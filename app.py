@@ -7,13 +7,13 @@ import datetime
 import time
 from streamlit_autorefresh import st_autorefresh
 
-# Auto refresh every 2 seconds
-st_autorefresh(interval=2000, key="scada_refresh")
+# Auto refresh every 3 seconds
+st_autorefresh(interval=3000, key="scada_refresh")
 
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
 # ===============================
-# CONTROL ROOM STYLE
+# INDUSTRIAL STYLE
 # ===============================
 st.markdown("""
 <style>
@@ -25,20 +25,21 @@ h1,h2,h3 {color:#00F5FF;}
 @keyframes blinker {
     50% {opacity:0;}
 }
-.led-green {color:#00FF00;font-size:22px;}
-.led-yellow {color:#FFD700;font-size:22px;}
-.led-red {color:#FF0000;font-size:22px;}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("WTP MOHARDA – LIVE SCADA HMI PANEL")
-st.markdown(f"### {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
+st.title("🏭 WTP MOHARDA – LIVE SCADA HMI PANEL")
+st.markdown(f"### ⏱ {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
 
 # ===============================
-# LOAD DATA
+# LOAD DATA SAFELY
 # ===============================
-data = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
-data.columns = data.columns.str.strip()
+try:
+    data = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
+    data.columns = data.columns.str.strip()
+except Exception as e:
+    st.error(f"Excel Load Error: {e}")
+    st.stop()
 
 def find_col(keyword):
     for col in data.columns:
@@ -50,6 +51,13 @@ turb_col = find_col("turb")
 frc_col = find_col("frc")
 lat_col = find_col("lat")
 lon_col = find_col("lon")
+date_col = find_col("date")
+name_col = find_col("cust")
+
+if turb_col is None or frc_col is None:
+    st.error("Turbidity or FRC column not found.")
+    st.write("Available Columns:", data.columns)
+    st.stop()
 
 data[turb_col] = pd.to_numeric(data[turb_col], errors="coerce")
 data[frc_col] = pd.to_numeric(data[frc_col], errors="coerce")
@@ -64,7 +72,6 @@ intake_turb = 10 + wave * 0.5
 clarifier_turb = intake_turb * 0.35
 filter_turb = clarifier_turb * 0.2
 sump_turb = filter_turb
-
 sump_frc = 1.0
 consumer_frc = data[frc_col].mean()
 
@@ -73,7 +80,7 @@ filter_eff = (clarifier_turb - filter_turb) / clarifier_turb
 frc_loss = sump_frc - consumer_frc
 
 # ===============================
-# STATUS
+# STATUS LOGIC
 # ===============================
 def status(val, good, warn):
     if val >= good:
@@ -85,39 +92,47 @@ def status(val, good, warn):
 
 clar_status = status(clar_eff, 0.65, 0.60)
 filter_status = status(filter_eff, 0.80, 0.75)
-dist_status = status(1-frc_loss, 0.6, 0.4)
+
+if frc_loss <= 0.4:
+    dist_status = "GREEN"
+elif frc_loss <= 0.6:
+    dist_status = "YELLOW"
+else:
+    dist_status = "RED"
 
 # ===============================
-# FLASHING ALARM BANNER
+# ALARM BANNER
 # ===============================
 if clar_status == "RED" or filter_status == "RED" or dist_status == "RED":
-    st.markdown('<h2 class="blink" style="color:red;">🚨 CRITICAL SYSTEM ALARM 🚨</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="blink" style="color:red;">🚨 CRITICAL SYSTEM ALARM</h2>', unsafe_allow_html=True)
 elif clar_status == "YELLOW" or filter_status == "YELLOW" or dist_status == "YELLOW":
-    st.markdown('<h3 style="color:gold;">⚠ SYSTEM WARNING</h3>', unsafe_allow_html=True)
+    st.warning("⚠ MINOR DEVIATION DETECTED")
 else:
-    st.markdown('<h3 style="color:lime;">SYSTEM STABLE</h3>', unsafe_allow_html=True)
+    st.success("🟢 ALL SYSTEMS OPERATING NORMALLY")
 
 # ===============================
-# NEON GAUGES
+# LIVE GAUGES
 # ===============================
+st.subheader("📊 LIVE PERFORMANCE GAUGES")
+
 cols = st.columns(4)
 
 def gauge(title, value, max_val):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=value,
-        title={'text':title},
+        title={'text': title},
         gauge={
-            'axis':{'range':[0,max_val]},
-            'bar':{'color':"#00F5FF"},
-            'bgcolor':"#111111",
+            'axis': {'range': [0, max_val]},
+            'bar': {'color': "#00F5FF"},
+            'bgcolor': "#111111"
         }
     ))
-    fig.update_layout(height=250, paper_bgcolor="#050A18")
+    fig.update_layout(height=260, paper_bgcolor="#050A18")
     return fig
 
 with cols[0]:
-    st.plotly_chart(gauge("Intake Turbidity", intake_turb, 20), use_container_width=True)
+    st.plotly_chart(gauge("Intake Turbidity (NTU)", intake_turb, 20), use_container_width=True)
 
 with cols[1]:
     st.plotly_chart(gauge("Clarifier Efficiency", clar_eff, 1), use_container_width=True)
@@ -129,97 +144,135 @@ with cols[3]:
     st.plotly_chart(gauge("Chlorine Loss", frc_loss, 1), use_container_width=True)
 
 # ===============================
-# FLOW PIPE ANIMATION
+# FLOW ANIMATION
 # ===============================
-st.subheader("FLOW VISUALIZATION")
+st.subheader("🌊 FLOW VISUALIZATION")
 
-stages = ["Intake","Clarifier","Filter","Sump"]
-values = [intake_turb,clarifier_turb,filter_turb,sump_turb]
+stages = ["Intake", "Clarifier", "Filter", "Sump"]
+values = [intake_turb, clarifier_turb, filter_turb, sump_turb]
 
-fig = go.Figure()
+fig_flow = go.Figure()
 
-fig.add_trace(go.Scatter(
+fig_flow.add_trace(go.Scatter(
     x=stages,
     y=values,
     mode="lines+markers",
-    line=dict(width=8,color="#00F5FF"),
+    line=dict(width=8, color="#00F5FF"),
     marker=dict(size=14)
 ))
 
-# Moving flow particle
 index = int((time.time()*3) % 4)
-fig.add_trace(go.Scatter(
+
+fig_flow.add_trace(go.Scatter(
     x=[stages[index]],
     y=[values[index]],
     mode="markers",
-    marker=dict(size=24,color="white"),
+    marker=dict(size=24, color="white"),
     showlegend=False
 ))
 
-fig.update_layout(template="plotly_dark",
-                  height=450,
-                  paper_bgcolor="#050A18")
+fig_flow.update_layout(template="plotly_dark",
+                       height=450,
+                       paper_bgcolor="#050A18")
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig_flow, use_container_width=True)
 
 # ===============================
-# LED STATUS LIGHTS
+# SUMP LEVEL
 # ===============================
-st.subheader("SECTION STATUS")
+st.subheader("💧 SUMP LEVEL")
 
-def led(label, stat):
-    if stat=="GREEN":
-        st.markdown(f'<span class="led-green">●</span> {label}', unsafe_allow_html=True)
-    elif stat=="YELLOW":
-        st.markdown(f'<span class="led-yellow">●</span> {label}', unsafe_allow_html=True)
+sump_level = int((filter_eff + np.sin(time.time())*0.05) * 100)
+st.progress(sump_level)
+
+# ===============================
+# WATER TOWER LEVEL
+# ===============================
+st.subheader("🗼 WATER TOWER LEVEL")
+
+tower_level = 75 + np.sin(time.time()) * 5
+
+fig_tower = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=tower_level,
+    title={'text': "Tower Level (%)"},
+    gauge={
+        'axis': {'range': [0, 100]},
+        'bar': {'color': "#00F5FF"},
+        'steps': [
+            {'range': [0, 30], 'color': "red"},
+            {'range': [30, 60], 'color': "orange"},
+            {'range': [60, 100], 'color': "green"}
+        ]
+    }
+))
+fig_tower.update_layout(height=300, paper_bgcolor="#050A18")
+st.plotly_chart(fig_tower, use_container_width=True)
+
+# ===============================
+# PARAMETER CONTROL PANEL
+# ===============================
+st.subheader("⚙ TREATMENT PARAMETER STATUS")
+
+def parameter_status(name, value, low, high):
+    if low <= value <= high:
+        st.success(f"{name}: {value:.2f} → UNDER CONTROL")
+    elif (value < low and value > low*0.8) or (value > high and value < high*1.2):
+        st.warning(f"{name}: {value:.2f} → MINOR DEVIATION")
     else:
-        st.markdown(f'<span class="led-red blink">●</span> {label}', unsafe_allow_html=True)
+        st.error(f"{name}: {value:.2f} → OUT OF RANGE")
 
-led("Clarifier", clar_status)
-led("Filter Bed", filter_status)
-led("Distribution", dist_status)
+parameter_status("Intake Turbidity", intake_turb, 0, 15)
+parameter_status("Clarifier Efficiency", clar_eff, 0.60, 1.0)
+parameter_status("Filter Efficiency", filter_eff, 0.75, 1.0)
+parameter_status("Chlorine Loss", frc_loss, 0.0, 0.5)
 
 # ===============================
-# MOVING WATER LEVEL BAR
+# DATE-WISE TURBIDITY TREND
 # ===============================
-st.subheader("SUMP LEVEL")
+if date_col:
+    st.subheader("📅 CUSTOMER TURBIDITY TREND")
+    data[date_col] = pd.to_datetime(data[date_col], errors="coerce")
+    trend = data.groupby(date_col)[turb_col].mean().reset_index()
 
-level = int((filter_eff + np.sin(time.time())*0.05)*100)
-st.progress(level)
+    fig_trend = px.line(trend, x=date_col, y=turb_col, markers=True)
+    fig_trend.update_layout(template="plotly_dark",
+                            height=450,
+                            paper_bgcolor="#050A18")
+    st.plotly_chart(fig_trend, use_container_width=True)
 
 # ===============================
 # GIS MAP
 # ===============================
 if lat_col and lon_col:
-    st.subheader("CUSTOMER GIS RISK MAP")
+    st.subheader("📍 CUSTOMER GIS RISK MAP")
 
     def risk(row):
-        if row[frc_col]<0.2 or row[turb_col]>1.5:
+        if row[frc_col] < 0.2 or row[turb_col] > 1.5:
             return "High Risk"
-        elif row[frc_col]<0.3:
+        elif row[frc_col] < 0.3:
             return "Moderate"
         else:
             return "Safe"
 
-    data["Risk"]=data.apply(risk,axis=1)
+    data["Risk"] = data.apply(risk, axis=1)
 
-    fig_map=px.scatter_mapbox(
+    fig_map = px.scatter_mapbox(
         data,
         lat=lat_col,
         lon=lon_col,
         color="Risk",
+        hover_name=name_col,
         zoom=12,
-        height=500,
+        height=600,
         color_discrete_map={
-            "Safe":"green",
-            "Moderate":"orange",
-            "High Risk":"red"
+            "Safe": "green",
+            "Moderate": "orange",
+            "High Risk": "red"
         }
     )
 
     fig_map.update_layout(mapbox_style="open-street-map",
                           paper_bgcolor="#050A18")
-    st.plotly_chart(fig_map,use_container_width=True)
-
-   
+    st.plotly_chart(fig_map, use_container_width=True)
 
