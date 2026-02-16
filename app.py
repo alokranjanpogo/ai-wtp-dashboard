@@ -2,81 +2,81 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-import plotly.graph_objects as go
+import plotly.express as px
 
-st.set_page_config(page_title="AI Smart WTP", layout="wide")
+st.set_page_config(page_title="AI Water Quality Intelligence", layout="wide")
 
-st.title("💧 AI Smart Water Treatment Monitoring System")
+st.title("💧 AI-Based Customer-End Water Quality Monitoring")
 
-np.random.seed(42)
-n = 1000
+# Load your real Excel data
+data = pd.read_excel("Gis Data.xlsx")
 
-clar_eff = np.random.uniform(0.6, 0.9, n)
-filt_eff = np.random.uniform(0.7, 0.95, n)
-frc_loss = np.random.uniform(0.1, 0.6, n)
-cond_change = np.random.uniform(-10, 40, n)
+# Clean Turbidity column
+data['Turbidity'] = pd.to_numeric(data['Turbidity'], errors='coerce')
 
-problem_stage = []
-
-for i in range(n):
-    if clar_eff[i] < 0.65:
-        problem_stage.append("Clarifier")
-    elif filt_eff[i] < 0.75:
-        problem_stage.append("Filter")
-    elif frc_loss[i] > 0.5:
-        problem_stage.append("Distribution")
+# Create Risk Level
+def risk_level(row):
+    if row['FRC(ppm)'] < 0.2 or row['Turbidity'] > 1.5:
+        return "High Risk"
+    elif row['FRC(ppm)'] < 0.3:
+        return "Moderate Risk"
     else:
-        problem_stage.append("Normal")
+        return "Safe"
 
-data = pd.DataFrame({
-    'clarifier_eff': clar_eff,
-    'filter_eff': filt_eff,
-    'frc_loss': frc_loss,
-    'cond_change': cond_change,
-    'problem_stage': problem_stage
-})
+data['Risk'] = data.apply(risk_level, axis=1)
 
-X = data[['clarifier_eff','filter_eff','frc_loss','cond_change']]
-y = data['problem_stage']
+# AI Model for Rating Prediction
+features = data[['Turbidity','FRC(ppm)','PH']]
+target = data['Rating']
 
 model = RandomForestClassifier()
-model.fit(X, y)
+model.fit(features, target)
 
-st.sidebar.header("🔧 Enter Current Plant Data")
+# Sidebar Input
+st.sidebar.header("🔍 Predict New Sample")
 
-clar_eff_input = st.sidebar.slider("Clarifier Efficiency", 0.4, 0.95, 0.75)
-filt_eff_input = st.sidebar.slider("Filter Efficiency", 0.5, 0.99, 0.85)
-frc_loss_input = st.sidebar.slider("FRC Loss", 0.0, 1.0, 0.3)
-cond_change_input = st.sidebar.slider("Conductivity Change", -50.0, 100.0, 10.0)
+turb = st.sidebar.number_input("Turbidity", value=1.0)
+frc = st.sidebar.number_input("FRC (ppm)", value=0.4)
+ph = st.sidebar.number_input("pH", value=7.8)
 
-input_data = pd.DataFrame([[clar_eff_input,
-                            filt_eff_input,
-                            frc_loss_input,
-                            cond_change_input]],
-                          columns=['clarifier_eff','filter_eff','frc_loss','cond_change'])
+input_df = pd.DataFrame([[turb, frc, ph]],
+                        columns=['Turbidity','FRC(ppm)','PH'])
 
-prediction = model.predict(input_data)[0]
+pred_rating = model.predict(input_df)[0]
 
-st.subheader("📊 System Status")
+st.sidebar.success(f"Predicted Rating: {pred_rating}")
 
-if prediction == "Normal":
-    st.success("🟢 SYSTEM NORMAL")
-elif prediction == "Clarifier":
-    st.warning("🟡 CLARIFIER ISSUE DETECTED")
-elif prediction == "Filter":
-    st.warning("🟠 FILTER ISSUE DETECTED")
-elif prediction == "Distribution":
-    st.error("🔴 DISTRIBUTION ISSUE DETECTED")
+# Risk Output
+if frc < 0.2 or turb > 1.5:
+    st.sidebar.error("High Risk Water")
+elif frc < 0.3:
+    st.sidebar.warning("Moderate Risk Water")
+else:
+    st.sidebar.success("Safe Water")
 
-st.subheader("📈 Efficiency Trend")
+# Map Visualization
+st.subheader("📍 GIS Water Quality Map")
 
-time = np.arange(0, 20)
-clar_trend = clar_eff_input + np.random.normal(0, 0.01, 20)
-filt_trend = filt_eff_input + np.random.normal(0, 0.01, 20)
+color_map = {
+    "Safe": "green",
+    "Moderate Risk": "orange",
+    "High Risk": "red"
+}
 
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=time, y=clar_trend, mode='lines', name='Clarifier'))
-fig.add_trace(go.Scatter(x=time, y=filt_trend, mode='lines', name='Filter'))
+fig = px.scatter_mapbox(
+    data,
+    lat="Latitude",
+    lon="Longitude",
+    hover_name="Cust.Name/Public Hydrant",
+    color="Risk",
+    color_discrete_map=color_map,
+    zoom=12,
+    height=500
+)
 
-fig.update_layout(template="plotly_dark")
+fig.update_layout(mapbox_style="open-street-map")
 st.plotly_chart(fig, use_container_width=True)
+
+# Show Data Table
+st.subheader("📊 Sample Data Overview")
+st.dataframe(data[['Cust.Name/Public Hydrant','Turbidity','FRC(ppm)','PH','Risk','Rating']])
