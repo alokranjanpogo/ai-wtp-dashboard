@@ -9,7 +9,7 @@ st.set_page_config(page_title="AI Water Quality Intelligence", layout="wide")
 st.title("💧 AI-Based Customer-End Water Quality Monitoring")
 
 # Load your real Excel data
-data = pd.read_excel("Gis Data.xlsx")
+data = pd.read_excel("Gis Data.csv")
 
 # Clean Turbidity column
 data['Turbidity'] = pd.to_numeric(data['Turbidity'], errors='coerce')
