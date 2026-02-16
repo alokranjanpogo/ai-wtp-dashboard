@@ -215,3 +215,6 @@ if dist_status == "RED":
 if clar_status == filter_status == dist_status == "GREEN":
     st.success("No Active Critical Alarms")
 
+
+
+
