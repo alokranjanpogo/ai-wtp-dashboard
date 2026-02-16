@@ -1,136 +1,173 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-import plotly.express as px
+import plotly.graph_objects as go
+import datetime
+import time
 
-st.set_page_config(page_title="AI Water Quality Intelligence", layout="wide")
-st.title("💧 AI-Based Customer-End Water Quality Monitoring")
-
-# ===============================
-# LOAD EXCEL FILE SAFELY
-# ===============================
-try:
-    data = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
-except Exception as e:
-    st.error(f"Error loading file: {e}")
-    st.stop()
+st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
 # ===============================
-# CLEAN COLUMN NAMES
+# REAL TIME CLOCK
 # ===============================
+st.markdown(f"### ⏱ {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
+
+st.title("🏭 WTP Moharda – AI Smart SCADA Control Panel")
+
+# ===============================
+# LOAD CUSTOMER DATA
+# ===============================
+data = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
 data.columns = data.columns.str.strip()
 
-# Show columns for safety (can remove later)
-# st.write("Columns:", data.columns)
-
-# ===============================
-# AUTO-DETECT IMPORTANT COLUMNS
-# ===============================
-# We search for columns dynamically to avoid mismatch
-
-def find_column(keyword):
+def find_col(keyword):
     for col in data.columns:
         if keyword.lower() in col.lower():
             return col
     return None
 
-turb_col = find_column("turb")
-frc_col = find_column("frc")
-ph_col = find_column("ph")
-rating_col = find_column("rating")
-lat_col = find_column("lat")
-lon_col = find_column("lon")
-name_col = find_column("cust")
+turb_col = find_col("turb")
+frc_col = find_col("frc")
 
-if None in [turb_col, frc_col, ph_col, rating_col, lat_col, lon_col]:
-    st.error("Required columns not found. Check Excel headers.")
-    st.write("Detected columns:", data.columns)
-    st.stop()
-
-# ===============================
-# CLEAN NUMERIC DATA
-# ===============================
 data[turb_col] = pd.to_numeric(data[turb_col], errors="coerce")
 data[frc_col] = pd.to_numeric(data[frc_col], errors="coerce")
-data[ph_col] = pd.to_numeric(data[ph_col], errors="coerce")
+data = data.dropna(subset=[turb_col, frc_col])
 
-data = data.dropna(subset=[turb_col, frc_col, ph_col, rating_col])
+consumer_turb = data[turb_col].mean()
+consumer_frc = data[frc_col].mean()
 
 # ===============================
-# CREATE RISK LEVEL
+# PLANT VALUES
 # ===============================
-def risk_level(row):
-    if row[frc_col] < 0.2 or row[turb_col] > 1.5:
-        return "High Risk"
-    elif row[frc_col] < 0.3:
-        return "Moderate Risk"
+intake_turb = 10.5
+clarifier_turb = intake_turb * 0.35
+filter_turb = clarifier_turb * 0.2
+sump_frc = 1.0
+
+clar_eff = (intake_turb - clarifier_turb) / intake_turb
+filter_eff = (clarifier_turb - filter_turb) / clarifier_turb
+frc_loss = sump_frc - consumer_frc
+
+# ===============================
+# STATUS LOGIC
+# ===============================
+def status_logic(value, good, warn):
+    if value >= good:
+        return "GREEN"
+    elif value >= warn:
+        return "YELLOW"
     else:
-        return "Safe"
+        return "RED"
 
-data["Risk"] = data.apply(risk_level, axis=1)
+clar_status = status_logic(clar_eff, 0.65, 0.60)
+filter_status = status_logic(filter_eff, 0.80, 0.75)
 
-# ===============================
-# TRAIN AI MODEL
-# ===============================
-features = data[[turb_col, frc_col, ph_col]]
-target = data[rating_col]
-
-model = RandomForestClassifier()
-model.fit(features, target)
-
-# ===============================
-# SIDEBAR INPUT FOR PREDICTION
-# ===============================
-st.sidebar.header("🔍 Predict New Sample")
-
-turb_input = st.sidebar.number_input("Turbidity", value=1.0)
-frc_input = st.sidebar.number_input("FRC (ppm)", value=0.4)
-ph_input = st.sidebar.number_input("pH", value=7.8)
-
-input_df = pd.DataFrame([[turb_input, frc_input, ph_input]],
-                        columns=[turb_col, frc_col, ph_col])
-
-pred_rating = model.predict(input_df)[0]
-
-st.sidebar.success(f"Predicted Rating: {pred_rating}")
-
-# Risk indicator
-if frc_input < 0.2 or turb_input > 1.5:
-    st.sidebar.error("High Risk Water")
-elif frc_input < 0.3:
-    st.sidebar.warning("Moderate Risk Water")
+if frc_loss <= 0.4:
+    dist_status = "GREEN"
+elif frc_loss <= 0.6:
+    dist_status = "YELLOW"
 else:
-    st.sidebar.success("Safe Water")
+    dist_status = "RED"
 
 # ===============================
-# GIS MAP
+# SCADA IMAGE BACKGROUND
 # ===============================
-st.subheader("📍 GIS Water Quality Map")
+st.subheader("📍 Plant Live Overview")
 
-color_map = {
-    "Safe": "green",
-    "Moderate Risk": "orange",
-    "High Risk": "red"
-}
+fig = go.Figure()
 
-fig = px.scatter_mapbox(
-    data,
-    lat=lat_col,
-    lon=lon_col,
-    hover_name=name_col if name_col else lat_col,
-    color="Risk",
-    color_discrete_map=color_map,
-    zoom=12,
-    height=500
+fig.add_layout_image(
+    dict(
+        source="plant_flow.png",
+        xref="paper",
+        yref="paper",
+        x=0,
+        y=1,
+        sizex=1,
+        sizey=1,
+        sizing="stretch",
+        opacity=0.8,
+        layer="below"
+    )
 )
 
-fig.update_layout(mapbox_style="open-street-map")
+fig.update_xaxes(visible=False)
+fig.update_yaxes(visible=False)
+fig.update_layout(height=500)
+
 st.plotly_chart(fig, use_container_width=True)
 
 # ===============================
-# DATA TABLE
+# STATUS PANELS
 # ===============================
-st.subheader("📊 Data Overview")
-st.dataframe(data[[name_col, turb_col, frc_col, ph_col, "Risk", rating_col]])
+st.subheader("🚦 Live Section Status")
+
+col1, col2, col3 = st.columns(3)
+
+def show_alarm(label, status):
+    if status == "GREEN":
+        st.success(f"🟢 {label}")
+    elif status == "YELLOW":
+        st.warning(f"🟡 {label} – Minor Deviation")
+    else:
+        st.error(f"🔴 {label} – CRITICAL")
+
+with col1:
+    show_alarm("Clarifier", clar_status)
+
+with col2:
+    show_alarm("Filter Bed", filter_status)
+
+with col3:
+    show_alarm("Distribution", dist_status)
+
+# ===============================
+# TURBIDITY FLOW GRAPH
+# ===============================
+st.subheader("📈 Turbidity Flow")
+
+stages = ["Intake", "Clarifier", "Filter", "Customer"]
+values = [intake_turb, clarifier_turb, filter_turb, consumer_turb]
+
+fig2 = go.Figure()
+fig2.add_trace(go.Scatter(x=stages, y=values, mode='lines+markers'))
+fig2.update_layout(template="plotly_dark",
+                   yaxis_title="Turbidity (NTU)")
+
+st.plotly_chart(fig2, use_container_width=True)
+
+# ===============================
+# CHLORINE DECAY GRAPH
+# ===============================
+st.subheader("🧪 Chlorine Monitoring")
+
+frc_stages = ["Sump", "Customer"]
+frc_values = [sump_frc, consumer_frc]
+
+fig3 = go.Figure()
+fig3.add_trace(go.Bar(x=frc_stages, y=frc_values))
+fig3.update_layout(template="plotly_dark",
+                   yaxis_title="FRC (ppm)")
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# ===============================
+# ALARM HISTORY
+# ===============================
+st.subheader("🚨 Alarm Log")
+
+alarms = []
+
+if clar_status == "RED":
+    alarms.append("Clarifier Efficiency Critical")
+if filter_status == "RED":
+    alarms.append("Filter Efficiency Critical")
+if dist_status == "RED":
+    alarms.append("Distribution Chlorine Loss High")
+
+if alarms:
+    for a in alarms:
+        st.error(a)
+else:
+    st.success("No Active Critical Alarms")
 
