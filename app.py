@@ -2,20 +2,16 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
 import datetime
-import time
 
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
-# ===============================
-# HEADER
-# ===============================
-st.title("🏭 WTP MOHARDA – SMART SCADA DASHBOARD")
-st.markdown(f"### ⏱ {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
+st.title("🏭 WTP MOHARDA – AI POWERED SCADA CONTROL")
 
-# ===============================
-# LOAD CUSTOMER DATA SAFELY
-# ===============================
+# ==============================
+# LOAD DATA
+# ==============================
 try:
     data = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
     data.columns = data.columns.str.strip()
@@ -31,6 +27,9 @@ def find_col(keyword):
 
 turb_col = find_col("turb")
 frc_col = find_col("frc")
+lat_col = find_col("lat")
+lon_col = find_col("lon")
+date_col = find_col("date")
 
 data[turb_col] = pd.to_numeric(data[turb_col], errors="coerce")
 data[frc_col] = pd.to_numeric(data[frc_col], errors="coerce")
@@ -39,17 +38,9 @@ data = data.dropna(subset=[turb_col, frc_col])
 consumer_turb = data[turb_col].mean()
 consumer_frc = data[frc_col].mean()
 
-# ===============================
-# PLANT DESIGN CAPACITY (FROM FIGURE)
-# ===============================
-INTAKE_CAP = 684
-CLARIFIER_CAP = 1200
-FILTER_CAP = 200
-UGR_CAP = 1000
-
-# ===============================
-# ASSUMED PROCESS VALUES
-# ===============================
+# ==============================
+# PROCESS VALUES
+# ==============================
 intake_turb = 11
 clarifier_turb = intake_turb * 0.35
 filter_turb = clarifier_turb * 0.2
@@ -60,10 +51,10 @@ clar_eff = (intake_turb - clarifier_turb) / intake_turb
 filter_eff = (clarifier_turb - filter_turb) / clarifier_turb
 frc_loss = sump_frc - consumer_frc
 
-# ===============================
-# STATUS LOGIC
-# ===============================
-def get_status(val, good, warn):
+# ==============================
+# STATUS
+# ==============================
+def status(val, good, warn):
     if val >= good:
         return "GREEN"
     elif val >= warn:
@@ -71,145 +62,127 @@ def get_status(val, good, warn):
     else:
         return "RED"
 
-clar_status = get_status(clar_eff, 0.65, 0.60)
-filter_status = get_status(filter_eff, 0.80, 0.75)
+clar_status = status(clar_eff, 0.65, 0.60)
+filter_status = status(filter_eff, 0.80, 0.75)
+dist_status = status(1-frc_loss, 0.6, 0.4)
 
-if frc_loss <= 0.4:
-    dist_status = "GREEN"
-elif frc_loss <= 0.6:
-    dist_status = "YELLOW"
+# ==============================
+# 🔴 ALARM STRIP
+# ==============================
+if clar_status == "RED" or filter_status == "RED" or dist_status == "RED":
+    st.error("🚨 CRITICAL PLANT CONDITION – IMMEDIATE ACTION REQUIRED")
+elif clar_status == "YELLOW" or filter_status == "YELLOW" or dist_status == "YELLOW":
+    st.warning("⚠ MINOR DEVIATION DETECTED")
 else:
-    dist_status = "RED"
+    st.success("🟢 ALL SYSTEMS NORMAL")
 
-# ===============================
-# SCADA PROCESS PANEL
-# ===============================
-st.subheader("🔷 PROCESS OVERVIEW")
+# ==============================
+# GAUGE ROW
+# ==============================
+st.subheader("📊 LIVE PERFORMANCE GAUGES")
 
-c1, c2, c3, c4, c5 = st.columns(5)
+g1, g2, g3, g4 = st.columns(4)
 
-c1.metric("INTAKE", f"{intake_turb:.2f} NTU",
-          delta=f"{INTAKE_CAP} m³/hr")
+def gauge(title, value, max_val):
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=value,
+        title={'text': title},
+        gauge={
+            'axis': {'range': [0, max_val]},
+            'bar': {'thickness': 0.6}
+        }
+    ))
+    fig.update_layout(height=250)
+    return fig
 
-c2.metric("CLARIFIER", f"{clarifier_turb:.2f} NTU",
-          delta=f"Eff: {clar_eff:.2f}")
+with g1:
+    st.plotly_chart(gauge("Intake Turbidity", intake_turb, 20), use_container_width=True)
 
-c3.metric("FILTER BED", f"{filter_turb:.2f} NTU",
-          delta=f"Eff: {filter_eff:.2f}")
+with g2:
+    st.plotly_chart(gauge("Clarifier Efficiency", clar_eff, 1), use_container_width=True)
 
-c4.metric("SUMP", f"{sump_turb:.2f} NTU",
-          delta=f"Cap: {UGR_CAP} m³")
+with g3:
+    st.plotly_chart(gauge("Filter Efficiency", filter_eff, 1), use_container_width=True)
 
-c5.metric("CUSTOMER FRC", f"{consumer_frc:.2f} ppm",
-          delta=f"Loss: {frc_loss:.2f}")
+with g4:
+    st.plotly_chart(gauge("Chlorine Loss", frc_loss, 1), use_container_width=True)
 
-# ===============================
-# TURBIDITY FLOW GRAPH (INTAKE → SUMP)
-# ===============================
-st.subheader("📈 TURBIDITY FLOW (INTAKE TO SUMP)")
+# ==============================
+# TURBIDITY FLOW
+# ==============================
+st.subheader("🌊 TURBIDITY REDUCTION PROFILE")
 
 stages = ["Intake", "Clarifier", "Filter", "Sump"]
 values = [intake_turb, clarifier_turb, filter_turb, sump_turb]
 
-fig = go.Figure()
-fig.add_trace(go.Scatter(
+fig_flow = go.Figure()
+fig_flow.add_trace(go.Scatter(
     x=stages,
     y=values,
     mode="lines+markers",
-    line=dict(width=5),
-    marker=dict(size=12)
+    line=dict(width=6)
 ))
+fig_flow.update_layout(template="plotly_dark",
+                       yaxis_title="Turbidity (NTU)",
+                       height=400)
 
-fig.update_layout(template="plotly_dark",
-                  yaxis_title="Turbidity (NTU)",
-                  height=400)
+st.plotly_chart(fig_flow, use_container_width=True)
 
-st.plotly_chart(fig, use_container_width=True)
+# ==============================
+# LOWER PANEL
+# ==============================
+col_left, col_right = st.columns(2)
 
-# ===============================
-# DATE-WISE CUSTOMER TREND
-# ===============================
-st.subheader("📊 CUSTOMER TURBIDITY TREND")
+# DATE TREND
+with col_left:
+    st.subheader("📅 Customer Turbidity Trend")
+    if date_col:
+        data[date_col] = pd.to_datetime(data[date_col], errors="coerce")
+        trend = data.groupby(date_col)[turb_col].mean().reset_index()
+        fig_trend = px.line(trend, x=date_col, y=turb_col)
+        fig_trend.update_layout(template="plotly_dark")
+        st.plotly_chart(fig_trend, use_container_width=True)
+    else:
+        st.info("No Date column detected.")
 
-date_col = find_col("date")
+# GIS
+with col_right:
+    if lat_col and lon_col:
+        st.subheader("📍 GIS Risk Map")
 
-if date_col:
-    data[date_col] = pd.to_datetime(data[date_col], errors="coerce")
-    trend = data.groupby(date_col)[turb_col].mean().reset_index()
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(x=trend[date_col],
-                              y=trend[turb_col],
-                              mode="lines"))
-    fig2.update_layout(template="plotly_dark")
-    st.plotly_chart(fig2, use_container_width=True)
-else:
-    st.info("No Date column available.")
+        def risk(row):
+            if row[frc_col] < 0.2 or row[turb_col] > 1.5:
+                return "High Risk"
+            elif row[frc_col] < 0.3:
+                return "Moderate"
+            else:
+                return "Safe"
 
-# ===============================
-# ANIMATED WATER INDICATOR
-# ===============================
-st.subheader("💧 FLOW STATUS")
+        data["Risk"] = data.apply(risk, axis=1)
 
-flow_level = int((filter_eff) * 100)
-st.progress(flow_level)
+        fig_map = px.scatter_mapbox(
+            data,
+            lat=lat_col,
+            lon=lon_col,
+            color="Risk",
+            zoom=12,
+            height=400,
+            color_discrete_map={
+                "Safe": "green",
+                "Moderate": "orange",
+                "High Risk": "red"
+            }
+        )
 
-# ===============================
-# ALARM PANEL (SCADA STYLE)
-# ===============================
-st.subheader("🚨 ALARM PANEL")
+        fig_map.update_layout(mapbox_style="open-street-map")
+        st.plotly_chart(fig_map, use_container_width=True)
 
-alarm_triggered = False
 
-if clar_status == "RED":
-    st.error("🔴 CLARIFIER PERFORMANCE CRITICAL")
-    alarm_triggered = True
 
-if filter_status == "RED":
-    st.error("🔴 FILTER BED PERFORMANCE CRITICAL")
-    alarm_triggered = True
 
-if dist_status == "RED":
-    st.error("🔴 DISTRIBUTION CHLORINE LOSS HIGH")
-    alarm_triggered = True
 
-if not alarm_triggered:
-    st.success("🟢 ALL SYSTEMS OPERATING NORMALLY")
+    
+                             
 
-# ===============================
-# GIS CUSTOMER MAP
-# ===============================
-lat_col = find_col("lat")
-lon_col = find_col("lon")
-name_col = find_col("cust")
-
-if lat_col and lon_col:
-    st.subheader("📍 CUSTOMER RISK MAP")
-
-    def risk(row):
-        if row[frc_col] < 0.2 or row[turb_col] > 1.5:
-            return "High Risk"
-        elif row[frc_col] < 0.3:
-            return "Moderate"
-        else:
-            return "Safe"
-
-    data["Risk"] = data.apply(risk, axis=1)
-
-    import plotly.express as px
-    fig3 = px.scatter_mapbox(
-        data,
-        lat=lat_col,
-        lon=lon_col,
-        color="Risk",
-        hover_name=name_col,
-        zoom=12,
-        height=500,
-        color_discrete_map={
-            "Safe": "green",
-            "Moderate": "orange",
-            "High Risk": "red"
-        }
-    )
-
-    fig3.update_layout(mapbox_style="open-street-map")
-    st.plotly_chart(fig3, use_container_width=True)
+     
