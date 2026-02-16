@@ -1,0 +1,49 @@
+﻿Sl.,Unique Id,Latitude ,Longitude,Cust.Name/Public Hydrant,Source,Collet. Type,Turbidity,FRC(ppm),PH,Total Coliforms/100ml,Faecal Coliforms/100ml,Rating,Customer Perception
+1,25122501,22.7904957,86.2593572,"Zone-2, Vivekanand Chowk",GSR,Schedule,0.96,0.4,7.82,Absent,Absent,4,Satisfied-Suitable for household use
+2,25122502,22.788315,86.2570833,"Zone-2B, Near Eden School",GSR,Schedule,1,0.4,7.81,Absent,Absent,4,Satisfied- Acceptable quality
+3,25122503,22.784395,86.2596017,"Zone-1B, Shankar Karmakar",GSR,Schedule,0.97,0.3,7.82,Absent,Absent,4,Satisfied- Clear and Usable
+4,25122504,22.784665,86.26076,"Zone-1B,Dinanath Pandey",GSR,Schedule,1.08,0.4,7.93,Absent,Absent,3,Moderately Satisfied
+5,25122505,22.7845183,86.2642617,"Zone-1B, Daspara, Hari Mandir",GSR,Schedule,0.96,0.4,7.84,Absent,Absent,4,Satisfied- Reliable domestic supply
+6,25122506,22.7812467,86.2573333,"Zone-1B, Jhanda Chowk",GSR,Schedule,0.98,0.5,7.82,Absent,Absent,4,Satisfied- Chlorine level acceptable
+7,25122507,22.78357,86.2561783,"Zone-1, Thakur Path",GSR,Schedule,0.95,0.4,7.87,Absent,Absent,4,Satisfied- Good clarity
+8,25122508,22.7846617,86.2515083,"Zone-1, Sunday Market",GSR,Schedule,1.15,0.5,7.88,Absent,Absent,3,Slight turbidity variation
+9,25122509,22.7851033,86.24717,"Zone-4, Old Post Off. Road",GSR,Schedule,0.98,0.4,7.74,Absent,Absent,4,Satisfied- Suitable for domestic use
+10,25122510,22.78677,86.2467167,"Zone-4, Kali Mandir",GSR,Schedule,1.18,0.4,7.8,Absent,Absent,3,Moderately Satisfied-Ocassional concern
+11,31122501,22.8071517,86.24625,"Road no.-2, Bagunhatu",ESR,Schedule,1.01,0.5,7.67,Absent,Absent,4,Satisfied- Stable quality
+12,31122502,22.8078967,86.24588,"Road no.-3, Asni Dutta",ESR,Schedule,1.08,0.6,7.87,Absent,Absent,3,Moderately Satisfied
+13,31122503,22.808015,86.2463167,"Road no.-4, Rakesh Lal",ESR,Schedule,1,0.5,7.82,Absent,Absent,4,Satisfied-Accepatable parameters
+14,31122504,22.8089066,86.2452076,"Road no.-5, Usha Devi",ESR,Schedule,0.95,0.4,7.91,Absent,Absent,4,Satisfied- Clear and Usable
+15,31122505,22.8104183,86.2428333,"Road no.-6, Bagunhatu",ESR,Schedule,0.97,0.6,7.8,Absent,Absent,3,Mixed Feedback
+16,31122506,22.8089583,86.2411667,"Water Tank, Bagunhatu",ESR,Schedule,1.02,0.6,7.91,Absent,Absent,4,Satisfied- Clear and Usable
+17,31122507,22.80071,86.25932,Annapurna Hotel,ESR,Schedule,1.02,0.3,7.64,Absent,Absent,3,Slight Caution in use
+18,31122508,22.8028633,86.2531367,"Mithila Colony, Baridih",ESR,Schedule,0.98,0.4,7.77,Absent,Absent,4,Satisfied 
+19,31122509,22.8055717,86.2539867,"Zila School, Baridih",ESR,Schedule,0.96,0.4,7.89,Absent,Absent,4,Satisfied but not using for drinking
+20,31122510,22.8042066,86.2505582,Pradeep Singh,ESR,Schedule,1.15,0.5,7.88,Absent,Absent,3,Not consuming directly
+21,31122511,22.8044833,86.2472633,"Water Tank, Bagun Nagar",ESR,Schedule,W,0.6,7.67,Absent,Absent,4,Satisfied- Acceptable quality
+22,3012601,22.8044967,86.2460317,Shri Krishna Singh,,Complaint,1.07,7.78,0.4,Absent,Absent,3,Moderately Satisfied
+23,3012602,22.804578,86.246053,Kamini Sinha,,Complaint,1.09,7.93,0.4,Absent,Absent,3,Mixed Feedback
+24,3012603,22.801766,86.256122,Shiv Kant Dubey,ESR,Complaint,1.04,7.78,0.3,Present,Absent,2,Dissatisfied
+25,24012601,22.807169,86.246281,"Road no.-2, Bagunhatu",ESR,Schedule,1.04,7.67,0.4,Absent,Absent,4,Satisfied 
+26,24012602,22.807689,86.24564,Pankaj Thakur,ESR,Schedule,1.03,7.69,0.4,Present,Absent,2,Dissatisfied
+27,24012603,22.808054,86.246256,Rakesh Ravidas,ESR,Schedule,0.95,7.69,0.3,Present,Absent,2,Dissatisfied
+28,24012604,22.809024,86.245621,Sujata Singh,ESR,Schedule,1.03,7.68,0.4,Present,Absent,2,Dissatisfied
+29,24012605,22.810529,86.242812,"Road no.-6, Bagunhatu",ESR,Schedule,1.12,7.69,0.3,Absent,Absent,4,Satisfied- Acceptable domestic use
+30,24012606,22.8079,86.241235,"Water Tank, Bagunhatu",ESR,Schedule,1.12,7.7,0.4,Absent,Absent,3,Moderately Satisfied
+31,29012607,22.789664,86.236274,Talvinder Kaur,ESR,Schedule,1.01,7.67,0.4,Absent,Absent,4,Satisfied but not using for drinking
+32,29012608,22.787414,86.244229,Somra Tirkey,ESR,Schedule,1.1,7.76,0.3,Present,Absent,2,Dissatisfied
+33,29012609,22.787162,86.244252,Fulchand Tirkey,ESR,Schedule,1.02,7.77,0.3,Present,Absent,2,Dissatisfied
+34,29012610,22.787622,86.244114,Pushpa Tirkey,ESR,Schedule,1.09,7.72,0.4,Absent,Absent,4,Satisfied- Acceptable quality
+35,29012611,22.785059,86.241051,Mantu Maharaj,ESR,Schedule,0.98,7.64,0.3,Absent,Absent,3,Moderately Satisfied-Ocassional concern
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
