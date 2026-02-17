@@ -30,7 +30,7 @@ st.title("🏭 WTP MOHARDA – LIVE SCADA HMI PANEL")
 st.markdown(f"### ⏱ {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
 
 # ===============================
-# LOAD DATA SAFELY
+# LOAD DATA
 # ===============================
 try:
     data = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
@@ -45,7 +45,6 @@ def find_col(keyword):
             return col
     return None
 
-# Detect columns
 turb_col = find_col("turb")
 frc_col = find_col("frc")
 lat_col = find_col("lat")
@@ -58,14 +57,13 @@ total_coliform_col = find_col("total")
 ecoli_col = find_col("coli")
 
 if turb_col is None or frc_col is None:
-    st.error("Turbidity or FRC column not found in Excel.")
+    st.error("Turbidity or FRC column not found.")
     st.write("Available Columns:", data.columns)
     st.stop()
 
-# Convert numeric safely
+# Convert safely
 data[turb_col] = pd.to_numeric(data[turb_col], errors="coerce")
 data[frc_col] = pd.to_numeric(data[frc_col], errors="coerce")
-
 if ph_col:
     data[ph_col] = pd.to_numeric(data[ph_col], errors="coerce")
 if cond_col:
@@ -74,7 +72,7 @@ if cond_col:
 data = data.dropna(subset=[turb_col, frc_col])
 
 # ===============================
-# DYNAMIC PROCESS VALUES
+# SIMULATED PROCESS VALUES
 # ===============================
 wave = np.sin(time.time())
 
@@ -82,71 +80,44 @@ intake_turb = 10 + wave * 0.5
 clarifier_turb = intake_turb * 0.35
 filter_turb = clarifier_turb * 0.2
 sump_turb = filter_turb
-sump_frc = 1.0
+
 consumer_frc = data[frc_col].mean()
 
 clar_eff = (intake_turb - clarifier_turb) / intake_turb
 filter_eff = (clarifier_turb - filter_turb) / clarifier_turb
 
 # ===============================
-# FRC STATUS (0.2–1.0 ppm)
+# FRC STATUS
 # ===============================
 st.subheader("🧪 FREE RESIDUAL CHLORINE STATUS")
 
 if consumer_frc < 0.2:
-    st.error(f"FRC: {consumer_frc:.2f} ppm → BELOW DESIRABLE LIMIT (0.2 ppm)")
+    st.error(f"FRC: {consumer_frc:.2f} ppm → BELOW 0.2 ppm (Unsafe)")
 elif 0.2 <= consumer_frc <= 1.0:
     st.success(f"FRC: {consumer_frc:.2f} ppm → UNDER CONTROL")
 else:
-    st.warning(f"FRC: {consumer_frc:.2f} ppm → ABOVE PERMISSIBLE LIMIT (1.0 ppm)")
+    st.warning(f"FRC: {consumer_frc:.2f} ppm → ABOVE 1.0 ppm")
 
 # ===============================
-# BACTERIA PRIORITY CHECK
+# BACTERIA CHECK
 # ===============================
-bacteria_present_count = 0
+bacteria_present = 0
 
 if total_coliform_col:
-    bacteria_present_count += len(
+    bacteria_present += len(
         data[data[total_coliform_col].astype(str).str.lower().isin(["present","yes","1"])]
     )
 
 if ecoli_col:
-    bacteria_present_count += len(
+    bacteria_present += len(
         data[data[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]
     )
 
-if bacteria_present_count > 0:
-    st.markdown(f'<h2 class="blink" style="color:red;">🚨 {bacteria_present_count} BACTERIAL CONTAMINATION POINTS DETECTED</h2>', unsafe_allow_html=True)
+if bacteria_present > 0:
+    st.markdown(f'<h2 class="blink" style="color:red;">🚨 {bacteria_present} BACTERIAL CONTAMINATION POINTS DETECTED</h2>', unsafe_allow_html=True)
 
 # ===============================
-# LIVE GAUGES
-# ===============================
-st.subheader("📊 LIVE PERFORMANCE GAUGES")
-
-cols = st.columns(4)
-
-def gauge(title, value, max_val):
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=value,
-        title={'text': title},
-        gauge={'axis': {'range': [0, max_val]},
-               'bar': {'color': "#00F5FF"}}
-    ))
-    fig.update_layout(height=250, paper_bgcolor="#050A18")
-    return fig
-
-with cols[0]:
-    st.plotly_chart(gauge("Intake Turbidity", intake_turb, 20), use_container_width=True)
-with cols[1]:
-    st.plotly_chart(gauge("Clarifier Efficiency", clar_eff, 1), use_container_width=True)
-with cols[2]:
-    st.plotly_chart(gauge("Filter Efficiency", filter_eff, 1), use_container_width=True)
-with cols[3]:
-    st.plotly_chart(gauge("Consumer FRC", consumer_frc, 2), use_container_width=True)
-
-# ===============================
-# TURBIDITY PROFILE
+# TURBIDITY PROFILE GRAPH
 # ===============================
 st.subheader("🌊 TURBIDITY REDUCTION PROFILE")
 
@@ -159,37 +130,93 @@ fig_flow.add_trace(go.Scatter(
     y=values,
     mode="lines+markers",
     line=dict(width=6, color="#00F5FF"),
-    marker=dict(size=12),
+    marker=dict(size=10),
     fill='tozeroy'
 ))
 fig_flow.update_layout(template="plotly_dark",
-                       height=450,
+                       height=400,
                        yaxis_title="Turbidity (NTU)")
 st.plotly_chart(fig_flow, use_container_width=True)
 
 # ===============================
-# WATER TOWER LEVEL
+# FILTER BED PANEL (6 DIVISIONS)
 # ===============================
-st.subheader("🗼 WATER TOWER LEVEL")
+st.subheader("🏗 FILTER BED SECTION")
 
-tower_level = 75 + np.sin(time.time()) * 5
+filter_efficiencies = []
+for i in range(6):
+    eff = filter_eff + np.sin(time.time() + i) * 0.01
+    filter_efficiencies.append(eff)
 
-fig_tower = go.Figure(go.Indicator(
-    mode="gauge+number",
-    value=tower_level,
-    title={'text': "Tower Level (%)"},
-    gauge={'axis': {'range': [0, 100]},
-           'steps': [
-               {'range': [0, 30], 'color': "red"},
-               {'range': [30, 60], 'color': "orange"},
-               {'range': [60, 100], 'color': "green"}
-           ]}
-))
-fig_tower.update_layout(height=300, paper_bgcolor="#050A18")
-st.plotly_chart(fig_tower, use_container_width=True)
+filter_html = """
+<div style="background-color:#111111;
+padding:25px;border-radius:10px;
+border:2px solid #00F5FF;">
+<h3 style='color:#00F5FF;text-align:center;'>FILTER BED SYSTEM</h3>
+<div style="display:flex;justify-content:space-between;margin-top:20px;">
+"""
+
+for i in range(6):
+    filter_html += f"""
+    <div style="width:14%;
+    padding:15px;
+    border:1px solid #00F5FF;
+    border-radius:6px;
+    text-align:center;
+    color:white;">
+    <h4>Filter {i+1}</h4>
+    <p style='font-size:20px;'>{filter_efficiencies[i]:.2f}</p>
+    </div>
+    """
+
+filter_html += "</div></div>"
+st.markdown(filter_html, unsafe_allow_html=True)
 
 # ===============================
-# DATE-WISE TURBIDITY TREND
+# WATER TOWER PANEL (6 DIVISIONS)
+# ===============================
+st.subheader("🗼 DISTRIBUTION WATER TOWERS")
+
+tower_names = [
+    "Moharda WT",
+    "Zone 9 WT",
+    "Zone 3 WT",
+    "Zone 1 GSR Outlet",
+    "Bagunhatu WT",
+    "Bagunnagar WT"
+]
+
+tower_levels = []
+for i in range(6):
+    level = 75 + np.sin(time.time() + i) * 5
+    tower_levels.append(level)
+
+tower_html = """
+<div style="background-color:#111111;
+padding:25px;border-radius:10px;
+border:2px solid #00F5FF;">
+<h3 style='color:#00F5FF;text-align:center;'>DISTRIBUTION STORAGE SYSTEM</h3>
+<div style="display:flex;justify-content:space-between;margin-top:20px;">
+"""
+
+for i in range(6):
+    tower_html += f"""
+    <div style="width:14%;
+    padding:15px;
+    border:1px solid #00F5FF;
+    border-radius:6px;
+    text-align:center;
+    color:white;">
+    <h4 style='font-size:14px;'>{tower_names[i]}</h4>
+    <p style='font-size:20px;'>{tower_levels[i]:.1f}%</p>
+    </div>
+    """
+
+tower_html += "</div></div>"
+st.markdown(tower_html, unsafe_allow_html=True)
+
+# ===============================
+# DATE-WISE TREND
 # ===============================
 if date_col:
     st.subheader("📅 CUSTOMER TURBIDITY TREND")
@@ -197,30 +224,26 @@ if date_col:
     trend = data.groupby(date_col)[turb_col].mean().reset_index()
 
     fig_trend = px.line(trend, x=date_col, y=turb_col, markers=True)
-    fig_trend.update_layout(template="plotly_dark", height=450)
+    fig_trend.update_layout(template="plotly_dark", height=400)
     st.plotly_chart(fig_trend, use_container_width=True)
 
 # ===============================
-# GIS MAP WITH BACTERIA PRIORITY
+# GIS MAP
 # ===============================
 if lat_col and lon_col:
     st.subheader("📍 CUSTOMER END QUALITY MAP")
 
     def classify(row):
-        # Bacteria priority
         if total_coliform_col and str(row[total_coliform_col]).lower() in ["present","yes","1"]:
             return "Bacteria Present"
         if ecoli_col and str(row[ecoli_col]).lower() in ["present","yes","1"]:
             return "Bacteria Present"
-
-        # Chemical/physical
         if row[frc_col] < 0.2:
             return "Low Chlorine"
         if row[frc_col] > 1.0:
             return "Over Chlorinated"
         if row[turb_col] > 1.5:
             return "High Turbidity"
-
         return "Safe"
 
     data["Quality_Status"] = data.apply(classify, axis=1)
@@ -239,7 +262,7 @@ if lat_col and lon_col:
         hover_name=name_col,
         hover_data=hover_dict,
         zoom=12,
-        height=650,
+        height=600,
         color_discrete_map={
             "Safe": "green",
             "Low Chlorine": "orange",
