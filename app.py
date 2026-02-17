@@ -45,6 +45,7 @@ def find_col(keyword):
             return col
     return None
 
+# Detect columns
 turb_col = find_col("turb")
 frc_col = find_col("frc")
 lat_col = find_col("lat")
@@ -53,16 +54,18 @@ date_col = find_col("date")
 name_col = find_col("cust")
 ph_col = find_col("ph")
 cond_col = find_col("cond")
-bacteria_col = find_col("bact")
+total_coliform_col = find_col("total")
+ecoli_col = find_col("coli")
 
 if turb_col is None or frc_col is None:
     st.error("Turbidity or FRC column not found in Excel.")
     st.write("Available Columns:", data.columns)
     st.stop()
 
-# Convert safely
+# Convert numeric safely
 data[turb_col] = pd.to_numeric(data[turb_col], errors="coerce")
 data[frc_col] = pd.to_numeric(data[frc_col], errors="coerce")
+
 if ph_col:
     data[ph_col] = pd.to_numeric(data[ph_col], errors="coerce")
 if cond_col:
@@ -98,14 +101,22 @@ else:
     st.warning(f"FRC: {consumer_frc:.2f} ppm → ABOVE PERMISSIBLE LIMIT (1.0 ppm)")
 
 # ===============================
-# ALARM LOGIC
+# BACTERIA PRIORITY CHECK
 # ===============================
-if clar_eff < 0.60 or filter_eff < 0.75 or consumer_frc < 0.2:
-    st.markdown('<h2 class="blink" style="color:red;">🚨 CRITICAL SYSTEM ALARM</h2>', unsafe_allow_html=True)
-elif clar_eff < 0.65 or filter_eff < 0.80:
-    st.warning("⚠ MINOR DEVIATION DETECTED")
-else:
-    st.success("🟢 ALL SYSTEMS OPERATING NORMALLY")
+bacteria_present_count = 0
+
+if total_coliform_col:
+    bacteria_present_count += len(
+        data[data[total_coliform_col].astype(str).str.lower().isin(["present","yes","1"])]
+    )
+
+if ecoli_col:
+    bacteria_present_count += len(
+        data[data[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]
+    )
+
+if bacteria_present_count > 0:
+    st.markdown(f'<h2 class="blink" style="color:red;">🚨 {bacteria_present_count} BACTERIAL CONTAMINATION POINTS DETECTED</h2>', unsafe_allow_html=True)
 
 # ===============================
 # LIVE GAUGES
@@ -135,7 +146,7 @@ with cols[3]:
     st.plotly_chart(gauge("Consumer FRC", consumer_frc, 2), use_container_width=True)
 
 # ===============================
-# TURBIDITY PROFILE GRAPH
+# TURBIDITY PROFILE
 # ===============================
 st.subheader("🌊 TURBIDITY REDUCTION PROFILE")
 
@@ -178,7 +189,7 @@ fig_tower.update_layout(height=300, paper_bgcolor="#050A18")
 st.plotly_chart(fig_tower, use_container_width=True)
 
 # ===============================
-# DATE-WISE TREND
+# DATE-WISE TURBIDITY TREND
 # ===============================
 if date_col:
     st.subheader("📅 CUSTOMER TURBIDITY TREND")
@@ -190,26 +201,35 @@ if date_col:
     st.plotly_chart(fig_trend, use_container_width=True)
 
 # ===============================
-# GIS MAP WITH BACTERIA
+# GIS MAP WITH BACTERIA PRIORITY
 # ===============================
 if lat_col and lon_col:
     st.subheader("📍 CUSTOMER END QUALITY MAP")
 
     def classify(row):
-        if bacteria_col and str(row[bacteria_col]).lower() in ["yes", "present", "1"]:
+        # Bacteria priority
+        if total_coliform_col and str(row[total_coliform_col]).lower() in ["present","yes","1"]:
             return "Bacteria Present"
-        elif row[frc_col] < 0.2 or row[turb_col] > 1.5:
-            return "High Risk"
-        elif row[frc_col] > 1.0:
+        if ecoli_col and str(row[ecoli_col]).lower() in ["present","yes","1"]:
+            return "Bacteria Present"
+
+        # Chemical/physical
+        if row[frc_col] < 0.2:
+            return "Low Chlorine"
+        if row[frc_col] > 1.0:
             return "Over Chlorinated"
-        else:
-            return "Safe"
+        if row[turb_col] > 1.5:
+            return "High Turbidity"
+
+        return "Safe"
 
     data["Quality_Status"] = data.apply(classify, axis=1)
 
     hover_dict = {turb_col: True, frc_col: True}
     if ph_col: hover_dict[ph_col] = True
     if cond_col: hover_dict[cond_col] = True
+    if total_coliform_col: hover_dict[total_coliform_col] = True
+    if ecoli_col: hover_dict[ecoli_col] = True
 
     fig_map = px.scatter_mapbox(
         data,
@@ -219,11 +239,12 @@ if lat_col and lon_col:
         hover_name=name_col,
         hover_data=hover_dict,
         zoom=12,
-        height=600,
+        height=650,
         color_discrete_map={
             "Safe": "green",
-            "High Risk": "orange",
+            "Low Chlorine": "orange",
             "Over Chlorinated": "yellow",
+            "High Turbidity": "orange",
             "Bacteria Present": "red"
         }
     )
@@ -231,5 +252,3 @@ if lat_col and lon_col:
     fig_map.update_layout(mapbox_style="open-street-map")
     st.plotly_chart(fig_map, use_container_width=True)
 
-
-       
