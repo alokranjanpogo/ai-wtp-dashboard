@@ -55,30 +55,30 @@ avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
 consumer_frc = frc["Clear Water"].mean()
 
 # ===============================
-# PROFESSIONAL SCADA ALARM PANEL
+# SCADA ALARM PANEL (POPUP STYLE)
 # ===============================
-st.subheader("🚨 PLANT ALARM STATUS")
+st.subheader("🚨 LIVE ALARM PANEL")
 
-alarm_data = []
+alarm_list = []
 
 # Clarifier
 if clar_eff < 0.5:
-    alarm_data.append(["CRITICAL", "Clarifier Efficiency", f"{clar_eff*100:.1f}%"])
+    alarm_list.append(("CRITICAL", f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)"))
 elif clar_eff < 0.7:
-    alarm_data.append(["WARNING", "Clarifier Efficiency", f"{clar_eff*100:.1f}%"])
+    alarm_list.append(("WARNING", f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)"))
 
 # Filters
 for i, eff in enumerate(filter_eff_list):
     if eff < 0.6:
-        alarm_data.append(["CRITICAL", f"Filter {i+1} Efficiency", f"{eff*100:.1f}%"])
+        alarm_list.append(("CRITICAL", f"Filter {i+1} Efficiency LOW ({eff*100:.1f}%)"))
     elif eff < 0.8:
-        alarm_data.append(["WARNING", f"Filter {i+1} Efficiency", f"{eff*100:.1f}%"])
+        alarm_list.append(("WARNING", f"Filter {i+1} Efficiency Moderate ({eff*100:.1f}%)"))
 
 # FRC
 if consumer_frc < 0.2:
-    alarm_data.append(["CRITICAL", "FRC", f"{consumer_frc:.2f} ppm"])
+    alarm_list.append(("CRITICAL", f"FRC LOW ({consumer_frc:.2f} ppm)"))
 elif consumer_frc > 1.0:
-    alarm_data.append(["WARNING", "FRC", f"{consumer_frc:.2f} ppm"])
+    alarm_list.append(("WARNING", f"FRC HIGH ({consumer_frc:.2f} ppm)"))
 
 # Bacteria
 total_col = next((c for c in gis.columns if "total" in c.lower()), None)
@@ -86,11 +86,34 @@ ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
 
 if total_col:
     if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_data.append(["CRITICAL", "Total Coliform", "Detected"])
+        alarm_list.append(("CRITICAL", "Total Coliform Detected"))
 
 if ecoli_col:
     if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_data.append(["CRITICAL", "E. Coli", "Detected"])
+        alarm_list.append(("CRITICAL", "E. Coli Detected"))
+
+# ===============================
+# DISPLAY
+# ===============================
+if len(alarm_list) == 0:
+    st.success("🟢 SYSTEM HEALTHY – NO ACTIVE ALARMS")
+
+else:
+    for level, message in alarm_list:
+
+        if level == "CRITICAL":
+            st.markdown(
+                f'<div class="blink" style="background:#8B0000;color:white;padding:15px;border-radius:6px;font-weight:bold;">'
+                f'🔴 CRITICAL: {message}</div>',
+                unsafe_allow_html=True
+            )
+
+        elif level == "WARNING":
+            st.markdown(
+                f'<div style="background:#FFA500;color:black;padding:15px;border-radius:6px;font-weight:bold;">'
+                f'🟡 WARNING: {message}</div>',
+                unsafe_allow_html=True
+            )
 
 # ===============================
 # DISPLAY SECTION
@@ -185,34 +208,44 @@ fig_prof.update_layout(template="plotly_dark",height=400)
 st.plotly_chart(fig_prof,use_container_width=True)
 
 # ===============================
-# INTAKE TURBIDITY TREND (DATE-WISE)
+# INTAKE TURBIDITY TREND (SAFE)
 # ===============================
-st.subheader("📈 Intake Turbidity Trend (Date-wise)")
+st.subheader("📈 Intake Turbidity Trend")
 
 date_col_plant = next((c for c in plant.columns if "date" in c.lower()), None)
 
-if date_col_plant:
-    turb_data[date_col_plant] = pd.to_datetime(turb_data[date_col_plant], errors='coerce')
+if date_col_plant is not None and "Intake" in turb.columns:
+    try:
+        turb[date_col_plant] = pd.to_datetime(turb[date_col_plant], errors='coerce')
+        intake_trend = turb[[date_col_plant, "Intake"]].dropna()
 
-    intake_trend = turb_data[[date_col_plant, "Intake"]].dropna()
+        fig_intake = px.line(
+            intake_trend,
+            x=date_col_plant,
+            y="Intake",
+            markers=True,
+            template="plotly_dark"
+        )
+
+        fig_intake.update_layout(
+            xaxis_title="Date",
+            yaxis_title="Turbidity (NTU)",
+            height=400
+        )
+
+        st.plotly_chart(fig_intake, use_container_width=True)
+
+    except Exception as e:
+        st.warning("Intake trend could not be generated. Check Date column format.")
+
+else:
+    st.info("No Date column found in plant file. Showing sample trend instead.")
 
     fig_intake = px.line(
-        intake_trend,
-        x=date_col_plant,
-        y="Intake",
-        markers=True,
+        y=turb["Intake"],
         template="plotly_dark"
     )
-
-    fig_intake.update_layout(
-        xaxis_title="Date",
-        yaxis_title="Turbidity (NTU)",
-        height=400
-    )
-
     st.plotly_chart(fig_intake, use_container_width=True)
-else:
-    st.warning("Date column not found in plant file.")
 
 # ===============================
 # CHEMICAL DOSAGE
