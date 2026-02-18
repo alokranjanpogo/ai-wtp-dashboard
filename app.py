@@ -27,7 +27,7 @@ st.title("🏭 WTP MOHARDA – LIVE SCADA HMI PANEL")
 st.markdown(f"### ⏱ {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
 
 # ===============================
-# LOAD DATA (NEW FILE)
+# LOAD DATA
 # ===============================
 try:
     data = pd.read_excel("Book 7.xlsx", engine="openpyxl")
@@ -37,7 +37,7 @@ except Exception as e:
     st.stop()
 
 # ===============================
-# REAL PROCESS CALCULATION
+# REAL CALCULATIONS
 # ===============================
 turb_data = data[data["Parameter"].str.lower() == "turbidity"]
 frc_data = data[data["Parameter"].str.lower() == "frc"]
@@ -58,7 +58,7 @@ for i in range(1, 7):
 consumer_frc = frc_data["Clear Water"].mean()
 
 # ===============================
-# TOTAL PRODUCTION (UNCHANGED)
+# TOTAL PRODUCTION
 # ===============================
 st.subheader("🏭 TOTAL WATER PRODUCTION")
 
@@ -72,7 +72,7 @@ prod_cols[1].metric("Flow (m³/hr)", f"{production_m3_hr:.0f}")
 prod_cols[2].metric("Flow (LPS)", f"{production_lps:.1f}")
 
 # ===============================
-# FRC STATUS (REAL)
+# FRC STATUS
 # ===============================
 st.subheader("🧪 FREE RESIDUAL CHLORINE STATUS")
 
@@ -84,7 +84,7 @@ else:
     st.warning(f"FRC: {consumer_frc:.2f} ppm → ABOVE 1.0 ppm")
 
 # ===============================
-# LIVE GAUGES (UPDATED VALUES ONLY)
+# LIVE GAUGES
 # ===============================
 st.subheader("📊 LIVE PERFORMANCE GAUGES")
 
@@ -111,7 +111,7 @@ with cols[3]:
     st.plotly_chart(gauge("Clear Water FRC", consumer_frc, 2), use_container_width=True)
 
 # ===============================
-# 6 FILTER BED GAUGES (REAL)
+# 6 FILTER BED GAUGES
 # ===============================
 st.subheader("🏗 FILTER BED PERFORMANCE")
 
@@ -119,10 +119,7 @@ filter_cols = st.columns(6)
 
 for i in range(6):
     with filter_cols[i]:
-        st.plotly_chart(
-            gauge(f"Filter {i+1}", filter_eff_list[i], 1),
-            use_container_width=True
-        )
+        st.plotly_chart(gauge(f"Filter {i+1}", filter_eff_list[i], 1), use_container_width=True)
 
 # ===============================
 # TURBIDITY PROFILE (REAL)
@@ -143,5 +140,3 @@ fig_flow.add_trace(go.Scatter(
 ))
 fig_flow.update_layout(template="plotly_dark", height=450)
 st.plotly_chart(fig_flow, use_container_width=True)
-
-
