@@ -55,7 +55,7 @@ avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
 consumer_frc = frc["Clear Water"].mean()
 
 # ===============================
-# SCADA STYLE ALARM PANEL
+# SCADA STYLE ALARM PANEL (SAFE)
 # ===============================
 st.subheader("🚨 PLANT ALARM STATUS")
 
@@ -65,27 +65,27 @@ warning_count = 0
 
 # Clarifier
 if clar_eff < 0.5:
-    alarm_list.append(f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)")
+    alarm_list.append(("CRITICAL", f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)"))
     critical_count += 1
 elif clar_eff < 0.7:
-    alarm_list.append(f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)")
+    alarm_list.append(("WARNING", f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)"))
     warning_count += 1
 
 # Filters
 for i, eff in enumerate(filter_eff_list):
     if eff < 0.6:
-        alarm_list.append(f"Filter {i+1} Efficiency LOW ({eff*100:.1f}%)")
+        alarm_list.append(("CRITICAL", f"Filter {i+1} Efficiency LOW ({eff*100:.1f}%)"))
         critical_count += 1
     elif eff < 0.8:
-        alarm_list.append(f"Filter {i+1} Efficiency Moderate ({eff*100:.1f}%)")
+        alarm_list.append(("WARNING", f"Filter {i+1} Efficiency Moderate ({eff*100:.1f}%)"))
         warning_count += 1
 
 # FRC
 if consumer_frc < 0.2:
-    alarm_list.append(f"FRC LOW ({consumer_frc:.2f} ppm)")
+    alarm_list.append(("CRITICAL", f"FRC LOW ({consumer_frc:.2f} ppm)"))
     critical_count += 1
 elif consumer_frc > 1.0:
-    alarm_list.append(f"FRC HIGH ({consumer_frc:.2f} ppm)")
+    alarm_list.append(("WARNING", f"FRC HIGH ({consumer_frc:.2f} ppm)"))
     warning_count += 1
 
 # Bacteria
@@ -94,36 +94,39 @@ ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
 
 if total_col:
     if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_list.append("Total Coliform Detected")
+        alarm_list.append(("CRITICAL", "Total Coliform Detected"))
         critical_count += 1
 
 if ecoli_col:
     if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_list.append("E. Coli Detected")
+        alarm_list.append(("CRITICAL", "E. Coli Detected"))
         critical_count += 1
 
 # ===============================
-# DISPLAY SECTION
+# DISPLAY
 # ===============================
 
 col1, col2, col3 = st.columns(3)
 
-# STATUS LIGHTS
 if critical_count > 0:
-    col1.markdown("### 🔴 CRITICAL")
+    col1.error("🔴 CRITICAL STATUS")
 elif warning_count > 0:
-    col1.markdown("### 🟡 WARNING")
+    col1.warning("🟡 WARNING STATUS")
 else:
-    col1.markdown("### 🟢 NORMAL")
+    col1.success("🟢 NORMAL STATUS")
 
 col2.metric("Critical Alarms", critical_count)
 col3.metric("Warning Alarms", warning_count)
 
-# SCROLLING TICKER BAR
+# Alarm List Display
 if len(alarm_list) > 0:
-    alarm_text = " | ".join(alarm_list)
-
-    st
+    for level, message in alarm_list:
+        if level == "CRITICAL":
+            st.error(f"🔴 {message}")
+        else:
+            st.warning(f"🟡 {message}")
+else:
+    st.success("No Active Alarms")
 
 # ===============================
 # PRODUCTION
