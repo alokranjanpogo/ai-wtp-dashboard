@@ -55,47 +55,66 @@ avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
 consumer_frc = frc["Clear Water"].mean()
 
 # ===============================
-# ADVANCED ALARM PANEL
+# PROFESSIONAL SCADA ALARM PANEL
 # ===============================
-st.subheader("🚨 SCADA ALARM PANEL")
-alarms = []
+st.subheader("🚨 PLANT ALARM STATUS")
 
+alarm_data = []
+
+# Clarifier
 if clar_eff < 0.5:
-    alarms.append(("CRITICAL","Clarifier Efficiency Below 50%"))
+    alarm_data.append(["CRITICAL", "Clarifier Efficiency", f"{clar_eff*100:.1f}%"])
 elif clar_eff < 0.7:
-    alarms.append(("WARNING","Clarifier Efficiency Moderate"))
+    alarm_data.append(["WARNING", "Clarifier Efficiency", f"{clar_eff*100:.1f}%"])
 
-for i,eff in enumerate(filter_eff_list):
+# Filters
+for i, eff in enumerate(filter_eff_list):
     if eff < 0.6:
-        alarms.append(("CRITICAL",f"Filter {i+1} Efficiency Below 60%"))
+        alarm_data.append(["CRITICAL", f"Filter {i+1} Efficiency", f"{eff*100:.1f}%"])
     elif eff < 0.8:
-        alarms.append(("WARNING",f"Filter {i+1} Efficiency Moderate"))
+        alarm_data.append(["WARNING", f"Filter {i+1} Efficiency", f"{eff*100:.1f}%"])
 
+# FRC
 if consumer_frc < 0.2:
-    alarms.append(("CRITICAL","FRC Below 0.2 ppm"))
+    alarm_data.append(["CRITICAL", "FRC", f"{consumer_frc:.2f} ppm"])
 elif consumer_frc > 1.0:
-    alarms.append(("WARNING","FRC Above 1.0 ppm"))
+    alarm_data.append(["WARNING", "FRC", f"{consumer_frc:.2f} ppm"])
 
-# Bacteria Alarm
-total_col = next((c for c in gis.columns if "total" in c.lower()),None)
-ecoli_col = next((c for c in gis.columns if "coli" in c.lower()),None)
+# Bacteria
+total_col = next((c for c in gis.columns if "total" in c.lower()), None)
+ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
 
 if total_col:
-    if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])])>0:
-        alarms.append(("CRITICAL","Total Coliform Detected"))
-if ecoli_col:
-    if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])])>0:
-        alarms.append(("CRITICAL","E.coli Detected"))
+    if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
+        alarm_data.append(["CRITICAL", "Total Coliform", "Detected"])
 
-if len(alarms)==0:
-    st.success("🟢 All Parameters Within Safe Limits")
+if ecoli_col:
+    if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
+        alarm_data.append(["CRITICAL", "E. Coli", "Detected"])
+
+# ===============================
+# DISPLAY SECTION
+# ===============================
+
+if len(alarm_data) == 0:
+    st.success("🟢 SYSTEM HEALTHY – ALL PARAMETERS WITHIN LIMIT")
+
 else:
-    st.metric("Active Alarms",len(alarms))
-    for level,msg in alarms:
-        if level=="CRITICAL":
-            st.markdown(f'<div style="background:#8B0000;color:white;padding:10px;border-radius:5px;">🔴 {msg}</div>',unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div style="background:#FFA500;color:black;padding:10px;border-radius:5px;">🟡 {msg}</div>',unsafe_allow_html=True)
+    alarm_df = pd.DataFrame(alarm_data, columns=["Severity", "Parameter", "Value"])
+
+    critical_count = len(alarm_df[alarm_df["Severity"] == "CRITICAL"])
+    warning_count = len(alarm_df[alarm_df["Severity"] == "WARNING"])
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("🔴 Critical", critical_count)
+    col2.metric("🟡 Warning", warning_count)
+    col3.metric("Total Alarms", len(alarm_df))
+
+    st.dataframe(
+        alarm_df,
+        use_container_width=True,
+        height=250
+    )
 
 # ===============================
 # PRODUCTION
@@ -166,22 +185,34 @@ fig_prof.update_layout(template="plotly_dark",height=400)
 st.plotly_chart(fig_prof,use_container_width=True)
 
 # ===============================
-# INTAKE TREND
+# INTAKE TURBIDITY TREND (DATE-WISE)
 # ===============================
-st.subheader("📈 Intake Turbidity Trend")
-fig_int=px.line(turb,y="Intake",template="plotly_dark")
-st.plotly_chart(fig_int,use_container_width=True)
+st.subheader("📈 Intake Turbidity Trend (Date-wise)")
 
-# ===============================
-# CUSTOMER TURBIDITY TREND
-# ===============================
-date_col=next((c for c in gis.columns if "date" in c.lower()),None)
-turb_col=next((c for c in gis.columns if "turb" in c.lower()),None)
-if date_col and turb_col:
-    gis[date_col]=pd.to_datetime(gis[date_col],errors='coerce')
-    trend=gis.groupby(date_col)[turb_col].mean().reset_index()
-    fig_ct=px.line(trend,x=date_col,y=turb_col,template="plotly_dark")
-    st.plotly_chart(fig_ct,use_container_width=True)
+date_col_plant = next((c for c in plant.columns if "date" in c.lower()), None)
+
+if date_col_plant:
+    turb_data[date_col_plant] = pd.to_datetime(turb_data[date_col_plant], errors='coerce')
+
+    intake_trend = turb_data[[date_col_plant, "Intake"]].dropna()
+
+    fig_intake = px.line(
+        intake_trend,
+        x=date_col_plant,
+        y="Intake",
+        markers=True,
+        template="plotly_dark"
+    )
+
+    fig_intake.update_layout(
+        xaxis_title="Date",
+        yaxis_title="Turbidity (NTU)",
+        height=400
+    )
+
+    st.plotly_chart(fig_intake, use_container_width=True)
+else:
+    st.warning("Date column not found in plant file.")
 
 # ===============================
 # CHEMICAL DOSAGE
@@ -203,29 +234,111 @@ for i in range(6):
     tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
 
 # ===============================
-# CUSTOMER END GIS MAP
+# CUSTOMER END GIS MAP (FIXED)
 # ===============================
 st.subheader("📍 Customer End GIS Map")
 
-lat=next((c for c in gis.columns if "lat" in c.lower()),None)
-lon=next((c for c in gis.columns if "lon" in c.lower()),None)
-name=next((c for c in gis.columns if "name" in c.lower() or "cust" in c.lower()),None)
+lat_col = next((c for c in gis.columns if "lat" in c.lower()), None)
+lon_col = next((c for c in gis.columns if "lon" in c.lower()), None)
+name_col = next((c for c in gis.columns if "name" in c.lower() or "cust" in c.lower()), None)
+turb_col = next((c for c in gis.columns if "turb" in c.lower()), None)
+frc_col = next((c for c in gis.columns if "frc" in c.lower()), None)
+date_col = next((c for c in gis.columns if "date" in c.lower()), None)
 
+total_col = next((c for c in gis.columns if "total" in c.lower()), None)
+ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
+
+# Convert numeric safely
 if turb_col:
-    gis[turb_col]=pd.to_numeric(gis[turb_col],errors='coerce')
-if lat and lon:
-    gis["Status"]=np.where(gis[turb_col]>1.5,"High Turbidity","Safe")
-    fig_map=px.scatter_mapbox(
+    gis[turb_col] = pd.to_numeric(gis[turb_col], errors='coerce')
+if frc_col:
+    gis[frc_col] = pd.to_numeric(gis[frc_col], errors='coerce')
+
+def classify(row):
+    # Bacteria priority (RED)
+    if total_col and str(row[total_col]).lower() in ["present","yes","1"]:
+        return "Bacteria Present"
+    if ecoli_col and str(row[ecoli_col]).lower() in ["present","yes","1"]:
+        return "Bacteria Present"
+
+    # Chemical/physical deviation (YELLOW)
+    if turb_col and row[turb_col] > 1.5:
+        return "High Turbidity"
+    if frc_col and (row[frc_col] < 0.2 or row[frc_col] > 1.0):
+        return "Chlorine Deviation"
+
+    # Safe (GREEN)
+    return "Safe"
+
+gis["Status"] = gis.apply(classify, axis=1)
+
+if lat_col and lon_col:
+    fig_map = px.scatter_mapbox(
         gis,
-        lat=lat,
-        lon=lon,
-        hover_name=name,
-        hover_data=gis.columns,
+        lat=lat_col,
+        lon=lon_col,
+        hover_name=name_col,
+        hover_data={
+            turb_col: True,
+            frc_col: True,
+            total_col: True,
+            ecoli_col: True
+        },
         color="Status",
-        color_discrete_map={"Safe":"green","High Turbidity":"red"},
+        color_discrete_map={
+            "Safe": "green",
+            "High Turbidity": "yellow",
+            "Chlorine Deviation": "yellow",
+            "Bacteria Present": "red"
+        },
         zoom=12,
-        height=600)
+        height=600
+    )
+
     fig_map.update_layout(mapbox_style="open-street-map")
-    st.plotly_chart(fig_map,use_container_width=True)
+    st.plotly_chart(fig_map, use_container_width=True)
 
 
+# ===============================
+# SUMP LEVEL MONITORING
+# ===============================
+st.subheader("💧 Clear Water Sump Status")
+
+# Given values
+sump_capacity = 1500000 # litres
+production_mld = 18
+flow_per_hour = (production_mld * 1000000) / 24 # L/hr
+
+# Theoretical operating level based on 1 hr residence time
+sump_volume_required = flow_per_hour # 1 hr storage
+sump_level_percent = (sump_volume_required / sump_capacity) * 100
+
+# Ensure it doesn't exceed 100%
+sump_level_percent = min(sump_level_percent, 100)
+
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Sump Capacity (L)", f"{sump_capacity:,}")
+col2.metric("Flow per Hour (L/hr)", f"{flow_per_hour:,.0f}")
+col3.metric("Operating Level (%)", f"{sump_level_percent:.1f}%")
+
+# Gauge representation
+fig_sump = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=sump_level_percent,
+    title={'text': "Sump Level (%)"},
+    gauge={
+        'axis': {'range': [0, 100]},
+        'steps': [
+            {'range': [0, 30], 'color': "red"},
+            {'range': [30, 60], 'color': "orange"},
+            {'range': [60, 100], 'color': "green"}
+        ],
+        'bar': {'color': "#00F5FF"}
+    }
+))
+
+fig_sump.update_layout(height=350, paper_bgcolor="#050A18")
+st.plotly_chart(fig_sump, use_container_width=True)
+
+st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Production")
