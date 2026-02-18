@@ -55,26 +55,38 @@ avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
 consumer_frc = frc["Clear Water"].mean()
 
 # ===============================
-# CLEAN POPUP ALARM PANEL
+# SCADA STYLE ALARM PANEL
 # ===============================
-st.subheader("🚨 LIVE ALARM STATUS")
+st.subheader("🚨 PLANT ALARM STATUS")
 
 alarm_list = []
+critical_count = 0
+warning_count = 0
 
 # Clarifier
 if clar_eff < 0.5:
     alarm_list.append(f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)")
+    critical_count += 1
+elif clar_eff < 0.7:
+    alarm_list.append(f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)")
+    warning_count += 1
 
 # Filters
 for i, eff in enumerate(filter_eff_list):
     if eff < 0.6:
         alarm_list.append(f"Filter {i+1} Efficiency LOW ({eff*100:.1f}%)")
+        critical_count += 1
+    elif eff < 0.8:
+        alarm_list.append(f"Filter {i+1} Efficiency Moderate ({eff*100:.1f}%)")
+        warning_count += 1
 
 # FRC
 if consumer_frc < 0.2:
     alarm_list.append(f"FRC LOW ({consumer_frc:.2f} ppm)")
+    critical_count += 1
 elif consumer_frc > 1.0:
     alarm_list.append(f"FRC HIGH ({consumer_frc:.2f} ppm)")
+    warning_count += 1
 
 # Bacteria
 total_col = next((c for c in gis.columns if "total" in c.lower()), None)
@@ -83,34 +95,35 @@ ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
 if total_col:
     if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
         alarm_list.append("Total Coliform Detected")
+        critical_count += 1
 
 if ecoli_col:
     if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
         alarm_list.append("E. Coli Detected")
+        critical_count += 1
 
 # ===============================
-# DISPLAY ONLY POPUP STYLE
+# DISPLAY SECTION
 # ===============================
 
+col1, col2, col3 = st.columns(3)
+
+# STATUS LIGHTS
+if critical_count > 0:
+    col1.markdown("### 🔴 CRITICAL")
+elif warning_count > 0:
+    col1.markdown("### 🟡 WARNING")
+else:
+    col1.markdown("### 🟢 NORMAL")
+
+col2.metric("Critical Alarms", critical_count)
+col3.metric("Warning Alarms", warning_count)
+
+# SCROLLING TICKER BAR
 if len(alarm_list) > 0:
     alarm_text = " | ".join(alarm_list)
 
-    st.markdown(
-        f"""
-        <div class="blink" style="
-        background:#8B0000;
-        color:white;
-        padding:20px;
-        border-radius:8px;
-        font-size:18px;
-        text-align:center;">
-        🚨 CRITICAL ALERT: {alarm_text}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-else:
-    st.success("🟢 SYSTEM HEALTHY – NO ACTIVE ALARMS")
+    st
 
 # ===============================
 # PRODUCTION
