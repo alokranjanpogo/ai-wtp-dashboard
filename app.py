@@ -55,30 +55,26 @@ avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
 consumer_frc = frc["Clear Water"].mean()
 
 # ===============================
-# SCADA ALARM PANEL (POPUP STYLE)
+# CLEAN POPUP ALARM PANEL
 # ===============================
-st.subheader("🚨 LIVE ALARM PANEL")
+st.subheader("🚨 LIVE ALARM STATUS")
 
 alarm_list = []
 
 # Clarifier
 if clar_eff < 0.5:
-    alarm_list.append(("CRITICAL", f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)"))
-elif clar_eff < 0.7:
-    alarm_list.append(("WARNING", f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)"))
+    alarm_list.append(f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)")
 
 # Filters
 for i, eff in enumerate(filter_eff_list):
     if eff < 0.6:
-        alarm_list.append(("CRITICAL", f"Filter {i+1} Efficiency LOW ({eff*100:.1f}%)"))
-    elif eff < 0.8:
-        alarm_list.append(("WARNING", f"Filter {i+1} Efficiency Moderate ({eff*100:.1f}%)"))
+        alarm_list.append(f"Filter {i+1} Efficiency LOW ({eff*100:.1f}%)")
 
 # FRC
 if consumer_frc < 0.2:
-    alarm_list.append(("CRITICAL", f"FRC LOW ({consumer_frc:.2f} ppm)"))
+    alarm_list.append(f"FRC LOW ({consumer_frc:.2f} ppm)")
 elif consumer_frc > 1.0:
-    alarm_list.append(("WARNING", f"FRC HIGH ({consumer_frc:.2f} ppm)"))
+    alarm_list.append(f"FRC HIGH ({consumer_frc:.2f} ppm)")
 
 # Bacteria
 total_col = next((c for c in gis.columns if "total" in c.lower()), None)
@@ -86,58 +82,35 @@ ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
 
 if total_col:
     if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_list.append(("CRITICAL", "Total Coliform Detected"))
+        alarm_list.append("Total Coliform Detected")
 
 if ecoli_col:
     if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_list.append(("CRITICAL", "E. Coli Detected"))
+        alarm_list.append("E. Coli Detected")
 
 # ===============================
-# DISPLAY
-# ===============================
-if len(alarm_list) == 0:
-    st.success("🟢 SYSTEM HEALTHY – NO ACTIVE ALARMS")
-
-else:
-    for level, message in alarm_list:
-
-        if level == "CRITICAL":
-            st.markdown(
-                f'<div class="blink" style="background:#8B0000;color:white;padding:15px;border-radius:6px;font-weight:bold;">'
-                f'🔴 CRITICAL: {message}</div>',
-                unsafe_allow_html=True
-            )
-
-        elif level == "WARNING":
-            st.markdown(
-                f'<div style="background:#FFA500;color:black;padding:15px;border-radius:6px;font-weight:bold;">'
-                f'🟡 WARNING: {message}</div>',
-                unsafe_allow_html=True
-            )
-
-# ===============================
-# DISPLAY SECTION
+# DISPLAY ONLY POPUP STYLE
 # ===============================
 
-if len(alarm_data) == 0:
-    st.success("🟢 SYSTEM HEALTHY – ALL PARAMETERS WITHIN LIMIT")
+if len(alarm_list) > 0:
+    alarm_text = " | ".join(alarm_list)
 
-else:
-    alarm_df = pd.DataFrame(alarm_data, columns=["Severity", "Parameter", "Value"])
-
-    critical_count = len(alarm_df[alarm_df["Severity"] == "CRITICAL"])
-    warning_count = len(alarm_df[alarm_df["Severity"] == "WARNING"])
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("🔴 Critical", critical_count)
-    col2.metric("🟡 Warning", warning_count)
-    col3.metric("Total Alarms", len(alarm_df))
-
-    st.dataframe(
-        alarm_df,
-        use_container_width=True,
-        height=250
+    st.markdown(
+        f"""
+        <div class="blink" style="
+        background:#8B0000;
+        color:white;
+        padding:20px;
+        border-radius:8px;
+        font-size:18px;
+        text-align:center;">
+        🚨 CRITICAL ALERT: {alarm_text}
+        </div>
+        """,
+        unsafe_allow_html=True
     )
+else:
+    st.success("🟢 SYSTEM HEALTHY – NO ACTIVE ALARMS")
 
 # ===============================
 # PRODUCTION
