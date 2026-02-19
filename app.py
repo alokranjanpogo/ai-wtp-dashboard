@@ -72,8 +72,12 @@ elif clar_eff < 0.7:
     warning_count += 1
 
 # Filters
-for i, eff in enumerate(filter_eff_list):
-    if eff < 0.6:
+for i in range(6):
+    if filter_turb_list[i] > 5:
+        alarm_list.append(("CRITICAL", f"Filter {i+1} Turbidity Above 5 NTU"))
+    elif filter_turb_list[i] > 1:
+        alarm_list.append(("WARNING", f"Filter {i+1} Turbidity Above 1 NTU"))
+
         alarm_list.append(("CRITICAL", f"Filter {i+1} Efficiency LOW ({eff*100:.1f}%)"))
         critical_count += 1
     elif eff < 0.8:
@@ -177,12 +181,54 @@ cols[2].plotly_chart(gauge("Average Filter Efficiency",avg_filter_eff,1,"filter"
 cols[3].plotly_chart(gauge("Clear Water FRC",consumer_frc,2),use_container_width=True)
 
 # ===============================
-# FILTER BED GAUGES
+# FILTER BED PERFORMANCE (BIS BASED)
 # ===============================
-st.subheader("🏗 FILTER BED PERFORMANCE")
-fc=st.columns(6)
+st.subheader("🏗 FILTER BED PERFORMANCE (BIS Standard Based)")
+
+filter_eff_list = []
+filter_status_list = []
+filter_turb_list = []
+
+for i in range(1,7):
+    f_avg = turb[f"Filter {i}"].mean()
+    filter_turb_list.append(f_avg)
+
+    # Removal efficiency
+    eff = (clarifier_turb - f_avg) / clarifier_turb
+    filter_eff_list.append(eff)
+
+    # BIS compliance classification
+    if f_avg <= 1:
+        filter_status_list.append("Excellent")
+    elif f_avg <= 5:
+        filter_status_list.append("Acceptable")
+    else:
+        filter_status_list.append("Failure")
+
+fc = st.columns(6)
+
 for i in range(6):
-    fc[i].plotly_chart(gauge(f"Filter {i+1}",filter_eff_list[i],1,"filter"),use_container_width=True)
+
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=filter_turb_list[i],
+        title={'text': f"Filter {i+1} (NTU)"},
+        gauge={
+            'axis': {'range': [0, 6]},
+            'steps': [
+                {'range': [0, 1], 'color': 'green'},
+                {'range': [1, 5], 'color': 'orange'},
+                {'range': [5, 6], 'color': 'red'}
+            ],
+            'bar': {'color': "#00F5FF"}
+        }
+    ))
+
+    fig.update_layout(height=250, paper_bgcolor="#050A18")
+    fc[i].plotly_chart(fig, use_container_width=True)
+
+    fc[i].write(f"Removal Efficiency: {filter_eff_list[i]*100:.1f}%")
+    fc[i].write(f"Status: {filter_status_list[i]}")
 
 # ===============================
 # TURBIDITY PROFILE
