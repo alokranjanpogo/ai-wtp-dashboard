@@ -54,6 +54,11 @@ for i in range(1,7):
 avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
 consumer_frc = frc["Clear Water"].mean()
 
+filter_turb_list = []
+for i in range(1,7):
+    f_avg = turb[f"Filter {i}"].mean()
+    filter_turb_list.append(f_avg)
+
 # ===============================
 # SCADA STYLE ALARM PANEL (SAFE)
 # ===============================
