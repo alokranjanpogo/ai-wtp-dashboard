@@ -212,7 +212,8 @@ production_lps = production_m3_hr*1000/3600
 
 colp = st.columns(3)
 colp[0].metric("Production (MLD)",production_mld)
-colp[1].metric("Flow (m³/hr)",f"{production_m3_h# ===============================
+colp[1].metric("Flow (m³/hr)",f"{production_m3_hr:.0f}")
+
 # AI FAULT DIAGNOSIS SECTION
 # ===============================
 st.subheader("🛠 AI Equipment Diagnosis")
