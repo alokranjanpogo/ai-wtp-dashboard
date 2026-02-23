@@ -151,42 +151,7 @@ colp = st.columns(3)
 colp[0].metric("Production (MLD)",production_mld)
 colp[1].metric("Flow (m³/hr)",f"{production_m3_hr:.0f}")
 
-# AI FAULT DIAGNOSIS SECTION
-# ===============================
-st.subheader("🛠 AI Equipment Diagnosis")
 
-for equip, status in equipment_status.items():
-
-    if status == "TRIP":
-
-        st.error(f"{equip} Failure Detected")
-
-        if equip == "Intake Pump":
-            st.write("Possible Causes:")
-            st.write("• High suction load")
-            st.write("• Motor overload")
-            st.write("• Bearing wear")
-            st.write("• Impeller damage")
-
-        elif equip == "Clarifier Drive":
-            st.write("Possible Causes:")
-            st.write("• Sludge accumulation")
-            st.write("• Gearbox oil low")
-            st.write("• Torque overload")
-
-        elif equip == "Filter System":
-            st.write("Possible Causes:")
-            st.write("• Filter breakthrough")
-            st.write("• Media clogging")
-            st.write("• Backwash overdue")
-
-        elif equip == "Clear Water Pump":
-            st.write("Possible Causes:")
-            st.write("• Cavitation")
-            st.write("• Air locking")
-            st.write("• Seal leakage")
-
-colp[2].metric("Flow (LPS)",f"{production_lps:.1f}")
 
 # ===============================
 # GAUGE FUNCTION WITH ZONES
