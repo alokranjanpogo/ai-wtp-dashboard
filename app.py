@@ -42,7 +42,8 @@ frc = plant[plant["Parameter"].str.lower() == "frc"]
 intake_turb = turb["Intake"].mean()
 clarifier_turb = turb["Clarifier"].mean()
 clearwater_turb = turb["Clear Water"].mean()
-sump_turb = filter_turb
+
+sump_turb = clearwater_turb
 
 clar_eff = (intake_turb - clarifier_turb) / intake_turb
 
