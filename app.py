@@ -248,7 +248,7 @@ for equip, status in equipment_status.items():
             st.write("• Cavitation")
             st.write("• Air locking")
             st.write("• Seal leakage")
-r:.0f}")
+
 colp[2].metric("Flow (LPS)",f"{production_lps:.1f}")
 
 # ===============================
