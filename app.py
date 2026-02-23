@@ -136,6 +136,71 @@ if len(alarm_list) > 0:
             st.warning(f"🟡 {message}")
 else:
     st.success("No Active Alarms")
+# ===============================
+# LIVE SCADA EQUIPMENT VIEW
+# ===============================
+st.subheader("⚙ LIVE PROCESS VISUAL – SCADA MODE")
+
+# Equipment Logic
+equipment_status = {}
+
+equipment_status["Intake Pump"] = "RUN" if intake_turb < 20 else "TRIP"
+equipment_status["Clarifier Drive"] = "RUN" if clar_eff > 0.5 else "TRIP"
+equipment_status["Filter System"] = "RUN" if max(filter_turb_list) <= 5 else "TRIP"
+equipment_status["Clear Water Pump"] = "RUN" if sump_turb < 2 else "TRIP"
+equipment_status["Water Tower"] = "RUN"
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+# ---------------- Intake Pump ----------------
+with col1:
+    st.markdown("### Intake Pump")
+
+    if equipment_status["Intake Pump"] == "RUN":
+        st.image("1000071881.gif", width=180)
+        st.success("🟢 RUNNING")
+    else:
+        st.image("1000071883.jpg", width=180)
+        st.error("🔴 TRIPPED")
+
+# ---------------- Clarifier ----------------
+with col2:
+    st.markdown("### Clarifier")
+
+    if equipment_status["Clarifier Drive"] == "RUN":
+        st.image("1000071884.jpg", width=180)
+        st.success("🟢 ROTATING")
+    else:
+        st.image("1000071884.jpg", width=180)
+        st.error("🔴 DRIVE FAILURE")
+
+# ---------------- Filter ----------------
+with col3:
+    st.markdown("### Filters")
+
+    if equipment_status["Filter System"] == "RUN":
+        st.image("1000071887.png", width=180)
+        st.success("🟢 FILTERING")
+    else:
+        st.image("1000071887.png", width=180)
+        st.error("🔴 HIGH TURBIDITY")
+
+# ---------------- Clear Water Pump ----------------
+with col4:
+    st.markdown("### Clear Water Pump")
+
+    if equipment_status["Clear Water Pump"] == "RUN":
+        st.image("1000071885.jpg", width=180)
+        st.success("🟢 RUNNING")
+    else:
+        st.image("1000071885.jpg", width=180)
+        st.error("🔴 TRIPPED")
+
+# ---------------- Water Tower ----------------
+with col5:
+    st.markdown("### Water Tower")
+    st.image("1000071893.jpg", width=180)
+    st.success("🟢 SUPPLY ACTIVE")
 
 # ===============================
 # PRODUCTION
@@ -147,7 +212,42 @@ production_lps = production_m3_hr*1000/3600
 
 colp = st.columns(3)
 colp[0].metric("Production (MLD)",production_mld)
-colp[1].metric("Flow (m³/hr)",f"{production_m3_hr:.0f}")
+colp[1].metric("Flow (m³/hr)",f"{production_m3_h# ===============================
+# AI FAULT DIAGNOSIS SECTION
+# ===============================
+st.subheader("🛠 AI Equipment Diagnosis")
+
+for equip, status in equipment_status.items():
+
+    if status == "TRIP":
+
+        st.error(f"{equip} Failure Detected")
+
+        if equip == "Intake Pump":
+            st.write("Possible Causes:")
+            st.write("• High suction load")
+            st.write("• Motor overload")
+            st.write("• Bearing wear")
+            st.write("• Impeller damage")
+
+        elif equip == "Clarifier Drive":
+            st.write("Possible Causes:")
+            st.write("• Sludge accumulation")
+            st.write("• Gearbox oil low")
+            st.write("• Torque overload")
+
+        elif equip == "Filter System":
+            st.write("Possible Causes:")
+            st.write("• Filter breakthrough")
+            st.write("• Media clogging")
+            st.write("• Backwash overdue")
+
+        elif equip == "Clear Water Pump":
+            st.write("Possible Causes:")
+            st.write("• Cavitation")
+            st.write("• Air locking")
+            st.write("• Seal leakage")
+r:.0f}")
 colp[2].metric("Flow (LPS)",f"{production_lps:.1f}")
 
 # ===============================
