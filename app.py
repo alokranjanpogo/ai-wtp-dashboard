@@ -329,7 +329,7 @@ conductivity_today = 283
 current_frc = consumer_frc
 
 # ============================================================
-# 1️⃣ LAB JAR TEST MODEL
+# ORIGIN-LOCKED JAR TEST MODEL (Dose = aT² + bT)
 # ============================================================
 
 lab_df = pd.read_excel("DATASHEET.xlsx")
@@ -343,11 +343,34 @@ lab_df = lab_df.rename(columns={
 lab_df = lab_df.dropna(subset=["Turbidity", "Lab_Dose"])
 lab_df = lab_df.sort_values("Turbidity")
 
-coeff = np.polyfit(lab_df["Turbidity"], lab_df["Lab_Dose"], 2)
-model = np.poly1d(coeff)
+T = lab_df["Turbidity"].values
+D = lab_df["Lab_Dose"].values
 
-# Lab Dose Today
-lab_today_mgL = float(model(aerator_turbidity))
+# Build matrix for model without constant term
+X = np.column_stack([T**2, T])
+
+# Solve least squares
+coeff, _, _, _ = np.linalg.lstsq(X, D, rcond=None)
+
+a, b = coeff
+
+def origin_model(t):
+    return a*t**2 + b*t
+
+# Continuous axis starting from zero
+turb_axis = np.linspace(0, lab_df["Turbidity"].max(), 200)
+
+lab_curve = origin_model(turb_axis)
+
+# AI adjustment (if any correction factor applied)
+correction = 1.0
+if clearwater_turb > 1:
+    correction += 0.05
+
+ai_curve = lab_curve * correction
+
+lab_today = origin_model(aerator_turbidity)
+ai_today = lab_today * correction
 
 # ============================================================
 # 2️⃣ AI OPTIMIZATION LOGIC
