@@ -78,17 +78,31 @@ elif clar_eff < 0.7:
     alarm_list.append(("WARNING", f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)"))
     warning_count += 1
 
-# Filters
-for i in range(6):
-    if filter_turb_list[i] > 5:
-        alarm_list.append(("CRITICAL", f"Filter {i+1} Turbidity Above 5 NTU"))
-    elif filter_turb_list[i] > 1:
-        alarm_list.append(("WARNING", f"Filter {i+1} Turbidity Above 1 NTU"))
+# ===============================
+# FILTER ALARM LOGIC (CORRECTED)
+# ===============================
 
-        alarm_list.append(("CRITICAL", f"Filter {i+1} Efficiency LOW ({eff*100:.1f}%)"))
+for i in range(1, 7):
+
+    f_avg = turb[f"Filter {i}"].mean()
+    eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
+
+    # --- Turbidity Based Alarm ---
+    if f_avg > 5:
+        alarm_list.append(("CRITICAL", f"Filter {i} Turbidity Above 5 NTU ({f_avg:.2f})"))
         critical_count += 1
+
+    elif f_avg > 1:
+        alarm_list.append(("WARNING", f"Filter {i} Turbidity Above 1 NTU ({f_avg:.2f})"))
+        warning_count += 1
+
+    # --- Efficiency Based Alarm ---
+    if eff < 0.6:
+        alarm_list.append(("CRITICAL", f"Filter {i} Efficiency LOW ({eff*100:.1f}%)"))
+        critical_count += 1
+
     elif eff < 0.8:
-        alarm_list.append(("WARNING", f"Filter {i+1} Efficiency Moderate ({eff*100:.1f}%)"))
+        alarm_list.append(("WARNING", f"Filter {i} Efficiency Moderate ({eff*100:.1f}%)"))
         warning_count += 1
 
 # FRC
@@ -300,6 +314,69 @@ c1,c2=st.columns(2)
 c1.metric("Recommended Alum Dose (mg/L)",f"{alum:.1f}")
 c2.metric("Recommended Chlorine Dose (mg/L)",f"{chlorine:.2f}")
 
+# ===============================
+# AI SMART CHEMICAL OPTIMIZER
+# ===============================
+st.subheader("🤖 AI Smart Chemical Optimization")
+
+# --- Simulated AI Logic Based on Trend ---
+turbidity_trend_factor = np.std(turb["Intake"]) if "Intake" in turb.columns else 0
+
+# AI Alum Model
+ai_alum = 7 + (1.1 * intake_turb) + (0.5 * turbidity_trend_factor)
+
+# Cap safe operating limits
+ai_alum = max(8, min(ai_alum, 65))
+
+# Existing Manual Recommendation
+manual_alum = alum
+
+# Savings Calculation
+alum_saving_percent = ((manual_alum - ai_alum) / manual_alum) * 100 if manual_alum > 0 else 0
+
+# Chlorine AI adjustment (Based on FRC feedback control)
+if consumer_frc < 0.3:
+    ai_chlorine = chlorine + 0.3
+elif consumer_frc > 0.8:
+    ai_chlorine = chlorine - 0.2
+else:
+    ai_chlorine = chlorine
+
+# Cost Assumptions
+alum_cost_per_kg = 8 # ₹/kg (example)
+plant_flow_m3_day = production_mld * 1000
+
+daily_alum_manual_kg = (manual_alum * plant_flow_m3_day) / 1000
+daily_alum_ai_kg = (ai_alum * plant_flow_m3_day) / 1000
+
+daily_cost_manual = daily_alum_manual_kg * alum_cost_per_kg
+daily_cost_ai = daily_alum_ai_kg * alum_cost_per_kg
+
+cost_saving = daily_cost_manual - daily_cost_ai
+
+# ===============================
+# DISPLAY
+# ===============================
+c1, c2, c3 = st.columns(3)
+
+c1.metric("Manual Alum Dose (mg/L)", f"{manual_alum:.1f}")
+c2.metric("AI Optimized Alum Dose (mg/L)", f"{ai_alum:.1f}",
+          delta=f"{alum_saving_percent:.1f}% Saving")
+
+c3.metric("AI Adjusted Chlorine (mg/L)", f"{ai_chlorine:.2f}")
+
+st.markdown("---")
+
+c4, c5 = st.columns(2)
+
+c4.metric("Manual Chemical Cost (₹/day)", f"{daily_cost_manual:,.0f}")
+c5.metric("AI Optimized Cost (₹/day)", f"{daily_cost_ai:,.0f}",
+          delta=f"₹ {cost_saving:,.0f} Saved per Day")
+
+if cost_saving > 0:
+    st.success("AI Optimization Active: Chemical Consumption Reduced")
+else:
+    st.warning("AI Optimization Suggests No Cost Reduction Today")
 # ===============================
 # WATER TOWERS
 # ===============================
