@@ -314,46 +314,156 @@ c1,c2=st.columns(2)
 c1.metric("Recommended Alum Dose (mg/L)",f"{alum:.1f}")
 c2.metric("Recommended Chlorine Dose (mg/L)",f"{chlorine:.2f}")
 
+# ============================================================
+# FINAL JAR TEST BASED AI SMART CHEMICAL DOSING – MOHARDA
+# ============================================================
+
+st.subheader("🧪 AI Smart Chemical Dosing – Jar Test Integrated")
+
 # ===============================
-# AI SMART CHEMICAL OPTIMIZER
+# LOAD LAB JAR TEST DATA
 # ===============================
-st.subheader("🤖 AI Smart Chemical Optimization")
+lab_df = pd.read_excel("DATASHEET.xlsx", sheet_name="Sheet1")
+lab_df.columns = lab_df.columns.str.strip()
 
-# --- Simulated AI Logic Based on Trend ---
-turbidity_trend_factor = np.std(turb["Intake"]) if "Intake" in turb.columns else 0
+lab_df = lab_df.rename(columns={
+    "Turbidity\n(NTU)": "Turbidity",
+    "ALUM DOSE(PPM)": "Lab_Dose"
+})
 
-# AI Alum Model
-ai_alum = 7 + (1.1 * intake_turb) + (0.5 * turbidity_trend_factor)
+lab_df = lab_df.dropna(subset=["Turbidity", "Lab_Dose"])
 
-# Cap safe operating limits
-ai_alum = max(8, min(ai_alum, 65))
+st.write("Lab Jar Test Data")
+st.dataframe(lab_df.head())
 
-# Existing Manual Recommendation
-manual_alum = alum
+# ===============================
+# AI REGRESSION MODEL (BASED ON LAB)
+# ===============================
+coeff = np.polyfit(lab_df["Turbidity"], lab_df["Lab_Dose"], 1)
+ai_model = np.poly1d(coeff)
 
-# Savings Calculation
-alum_saving_percent = ((manual_alum - ai_alum) / manual_alum) * 100 if manual_alum > 0 else 0
+current_raw_turb = intake_turb
 
-# Chlorine AI adjustment (Based on FRC feedback control)
-if consumer_frc < 0.3:
-    ai_chlorine = chlorine + 0.3
-elif consumer_frc > 0.8:
-    ai_chlorine = chlorine - 0.2
+ai_dose_current = float(ai_model(current_raw_turb))
+
+# Safety Limits
+ai_dose_current = max(5, min(ai_dose_current, 100))
+
+# ===============================
+# TARGET CHECK (<1 NTU DESIRABLE)
+# ===============================
+if clearwater_turb > 1:
+    ai_dose_current *= 1.10 # Increase 10% if final turb >1 NTU
+
+if clearwater_turb > 5:
+    ai_dose_current *= 1.25 # Emergency increase
+
+# ===============================
+# FLOW – MOHARDA
+# ===============================
+flow_m3_hr = 1100
+flow_m3_day = flow_m3_hr * 24
+
+# mg/L → kg/day
+ai_kg_day = (ai_dose_current * flow_m3_day) / 1000
+
+# ===============================
+# SOLID ALUM CALCULATION
+# ===============================
+solid_alum_kg_day = ai_kg_day
+
+# ===============================
+# LIQUID ALUM CALCULATION
+# Assumption: 8% w/w, SG = 1.28
+# ===============================
+liquid_strength = 8
+liquid_sg = 1.28
+
+grams_active_per_L = (liquid_strength/100) * liquid_sg * 1000
+
+liquid_L_day = (ai_kg_day * 1000) / grams_active_per_L
+
+# ===============================
+# DISPLAY ALUM DOSING
+# ===============================
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Current Raw Turbidity (NTU)", f"{current_raw_turb:.2f}")
+col2.metric("AI Recommended Alum (mg/L)", f"{ai_dose_current:.1f}")
+col3.metric("Alum Required (kg/day)", f"{solid_alum_kg_day:,.0f}")
+
+st.write(f"Liquid Alum Required: **{liquid_L_day:,.0f} L/day** (8% solution)")
+
+# ===============================
+# LAB vs AI GRAPH
+# ===============================
+lab_df["AI_Dose"] = ai_model(lab_df["Turbidity"])
+
+fig_compare = go.Figure()
+
+fig_compare.add_trace(go.Scatter(
+    x=lab_df["Turbidity"],
+    y=lab_df["Lab_Dose"],
+    mode="lines+markers",
+    name="Lab Jar Test Dose"
+))
+
+fig_compare.add_trace(go.Scatter(
+    x=lab_df["Turbidity"],
+    y=lab_df["AI_Dose"],
+    mode="lines+markers",
+    name="AI Predicted Dose"
+))
+
+fig_compare.update_layout(
+    template="plotly_dark",
+    xaxis_title="Raw Water Turbidity (NTU)",
+    yaxis_title="Alum Dose (mg/L)",
+    height=450
+)
+
+st.plotly_chart(fig_compare, use_container_width=True)
+
+# ============================================================
+# HYPOCHLORITE DOSING (FRC 0.2 – 1 ppm)
+# ============================================================
+
+st.subheader("🧴 Chlorination Control – FRC Based")
+
+target_frc = st.slider("Target FRC (0.2 – 1 ppm)", 0.2, 1.0, 0.5, 0.05)
+
+current_frc = consumer_frc
+delta_frc = target_frc - current_frc
+
+if delta_frc < 0:
+    delta_frc = 0
+
+# Required chlorine kg/day
+kg_cl2_day = (delta_frc * flow_m3_day) / 1000
+
+# NaOCl 12%, SG 1.18
+naocl_strength = 12
+naocl_sg = 1.18
+
+naocl_kg_day = kg_cl2_day / (naocl_strength/100)
+naocl_L_day = naocl_kg_day / naocl_sg
+
+colh1, colh2, colh3 = st.columns(3)
+
+colh1.metric("Current FRC (ppm)", f"{current_frc:.2f}")
+colh2.metric("Cl₂ Required (kg/day)", f"{kg_cl2_day:.2f}")
+colh3.metric("NaOCl Required (L/day)", f"{naocl_L_day:.1f}")
+
+# ===============================
+# PRE-CHLORINATION LOGIC
+# ===============================
+if current_raw_turb > 100:
+    st.warning("High Turbidity Detected (>100 NTU) – Pre-Chlorination 1–2 ppm Recommended")
+
+if 0.2 <= current_frc <= 1:
+    st.success("FRC within BIS desirable range (0.2 – 1 ppm)")
 else:
-    ai_chlorine = chlorine
-
-# Cost Assumptions
-alum_cost_per_kg = 8 # ₹/kg (example)
-plant_flow_m3_day = production_mld * 1000
-
-daily_alum_manual_kg = (manual_alum * plant_flow_m3_day) / 1000
-daily_alum_ai_kg = (ai_alum * plant_flow_m3_day) / 1000
-
-daily_cost_manual = daily_alum_manual_kg * alum_cost_per_kg
-daily_cost_ai = daily_alum_ai_kg * alum_cost_per_kg
-
-cost_saving = daily_cost_manual - daily_cost_ai
-
+    st.warning("FRC outside desirable range – Adjust dosing")
 # ===============================
 # DISPLAY
 # ===============================
