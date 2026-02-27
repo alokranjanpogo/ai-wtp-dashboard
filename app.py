@@ -376,27 +376,7 @@ ai_today = lab_today * correction
 # 2️⃣ AI OPTIMIZATION LOGIC
 # ============================================================
 
-adjustment_factor = 1.0
-
-# Slight correction if clearwater turbidity > 1
-if clearwater_turb > 1:
-    adjustment_factor += 0.05
-
-# Slight correction if FRC unstable
-if not (0.2 <= current_frc <= 1):
-    adjustment_factor += 0.05
-
-# ------------------------------------------------------------
-# AI Adjustment Factor
-# ------------------------------------------------------------
-adjustment_factor = 1.0
-
-if clearwater_turb > 1:
-    adjustment_factor += 0.05
-
-if not (0.2 <= consumer_frc <= 1):
-    adjustment_factor += 0.05
-
+    
 # AI adjustment factor (define before use)
 adjustment_factor = 1.0
 
