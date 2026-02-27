@@ -482,7 +482,7 @@ st.plotly_chart(fig_hypo, use_container_width=True)
 # 5️⃣ PROFESSIONAL GAUGES
 # ============================================================
 
-def gauge(title, value, min_val, max_val, low, high):
+def ai_gauge(title, value, min_val, max_val, low, high):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=value,
@@ -497,6 +497,8 @@ def gauge(title, value, min_val, max_val, low, high):
             ],
         }
     ))
+    fig.update_layout(height=250, paper_bgcolor="#050A18")
+    return fig
     fig.update_layout(height=250, paper_bgcolor="#050A18")
     return fig
 
