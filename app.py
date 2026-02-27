@@ -315,156 +315,181 @@ c1.metric("Recommended Alum Dose (mg/L)",f"{alum:.1f}")
 c2.metric("Recommended Chlorine Dose (mg/L)",f"{chlorine:.2f}")
 
 # ============================================================
-# AI SMART DOSING – FINAL INDUSTRIAL VERSION
+# FINAL SERIOUS AI CHEMICAL OPTIMIZATION PANEL
 # ============================================================
 
-st.subheader("🧠 Intelligent Chemical Optimization Panel")
+st.subheader("🧠 AI Chemical Optimization Panel")
 
-# ============================================================
-# 1️⃣ PLANT OPERATING CONDITIONS
-# ============================================================
+# ------------------------------------------------------------
+# PLANT CONDITIONS
+# ------------------------------------------------------------
 
-flow_m3_hr = 1100 # Operational flow
-operating_hours = 16.5 # 5:30 AM – 10:00 PM
+flow_m3_hr = 1100
+operating_hours = 16.5
 flow_m3_day = flow_m3_hr * operating_hours
 
-production_mld_today = flow_m3_day / 1000
+production_mld = flow_m3_day / 1000
 
-turbidity_today = 4.2 # Given today
-conductivity_today = 283 # Given today
-
-st.info(
-    f"Operating Flow: {flow_m3_hr} m³/hr | "
-    f"Daily Production: {production_mld_today:.2f} MLD | "
-    f"Turbidity: {turbidity_today} NTU | "
-    f"Conductivity: {conductivity_today} µS/cm"
-)
-
-# ============================================================
-# 2️⃣ SOLID ALUM DOSING (BASED ON LAB REFERENCE)
-# ============================================================
-
-# Lab reference: 800 kg/day at 283 µS/cm & 4.2 NTU
-lab_alum_base = 800
-
-# Adjust mildly with turbidity ratio
-ai_alum_kg_day = lab_alum_base * (turbidity_today / 4.2)
-
-col1, col2 = st.columns(2)
-col1.metric("Lab Solid Alum (kg/day)", f"{lab_alum_base:,.0f}")
-col2.metric("AI Solid Alum (kg/day)", f"{ai_alum_kg_day:,.0f}")
-
-# Remark logic
-if turbidity_today > 10:
-    alum_remark = "High turbidity season. Consider combination of solid + liquid alum."
-elif turbidity_today > 5:
-    alum_remark = "Moderate turbidity. Slight dose optimization applied."
-else:
-    alum_remark = "Normal turbidity. Solid alum sufficient."
-
-st.success(f"Alum Remark: {alum_remark}")
-
-# ============================================================
-# 3️⃣ NAOCL DOSING MODEL (CONDUCTIVITY BASED)
-# ============================================================
-
-st.subheader("🧴 NaOCl Optimization (Conductivity Based)")
-
-# FRC target range
-frc_range = np.linspace(0.2, 1.0, 10)
-
-lab_naocl_list = []
-ai_naocl_list = []
-
-# Conductivity reference at 283 µS/cm
-cond_factor = conductivity_today / 283
-
-for frc in frc_range:
-
-    # Lab chlorine baseline proportional to FRC & conductivity
-    base_cl2_ppm = frc * cond_factor
-
-    # kg/day = ppm × flow /1000
-    kg_day_lab = (base_cl2_ppm * flow_m3_day) / 1000
-
-    # AI improves efficiency by 5%
-    kg_day_ai = kg_day_lab * 0.95
-
-    lab_naocl_list.append(kg_day_lab)
-    ai_naocl_list.append(kg_day_ai)
-
-# ============================================================
-# 4️⃣ PROFESSIONAL GRAPH (BLUE vs GREEN WITH DOTS)
-# ============================================================
-
-fig = go.Figure()
-
-fig.add_trace(go.Scatter(
-    x=frc_range,
-    y=lab_naocl_list,
-    mode="lines+markers",
-    name="Lab Dose (kg/day)",
-    line=dict(color="blue", width=4),
-    marker=dict(size=8)
-))
-
-fig.add_trace(go.Scatter(
-    x=frc_range,
-    y=ai_naocl_list,
-    mode="lines+markers",
-    name="AI Dose (kg/day)",
-    line=dict(color="green", width=4),
-    marker=dict(size=8)
-))
-
-fig.update_layout(
-    template="plotly_dark",
-    title=f"NaOCl Dose vs FRC (Cond {conductivity_today} µS/cm)",
-    xaxis_title="Target FRC (ppm)",
-    yaxis_title="NaOCl Dose (kg/day)",
-    height=500,
-    legend=dict(x=0.01, y=0.99)
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# ============================================================
-# 5️⃣ BEST DOSAGE SELECTION (TARGET 0.6 ppm)
-# ============================================================
-
-target_index = np.argmin(np.abs(frc_range - 0.6))
-
-best_lab = lab_naocl_list[target_index]
-best_ai = ai_naocl_list[target_index]
-
-st.success(
-    f"Recommended Target FRC: 0.6 ppm → "
-    f"AI Dose ≈ {best_ai:.2f} kg/day "
-    f"(Lab ≈ {best_lab:.2f} kg/day)"
-)
-
-# ============================================================
-# 6️⃣ FRC CONTROL STATUS + ALARM PANEL
-# ============================================================
-
+turbidity_today = 4.2
+conductivity_today = 283
 current_frc = consumer_frc
 
-if 0.2 <= current_frc <= 1:
-    st.success("FRC within BIS control range (0.2 – 1 ppm).")
-else:
-    st.error("🚨 FRC OUT OF CONTROL RANGE")
-    st.warning("Alarm: Immediate chlorination adjustment required.")
+# ------------------------------------------------------------
+# 1️⃣ JAR TEST GRAPH (LAB vs AI)
+# ------------------------------------------------------------
 
-# ============================================================
-# 7️⃣ FINAL AI REMARK
-# ============================================================
+lab_df = pd.read_excel("DATASHEET.xlsx")
+lab_df.columns = lab_df.columns.str.strip()
 
-st.info(
-    "AI Remark: At 283 µS/cm conductivity and 4.2 NTU turbidity, "
-    "solid alum ≈ 800 kg/day is adequate. "
-    "Maintain 0.6 ppm FRC for stable residual. "
-    "AI reduces NaOCl by ~5% through optimized dosing control."
+lab_df = lab_df.rename(columns={
+    "Turbidity\n(NTU)": "Turbidity",
+    "ALUM DOSE(PPM)": "Lab_Dose",
+    "Date": "Date"
+})
+
+lab_df["Date"] = pd.to_datetime(lab_df["Date"]).dt.date
+lab_df = lab_df.groupby("Date", as_index=False).agg({
+    "Turbidity": "mean",
+    "Lab_Dose": "mean"
+})
+
+# AI regression from lab data
+coeff = np.polyfit(lab_df["Turbidity"], lab_df["Lab_Dose"], 1)
+ai_model = np.poly1d(coeff)
+
+lab_df["AI_Dose"] = ai_model(lab_df["Turbidity"])
+
+# ---- Trend Graph ----
+fig_jar = go.Figure()
+
+fig_jar.add_trace(go.Scatter(
+    x=lab_df["Date"],
+    y=lab_df["Lab_Dose"],
+    mode="lines+markers",
+    name="Lab Dose",
+    line=dict(color="blue", width=4)
+))
+
+fig_jar.add_trace(go.Scatter(
+    x=lab_df["Date"],
+    y=lab_df["AI_Dose"],
+    mode="lines+markers",
+    name="AI Dose",
+    line=dict(color="green", width=4)
+))
+
+fig_jar.update_layout(
+    template="plotly_dark",
+    title="Jar Test Trend: Lab vs AI",
+    xaxis_title="Date",
+    yaxis_title="Alum Dose (mg/L)",
+    height=450
 )
+
+st.plotly_chart(fig_jar, use_container_width=True)
+
+# ------------------------------------------------------------
+# 2️⃣ TODAY'S SOLID ALUM DOSE
+# ------------------------------------------------------------
+
+ai_alum_today_mgL = float(ai_model(turbidity_today))
+solid_alum_kg_day = (ai_alum_today_mgL * flow_m3_day) / 1000
+
+# ------------------------------------------------------------
+# 3️⃣ CORRECT NAOCL CALCULATION
+# ------------------------------------------------------------
+
+target_frc = 0.6
+
+kg_cl2_required = (target_frc * flow_m3_day) / 1000
+
+naocl_strength = 0.12
+naocl_kg_day = kg_cl2_required / naocl_strength
+
+# ------------------------------------------------------------
+# 4️⃣ SMALL GAUGES (RED / YELLOW / GREEN)
+# ------------------------------------------------------------
+
+def small_gauge(title, value, min_val, max_val, green_low, green_high):
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=value,
+        title={'text': title},
+        gauge={
+            'axis': {'range': [min_val, max_val]},
+            'steps': [
+                {'range': [min_val, green_low], 'color': 'red'},
+                {'range': [green_low, green_high], 'color': 'green'},
+                {'range': [green_high, max_val], 'color': 'yellow'}
+            ],
+        }
+    ))
+    fig.update_layout(height=220)
+    return fig
+
+g1, g2, g3 = st.columns(3)
+
+g1.plotly_chart(
+    small_gauge("Turbidity (NTU)", turbidity_today, 0, 10, 0, 1),
+    use_container_width=True
+)
+
+g2.plotly_chart(
+    small_gauge("FRC (ppm)", current_frc, 0, 1.5, 0.2, 1.0),
+    use_container_width=True
+)
+
+g3.plotly_chart(
+    small_gauge("Conductivity (µS/cm)", conductivity_today, 200, 400, 250, 320),
+    use_container_width=True
+)
+
+# ------------------------------------------------------------
+# 5️⃣ NAOCL TREND GRAPH (CORRECT VALUES)
+# ------------------------------------------------------------
+
+frc_range = np.linspace(0.2, 1.0, 10)
+naocl_list = []
+
+for frc in frc_range:
+    kg_cl2 = (frc * flow_m3_day) / 1000
+    naocl_list.append(kg_cl2 / naocl_strength)
+
+fig_hypo = go.Figure()
+
+fig_hypo.add_trace(go.Scatter(
+    x=frc_range,
+    y=naocl_list,
+    mode="lines+markers",
+    name="NaOCl (kg/day)",
+    line=dict(color="green", width=4)
+))
+
+fig_hypo.update_layout(
+    template="plotly_dark",
+    title="NaOCl Required vs Target FRC",
+    xaxis_title="Target FRC (ppm)",
+    yaxis_title="NaOCl (kg/day)",
+    height=450
+)
+
+st.plotly_chart(fig_hypo, use_container_width=True)
+
+# ------------------------------------------------------------
+# 6️⃣ REMARK SECTION
+# ------------------------------------------------------------
+
+remark = (
+    f"At {turbidity_today} NTU, AI recommends approx "
+    f"{solid_alum_kg_day:.0f} kg/day solid alum. "
+    f"For 0.6 ppm FRC at {production_mld:.2f} MLD, "
+    f"NaOCl required ≈ {naocl_kg_day:.1f} kg/day."
+)
+
+if not (0.2 <= current_frc <= 1):
+    remark += " FRC is out of BIS range. Immediate adjustment required."
+
+st.success(remark)
 # WATER TOWERS
 # ===============================
 st.subheader("🗼 Distribution Water Towers")
