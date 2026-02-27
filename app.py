@@ -334,7 +334,13 @@ lab_df = lab_df.rename(columns={
 })
 
 lab_df["Date"] = pd.to_datetime(lab_df["Date"]).dt.date
-lab_df = lab_df.groupby("Date", as_index=False).mean()
+lab_df = (
+    lab_df.groupby("Date", as_index=False)
+    .agg({
+        "Turbidity": "mean",
+        "Lab_Dose": "mean"
+    })
+)
 lab_df = lab_df.sort_values("Date")
 
 # ============================================================
