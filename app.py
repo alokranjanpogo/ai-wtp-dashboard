@@ -469,7 +469,7 @@ else:
 # ===============================
 c1, c2, c3 = st.columns(3)
 
-c1.metric("Manual Alum Dose (mg/L)", f"{manual_alum:.1f}")
+c1.metric("AI Recommended Alum (mg/L)", f"{ai_dose_current:.1f}")
 c2.metric("AI Optimized Alum Dose (mg/L)", f"{ai_alum:.1f}",
           delta=f"{alum_saving_percent:.1f}% Saving")
 
