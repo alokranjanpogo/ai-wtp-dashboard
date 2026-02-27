@@ -315,7 +315,7 @@ c1.metric("Recommended Alum Dose (mg/L)",f"{alum:.1f}")
 c2.metric("Recommended Chlorine Dose (mg/L)",f"{chlorine:.2f}")
 
 # ============================================================
-# AI RECOMMENDED DOSAGE PANEL (FINAL PROFESSIONAL VERSION)
+# AI RECOMMENDED DOSAGE PANEL (RECTIFIED & ERROR-FREE)
 # ============================================================
 
 st.subheader("AI Recommended Chemical Dosage")
@@ -346,59 +346,49 @@ lab_df = lab_df.sort_values("Turbidity")
 T = lab_df["Turbidity"].values
 D = lab_df["Lab_Dose"].values
 
-# Build matrix for model without constant term
 X = np.column_stack([T**2, T])
-
-# Solve least squares
 coeff, _, _, _ = np.linalg.lstsq(X, D, rcond=None)
-
 a, b = coeff
 
-def origin_model(t):
+def alum_model(t):
     return a*t**2 + b*t
 
-# Continuous axis starting from zero
+# Axis STARTING FROM ZERO (Important)
 turb_axis = np.linspace(0, lab_df["Turbidity"].max(), 200)
 
-lab_curve = origin_model(turb_axis)
-
-# AI adjustment (if any correction factor applied)
-correction = 1.0
-if clearwater_turb > 1:
-    correction += 0.05
-
-ai_curve = lab_curve * correction
-
-lab_today = origin_model(aerator_turbidity)
-ai_today = lab_today * correction
+lab_curve = alum_model(turb_axis)
 
 # ============================================================
-# 2️⃣ AI OPTIMIZATION LOGIC
+# AI CORRECTION FACTOR
 # ============================================================
 
-    
-# AI adjustment factor (define before use)
 adjustment_factor = 1.0
 
 if clearwater_turb > 1:
     adjustment_factor += 0.05
 
-if not (0.2 <= consumer_frc <= 1):
+if not (0.2 <= current_frc <= 1):
     adjustment_factor += 0.05
+
+ai_curve = lab_curve * adjustment_factor
+
+# Today's values
+lab_today_mgL = float(alum_model(aerator_turbidity))
 ai_today_mgL = lab_today_mgL * adjustment_factor
 
-# Daily allowable band (±10%)
+# Apply ±10% band
 lower_limit = lab_today_mgL * 0.9
 upper_limit = lab_today_mgL * 1.1
-
 ai_today_mgL = max(min(ai_today_mgL, upper_limit), lower_limit)
 
 solid_alum_kg_day = (ai_today_mgL * flow_m3_day) / 1000
 
-percent_change = ((ai_today_mgL - lab_today_mgL) / lab_today_mgL) * 100
+percent_change = 0
+if lab_today_mgL != 0:
+    percent_change = ((ai_today_mgL - lab_today_mgL) / lab_today_mgL) * 100
 
 # ============================================================
-# 3️⃣ DISPLAY METRICS (CLEAN & PROFESSIONAL)
+# DISPLAY METRICS
 # ============================================================
 
 c1, c2, c3 = st.columns(3)
@@ -406,21 +396,11 @@ c1, c2, c3 = st.columns(3)
 c1.metric("Lab Dose (mg/L)", f"{lab_today_mgL:.2f}")
 c2.metric("AI Recommended Dose (mg/L)", f"{ai_today_mgL:.2f}",
           delta=f"{percent_change:.1f}% Adjustment")
-
 c3.metric("Solid Alum (kg/day)", f"{solid_alum_kg_day:,.0f}")
 
 # ============================================================
-# 4️⃣ CLEAN COMPARISON GRAPH
+# CLEAN COMPARISON GRAPH (Starts from Origin)
 # ============================================================
-
-turb_axis = np.linspace(
-    lab_df["Turbidity"].min(),
-    lab_df["Turbidity"].max(),
-    200
-)
-
-lab_curve = model(turb_axis)
-ai_curve = lab_curve * adjustment_factor
 
 fig = go.Figure()
 
@@ -464,100 +444,70 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("## AI Recommended Chlorination (Calibrated to Lab)")
 
-flow_m3_hr = 1100
-operating_hours = 16.5
-flow_m3_day = flow_m3_hr * operating_hours
-
-# -----------------------------
-# REAL LAB REFERENCE POINT
-# -----------------------------
 lab_reference_cond = 273
-lab_reference_dose = 800     # kg/day (your actual lab data)
+lab_reference_dose = 800
 lab_reference_frc = 0.6
 
-conductivity_today = 283
-current_frc = consumer_frc
 target_frc = 0.6
-
-# ============================================================
-# 1️⃣ LAB BASELINE CURVE (BASED ON REAL 800 kg DATA)
-# ============================================================
 
 frc_axis = np.linspace(0.2, 1.0, 200)
 
-lab_curve = []
-
-for frc in frc_axis:
-    # Scale proportionally to FRC from 0.6 reference
-    scaled_dose = lab_reference_dose * (frc / lab_reference_frc)
-    lab_curve.append(scaled_dose)
-
-# ============================================================
-# 2️⃣ AI CORRECTION BASED ON CONDUCTIVITY + FRC FEEDBACK
-# ============================================================
+lab_naocl_curve = []
+ai_naocl_curve = []
 
 cond_factor = conductivity_today / lab_reference_cond
 
-ai_curve = []
 for frc in frc_axis:
     base = lab_reference_dose * (frc / lab_reference_frc)
-    corrected = base * cond_factor
-    ai_curve.append(corrected)
+    lab_naocl_curve.append(base)
+    ai_naocl_curve.append(base * cond_factor)
 
-# Today's recommended values
-lab_today = lab_reference_dose * (target_frc / lab_reference_frc)
-ai_today = lab_today * cond_factor
+lab_naocl_today = lab_reference_dose * (target_frc / lab_reference_frc)
+ai_naocl_today = lab_naocl_today * cond_factor
 
-# Apply ±10% safety band
-lower_limit = lab_today * 0.9
-upper_limit = lab_today * 1.1
+# Apply ±10% band
+lower_limit = lab_naocl_today * 0.9
+upper_limit = lab_naocl_today * 1.1
+ai_naocl_today = max(min(ai_naocl_today, upper_limit), lower_limit)
 
-ai_today = max(min(ai_today, upper_limit), lower_limit)
-
-percent_change = ((ai_today - lab_today) / lab_today) * 100
-
-# ============================================================
-# DISPLAY METRICS
-# ============================================================
+percent_change_hypo = 0
+if lab_naocl_today != 0:
+    percent_change_hypo = ((ai_naocl_today - lab_naocl_today) / lab_naocl_today) * 100
 
 c1, c2, c3 = st.columns(3)
 
-c1.metric("Lab NaOCl (kg/day)", f"{lab_today:.0f}")
-c2.metric("AI Recommended (kg/day)", f"{ai_today:.0f}",
-          delta=f"{percent_change:.1f}%")
+c1.metric("Lab NaOCl (kg/day)", f"{lab_naocl_today:.0f}")
+c2.metric("AI Recommended (kg/day)", f"{ai_naocl_today:.0f}",
+          delta=f"{percent_change_hypo:.1f}%")
 c3.metric("Conductivity (µS/cm)", f"{conductivity_today}")
 
-# ============================================================
-# PROFESSIONAL 2-LINE GRAPH
-# ============================================================
+fig2 = go.Figure()
 
-fig = go.Figure()
-
-fig.add_trace(go.Scatter(
+fig2.add_trace(go.Scatter(
     x=frc_axis,
-    y=lab_curve,
+    y=lab_naocl_curve,
     mode="lines",
-    name="Lab Dosage (Reference 800 kg @273 µS/cm)",
+    name="Lab Dosage (800 kg @273 µS/cm)",
     line=dict(color="blue", width=4)
 ))
 
-fig.add_trace(go.Scatter(
+fig2.add_trace(go.Scatter(
     x=frc_axis,
-    y=ai_curve,
+    y=ai_naocl_curve,
     mode="lines",
     name="AI Dosage (Conductivity Adjusted)",
     line=dict(color="green", width=4)
 ))
 
-fig.add_trace(go.Scatter(
+fig2.add_trace(go.Scatter(
     x=[target_frc],
-    y=[ai_today],
+    y=[ai_naocl_today],
     mode="markers",
     marker=dict(size=12, color="yellow"),
-    name="Recommended Operating Point"
+    name="Recommended Point"
 ))
 
-fig.update_layout(
+fig2.update_layout(
     template="plotly_dark",
     title="NaOCl Dose vs Target FRC (Calibrated Model)",
     xaxis_title="Target FRC (ppm)",
@@ -565,33 +515,25 @@ fig.update_layout(
     height=500
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig2, use_container_width=True)
 
 # ============================================================
-# OPERATIONAL ADVISORY
+# OPERATIONAL NOTES
 # ============================================================
 
 if current_frc < 0.2:
-    advisory = "Residual low. Increase dosing gradually while monitoring contact tank."
+    st.warning("Residual low. Increase NaOCl dosing gradually.")
 elif current_frc > 1:
-    advisory = "Residual high. Reduce NaOCl dosing to avoid taste complaints."
+    st.warning("Residual high. Reduce NaOCl dosing.")
 else:
-    advisory = "Residual stable. Maintain AI recommended dosing."
-
-st.success(f"Chlorination Advisory: {advisory}")
-# ============================================================
-# 6️⃣ PROFESSIONAL OPERATIONAL NOTE
-# ============================================================
+    st.success("Chlorination stable. Maintain recommended dosing.")
 
 if percent_change > 5:
-    note = "Increase alum dosing gradually. Monitor filter headloss."
+    st.info("Alum dosing slightly increased due to plant condition.")
 elif percent_change < -5:
-    note = "Alum dosing can be reduced. Observe settled water clarity."
+    st.info("Alum dosing can be slightly reduced.")
 else:
-    note = "Current alum dosing near optimal."
-
-st.success(f"Operational Note: {note}")
-
+    st.success("Alum dosing near optimal.")
 # WATER TOWERS
 # ===============================
 st.subheader("🗼 Distribution Water Towers")
