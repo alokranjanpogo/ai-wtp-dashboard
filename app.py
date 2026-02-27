@@ -315,22 +315,21 @@ c1.metric("Recommended Alum Dose (mg/L)",f"{alum:.1f}")
 c2.metric("Recommended Chlorine Dose (mg/L)",f"{chlorine:.2f}")
 
 # ============================================================
-# 🔷 PROFESSIONAL AI CHEMICAL OPTIMIZATION PANEL
+# AI RECOMMENDED DOSAGE PANEL (FINAL PROFESSIONAL VERSION)
 # ============================================================
 
-st.subheader("AI Chemical Optimization – Moharda WTP")
+st.subheader("AI Recommended Chemical Dosage")
 
 flow_m3_hr = 1100
 operating_hours = 16.5
 flow_m3_day = flow_m3_hr * operating_hours
-production_mld = flow_m3_day / 1000
 
 aerator_turbidity = intake_turb
 conductivity_today = 283
 current_frc = consumer_frc
 
 # ============================================================
-# 1️⃣ JAR TEST BASED LAB MODEL
+# 1️⃣ LAB JAR TEST MODEL
 # ============================================================
 
 lab_df = pd.read_excel("DATASHEET.xlsx")
@@ -345,42 +344,65 @@ lab_df = lab_df.dropna(subset=["Turbidity", "Lab_Dose"])
 lab_df = lab_df.sort_values("Turbidity")
 
 coeff = np.polyfit(lab_df["Turbidity"], lab_df["Lab_Dose"], 2)
-lab_model = np.poly1d(coeff)
+model = np.poly1d(coeff)
 
-# Continuous turbidity axis
+# Lab Dose Today
+lab_today_mgL = float(model(aerator_turbidity))
+
+# ============================================================
+# 2️⃣ AI OPTIMIZATION LOGIC
+# ============================================================
+
+adjustment_factor = 1.0
+
+# Slight correction if clearwater turbidity > 1
+if clearwater_turb > 1:
+    adjustment_factor += 0.05
+
+# Slight correction if FRC unstable
+if not (0.2 <= current_frc <= 1):
+    adjustment_factor += 0.05
+
+ai_today_mgL = lab_today_mgL * adjustment_factor
+
+# Daily allowable band (±10%)
+lower_limit = lab_today_mgL * 0.9
+upper_limit = lab_today_mgL * 1.1
+
+ai_today_mgL = max(min(ai_today_mgL, upper_limit), lower_limit)
+
+solid_alum_kg_day = (ai_today_mgL * flow_m3_day) / 1000
+
+percent_change = ((ai_today_mgL - lab_today_mgL) / lab_today_mgL) * 100
+
+# ============================================================
+# 3️⃣ DISPLAY METRICS (CLEAN & PROFESSIONAL)
+# ============================================================
+
+c1, c2, c3 = st.columns(3)
+
+c1.metric("Lab Dose (mg/L)", f"{lab_today_mgL:.2f}")
+c2.metric("AI Recommended Dose (mg/L)", f"{ai_today_mgL:.2f}",
+          delta=f"{percent_change:.1f}% Adjustment")
+
+c3.metric("Solid Alum (kg/day)", f"{solid_alum_kg_day:,.0f}")
+
+# ============================================================
+# 4️⃣ CLEAN COMPARISON GRAPH
+# ============================================================
+
 turb_axis = np.linspace(
     lab_df["Turbidity"].min(),
     lab_df["Turbidity"].max(),
     200
 )
 
-lab_curve = lab_model(turb_axis)
+lab_curve = model(turb_axis)
+ai_curve = lab_curve * adjustment_factor
 
-# AI curve = slight adaptive correction based on plant condition
-correction = 1.0
+fig = go.Figure()
 
-if clearwater_turb > 1:
-    correction += 0.05
-
-if not (0.2 <= current_frc <= 1):
-    correction += 0.05
-
-ai_curve = lab_curve * correction
-
-# Today's values
-lab_today_mgL = float(lab_model(aerator_turbidity))
-ai_today_mgL = lab_today_mgL * correction
-
-solid_alum_kg_day_lab = (lab_today_mgL * flow_m3_day) / 1000
-solid_alum_kg_day_ai = (ai_today_mgL * flow_m3_day) / 1000
-
-# ============================================================
-# 2️⃣ PROFESSIONAL ALUM TREND GRAPH
-# ============================================================
-
-fig_alum = go.Figure()
-
-fig_alum.add_trace(go.Scatter(
+fig.add_trace(go.Scatter(
     x=turb_axis,
     y=lab_curve,
     mode="lines",
@@ -388,7 +410,7 @@ fig_alum.add_trace(go.Scatter(
     line=dict(color="blue", width=4)
 ))
 
-fig_alum.add_trace(go.Scatter(
+fig.add_trace(go.Scatter(
     x=turb_axis,
     y=ai_curve,
     mode="lines",
@@ -396,7 +418,7 @@ fig_alum.add_trace(go.Scatter(
     line=dict(color="green", width=4)
 ))
 
-fig_alum.add_trace(go.Scatter(
+fig.add_trace(go.Scatter(
     x=[aerator_turbidity],
     y=[ai_today_mgL],
     mode="markers",
@@ -404,135 +426,52 @@ fig_alum.add_trace(go.Scatter(
     name="Current Operating Point"
 ))
 
-fig_alum.update_layout(
+fig.update_layout(
     template="plotly_dark",
-    title="Alum Dose vs Aerator Outlet Turbidity",
+    title="Alum Dosage Optimization Curve",
     xaxis_title="Aerator Outlet Turbidity (NTU)",
-    yaxis_title="Solid Alum Dose (mg/L)",
-    height=500,
-    legend=dict(x=0.02, y=0.98)
+    yaxis_title="Alum Dose (mg/L)",
+    height=450
 )
 
-st.plotly_chart(fig_alum, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
 # ============================================================
-# 3️⃣ NAOCL LAB vs AI MODEL
+# 5️⃣ NAOCL AI RECOMMENDATION
 # ============================================================
 
-frc_axis = np.linspace(0.2, 1.0, 200)
-
-lab_naocl_curve = []
-ai_naocl_curve = []
-
-for frc in frc_axis:
-    kg_cl2 = (frc * flow_m3_day) / 1000
-    lab_naocl = kg_cl2 / 0.12
-    ai_naocl = lab_naocl * correction
-
-    lab_naocl_curve.append(lab_naocl)
-    ai_naocl_curve.append(ai_naocl)
-
-# Today's recommended at 0.6 ppm
 target_frc = 0.6
-kg_cl2_today = (target_frc * flow_m3_day) / 1000
-lab_naocl_today = kg_cl2_today / 0.12
-ai_naocl_today = lab_naocl_today * correction
+
+kg_cl2 = (target_frc * flow_m3_day) / 1000
+lab_naocl = kg_cl2 / 0.12
+
+# Conductivity correction
+cond_factor = conductivity_today / 283
+ai_naocl = lab_naocl * cond_factor
+
+percent_change_hypo = ((ai_naocl - lab_naocl) / lab_naocl) * 100
+
+st.markdown("### Chlorination Recommendation")
+
+c4, c5 = st.columns(2)
+
+c4.metric("Lab NaOCl (kg/day)", f"{lab_naocl:.1f}")
+c5.metric("AI NaOCl (kg/day)", f"{ai_naocl:.1f}",
+          delta=f"{percent_change_hypo:.1f}%")
 
 # ============================================================
-# 4️⃣ PROFESSIONAL NAOCL GRAPH
+# 6️⃣ PROFESSIONAL OPERATIONAL NOTE
 # ============================================================
 
-fig_hypo = go.Figure()
-
-fig_hypo.add_trace(go.Scatter(
-    x=frc_axis,
-    y=lab_naocl_curve,
-    mode="lines",
-    name="Lab Dosage",
-    line=dict(color="blue", width=4)
-))
-
-fig_hypo.add_trace(go.Scatter(
-    x=frc_axis,
-    y=ai_naocl_curve,
-    mode="lines",
-    name="AI Dosage",
-    line=dict(color="green", width=4)
-))
-
-fig_hypo.add_trace(go.Scatter(
-    x=[target_frc],
-    y=[ai_naocl_today],
-    mode="markers",
-    marker=dict(size=12, color="yellow"),
-    name="Recommended Point"
-))
-
-fig_hypo.update_layout(
-    template="plotly_dark",
-    title="NaOCl Dose vs Target FRC",
-    xaxis_title="Target FRC (ppm)",
-    yaxis_title="NaOCl Dose (kg/day)",
-    height=500
-)
-
-st.plotly_chart(fig_hypo, use_container_width=True)
-
-# ============================================================
-# 5️⃣ PROFESSIONAL GAUGES
-# ============================================================
-
-def ai_gauge(title, value, min_val, max_val, low, high):
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=value,
-        title={'text': title},
-        gauge={
-            'axis': {'range': [min_val, max_val]},
-            'bar': {'color': "#00F5FF"},
-            'steps': [
-                {'range': [min_val, low], 'color': "#FF4B4B"},
-                {'range': [low, high], 'color': "#00FF7F"},
-                {'range': [high, max_val], 'color': "#FFA500"},
-            ],
-        }
-    ))
-    fig.update_layout(height=250, paper_bgcolor="#050A18")
-    return fig
-    fig.update_layout(height=250, paper_bgcolor="#050A18")
-    return fig
-
-c1, c2, c3 = st.columns(3)
-
-c1.plotly_chart(
-    gauge("Aerator Outlet Turbidity (NTU)", aerator_turbidity, 0, 10, 0, 1),
-    use_container_width=True
-)
-
-c2.plotly_chart(
-    gauge("Free Residual Chlorine (ppm)", current_frc, 0, 1.5, 0.2, 1.0),
-    use_container_width=True
-)
-
-c3.plotly_chart(
-    gauge("Solid Alum (kg/day)", solid_alum_kg_day_ai, 0, 1200, 600, 900),
-    use_container_width=True
-)
-
-# ============================================================
-# 6️⃣ AI OPERATIONAL RECOMMENDATION
-# ============================================================
-
-if clearwater_turb > 1:
-    recommendation = "Increase alum dosing slightly and monitor filter performance."
-elif current_frc < 0.2:
-    recommendation = "Increase NaOCl dosing immediately to maintain minimum residual."
-elif current_frc > 1:
-    recommendation = "Reduce NaOCl dosing to avoid excess chlorine."
+if percent_change > 5:
+    note = "Increase alum dosing gradually. Monitor filter headloss."
+elif percent_change < -5:
+    note = "Alum dosing can be reduced. Observe settled water clarity."
 else:
-    recommendation = "System stable. Maintain current chemical dosing."
+    note = "Current alum dosing near optimal."
 
-st.success(f"AI Operational Recommendation: {recommendation}")
+st.success(f"Operational Note: {note}")
+
 # WATER TOWERS
 # ===============================
 st.subheader("🗼 Distribution Water Towers")
