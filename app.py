@@ -396,6 +396,15 @@ if clearwater_turb > 1:
 
 if not (0.2 <= consumer_frc <= 1):
     adjustment_factor += 0.05
+
+# AI adjustment factor (define before use)
+adjustment_factor = 1.0
+
+if clearwater_turb > 1:
+    adjustment_factor += 0.05
+
+if not (0.2 <= consumer_frc <= 1):
+    adjustment_factor += 0.05
 ai_today_mgL = lab_today_mgL * adjustment_factor
 
 # Daily allowable band (±10%)
