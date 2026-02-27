@@ -437,6 +437,130 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # ============================================================
+# AI RECOMMENDED HYPO DOSAGE
+# ============================================================
+
+st.markdown("## AI Recommended Chlorination (NaOCl)")
+
+flow_m3_hr = 1100
+operating_hours = 16.5
+flow_m3_day = flow_m3_hr * operating_hours
+
+target_frc = 0.6  # Plant target
+current_frc = consumer_frc
+conductivity_today = 283
+
+# ----------------------------
+# LAB BASELINE (No Correction)
+# ----------------------------
+
+kg_cl2_lab = (target_frc * flow_m3_day) / 1000
+lab_naocl_kg = kg_cl2_lab / 0.12  # 12% strength
+
+# ----------------------------
+# AI CORRECTION LOGIC
+# ----------------------------
+
+adjustment_factor = 1.0
+
+# Conductivity influence
+cond_reference = 283
+cond_factor = conductivity_today / cond_reference
+adjustment_factor *= cond_factor
+
+# FRC feedback control
+if current_frc < 0.2:
+    adjustment_factor *= 1.05
+elif current_frc > 1:
+    adjustment_factor *= 0.95
+
+# Apply ±10% daily constraint
+lower_limit = lab_naocl_kg * 0.9
+upper_limit = lab_naocl_kg * 1.1
+
+ai_naocl_kg = lab_naocl_kg * adjustment_factor
+ai_naocl_kg = max(min(ai_naocl_kg, upper_limit), lower_limit)
+
+percent_change = ((ai_naocl_kg - lab_naocl_kg) / lab_naocl_kg) * 100
+
+# ----------------------------
+# DISPLAY METRICS
+# ----------------------------
+
+c1, c2, c3 = st.columns(3)
+
+c1.metric("Lab NaOCl (kg/day)", f"{lab_naocl_kg:.1f}")
+c2.metric("AI Recommended NaOCl (kg/day)", f"{ai_naocl_kg:.1f}",
+          delta=f"{percent_change:.1f}%")
+
+c3.metric("Target FRC (ppm)", f"{target_frc:.2f}")
+
+# ============================================================
+# PROFESSIONAL COMPARISON GRAPH
+# ============================================================
+
+frc_axis = np.linspace(0.2, 1.0, 200)
+
+lab_curve = []
+ai_curve = []
+
+for frc in frc_axis:
+
+    kg_cl2 = (frc * flow_m3_day) / 1000
+    base = kg_cl2 / 0.12
+
+    lab_curve.append(base)
+    ai_curve.append(base * cond_factor)
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(
+    x=frc_axis,
+    y=lab_curve,
+    mode="lines",
+    name="Lab Dosage",
+    line=dict(color="blue", width=4)
+))
+
+fig.add_trace(go.Scatter(
+    x=frc_axis,
+    y=ai_curve,
+    mode="lines",
+    name="AI Dosage",
+    line=dict(color="green", width=4)
+))
+
+fig.add_trace(go.Scatter(
+    x=[target_frc],
+    y=[ai_naocl_kg],
+    mode="markers",
+    marker=dict(size=12, color="yellow"),
+    name="Recommended Point"
+))
+
+fig.update_layout(
+    template="plotly_dark",
+    title="NaOCl Dosage vs Target FRC",
+    xaxis_title="Target FRC (ppm)",
+    yaxis_title="NaOCl (kg/day)",
+    height=450
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# ============================================================
+# OPERATIONAL RECOMMENDATION
+# ============================================================
+
+if current_frc < 0.2:
+    note = "Increase NaOCl dosing gradually to restore minimum residual."
+elif current_frc > 1:
+    note = "Reduce NaOCl dosing to avoid excess chlorine."
+else:
+    note = "Chlorination stable. Maintain current dosing."
+
+st.success(f"Chlorination Advisory: {note}")
+# ============================================================
 # 5️⃣ NAOCL AI RECOMMENDATION
 # ============================================================
 
