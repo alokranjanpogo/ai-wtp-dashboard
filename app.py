@@ -594,6 +594,82 @@ if lat_col and lon_col:
     fig_map.update_layout(mapbox_style="open-street-map")
     st.plotly_chart(fig_map, use_container_width=True)
 
+# ===============================
+# WASHOUT GIS MAP
+# ===============================
+
+
+st.subheader("🚰 Washout Points GIS Map")
+
+# Load Excel File
+washout = pd.read_excel("/mnt/data/Washout points (1).xlsx")
+
+# Auto-detect columns
+lat_col = next((c for c in washout.columns if "lat" in c.lower()), None)
+lon_col = next((c for c in washout.columns if "lon" in c.lower()), None)
+name_col = next((c for c in washout.columns if "name" in c.lower() or "wash" in c.lower()), None)
+turb_col = next((c for c in washout.columns if "turb" in c.lower()), None)
+frc_col = next((c for c in washout.columns if "frc" in c.lower()), None)
+total_col = next((c for c in washout.columns if "total" in c.lower()), None)
+ecoli_col = next((c for c in washout.columns if "coli" in c.lower()), None)
+
+# Convert numeric columns safely
+if turb_col:
+    washout[turb_col] = pd.to_numeric(washout[turb_col], errors="coerce")
+
+if frc_col:
+    washout[frc_col] = pd.to_numeric(washout[frc_col], errors="coerce")
+
+# Classification logic
+def classify(row):
+
+    # Bacteria present → Not OK
+    if total_col and str(row[total_col]).lower() in ["present", "yes", "1"]:
+        return "Not OK"
+
+    if ecoli_col and str(row[ecoli_col]).lower() in ["present", "yes", "1"]:
+        return "Not OK"
+
+    # Turbidity limit
+    if turb_col and row[turb_col] > 1.5:
+        return "Not OK"
+
+    # FRC range check
+    if frc_col and (row[frc_col] < 0.2 or row[frc_col] > 1.0):
+        return "Not OK"
+
+    return "OK"
+
+washout["Status"] = washout.apply(classify, axis=1)
+
+# Plot Map
+if lat_col and lon_col:
+
+    fig = px.scatter_mapbox(
+        washout,
+        lat=lat_col,
+        lon=lon_col,
+        hover_name=name_col,
+        hover_data={
+            turb_col: True,
+            frc_col: True,
+            total_col: True,
+            ecoli_col: True
+        },
+        color="Status",
+        color_discrete_map={
+            "OK": "green",
+            "Not OK": "red"
+        },
+        zoom=12,
+        height=600
+    )
+
+    fig.update_layout(mapbox_style="open-street-map")
+    st.plotly_chart(fig, use_container_width=True)
+
+else:
+    st.error("Latitude or Longitude column not found in Excel file.")
 
 # ===============================
 # SUMP LEVEL MONITORING
