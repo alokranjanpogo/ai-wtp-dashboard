@@ -601,8 +601,7 @@ if lat_col and lon_col:
 
 st.subheader("🚰 Washout Points GIS Map")
 
-# Load Excel File
-washout = pd.read_excel("/mnt/data/Washout points (1).xlsx")
+washout = pd.read_excel("Washout points (1).xlsx")
 
 # Auto-detect columns
 lat_col = next((c for c in washout.columns if "lat" in c.lower()), None)
