@@ -302,58 +302,48 @@ for i in range(6):
     fc[i].write(f"Removal Efficiency: {filter_eff_list[i]*100:.1f}%")
     fc[i].write(f"Status: {filter_status_list[i]}")
 
-# ===============================
-# TURBIDITY PROFILE
-# ===============================
-st.subheader("🌊 Turbidity Reduction Profile")
-fig_prof=go.Figure()
-fig_prof.add_trace(go.Scatter(
-    x=["Intake","Clarifier","Clear Water"],
-    y=[intake_turb,clarifier_turb,clearwater_turb],
-    mode="lines+markers"))
-fig_prof.update_layout(template="plotly_dark",height=400)
-st.plotly_chart(fig_prof,use_container_width=True)
+# ============================================================
+# PREVIOUS 4 DAYS TURBIDITY TREND
+# ============================================================
 
-# ===============================
-# INTAKE TURBIDITY TREND (SAFE)
-# ===============================
-st.subheader("📈 Intake Turbidity Trend")
+st.subheader("Raw Water Turbidity Trend (Last 4 Days)")
 
-date_col_plant = next((c for c in plant.columns if "date" in c.lower()), None)
+# ensure date column is datetime
+history_df["Date"] = pd.to_datetime(history_df["Date"], dayfirst=True)
 
-if date_col_plant is not None and "Intake" in turb.columns:
-    try:
-        turb[date_col_plant] = pd.to_datetime(turb[date_col_plant], errors='coerce')
-        intake_trend = turb[[date_col_plant, "Intake"]].dropna()
+# selected date from slicer
+selected_date = selected_time.normalize()
 
-        fig_intake = px.line(
-            intake_trend,
-            x=date_col_plant,
-            y="Intake",
-            markers=True,
-            template="plotly_dark"
-        )
+# filter last 4 days including today
+trend_df = history_df[
+    (history_df["Date"] <= selected_date) &
+    (history_df["Date"] >= selected_date - pd.Timedelta(days=4))
+]
 
-        fig_intake.update_layout(
-            xaxis_title="Date",
-            yaxis_title="Turbidity (NTU)",
-            height=400
-        )
+# ------------------------------------------------------------
+# GRAPH
+# ------------------------------------------------------------
 
-        st.plotly_chart(fig_intake, use_container_width=True)
+fig_turb = go.Figure()
 
-    except Exception as e:
-        st.warning("Intake trend could not be generated. Check Date column format.")
+fig_turb.add_trace(go.Scatter(
+    x=trend_df["Date"],
+    y=trend_df["Turbidity (NTU)"],
+    mode="lines+markers",
+    line=dict(color="cyan", width=3),
+    marker=dict(size=8),
+    name="Raw Turbidity (Intake)"
+))
 
-else:
-    st.info("No Date column found in plant file. Showing sample trend instead.")
+fig_turb.update_layout(
+    template="plotly_dark",
+    title="Intake Turbidity Trend (Last 4 Days)",
+    xaxis_title="Date",
+    yaxis_title="Turbidity (NTU)",
+    height=400
+)
 
-    fig_intake = px.line(
-        y=turb["Intake"],
-        template="plotly_dark"
-    )
-    st.plotly_chart(fig_intake, use_container_width=True)
-
+st.plotly_chart(fig_turb, use_container_width=True)
 # ===============================
 # CHEMICAL DOSAGE
 # ===============================
