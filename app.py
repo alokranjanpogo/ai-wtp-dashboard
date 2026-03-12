@@ -633,97 +633,120 @@ c2.metric("AI Hypo Dose",f"{ai_hypo_kg_day:,.0f} kg/day")
 c3.metric("Chlorine Dose",f"{ai_chlorine:.2f} mg/L")
 
 # ============================================================
-# HYPO GRAPH
+# AI SODIUM HYPOCHLORITE DOSING (PLANT BASED GRAPH)
 # ============================================================
+
+st.subheader("AI Hypochlorite Dosing Recommendation")
+
+# ------------------------------------------------------------
+# PLANT PARAMETERS
+# ------------------------------------------------------------
+
+max_flow_MLD = 23
+flow_m3_day = max_flow_MLD * 1000 # convert to m3/day
+hypo_strength = 0.12 # 12% available chlorine
+
+# plant current operation
+plant_hypo_kg = 800 # kg/day
+current_frc = consumer_frc # measured FRC
+
+# ------------------------------------------------------------
+# FRC RANGE
+# ------------------------------------------------------------
 
 frc_range = np.linspace(0.2,1.0,100)
 
-# ============================================================
-# HYPOCHLORITE STANDARD CURVES
-# ============================================================
+# ------------------------------------------------------------
+# STANDARD CURVES (kg/day)
+# ------------------------------------------------------------
 
-flow = 18000 # m3/day (18 MLD)
-hypo_strength = 0.12 # 12%
+bis_curve = (frc_range * flow_m3_day) / (hypo_strength * 1000)
 
-frc_range = np.linspace(0.2,1.0,100)
+who_curve = (frc_range * flow_m3_day * 1.05) / (hypo_strength * 1000)
 
-# kg/day calculation
-bis_curve = (frc_range * flow * 1) / hypo_strength
-who_curve = (frc_range * flow * 1.05) / hypo_strength
-awwa_curve = (frc_range * flow * 1.1) / hypo_strength
+awwa_curve = (frc_range * flow_m3_day * 1.1) / (hypo_strength * 1000)
+
+# ------------------------------------------------------------
+# GRAPH
+# ------------------------------------------------------------
 
 fig_hypo = go.Figure()
 
 fig_hypo.add_trace(go.Scatter(
     x=frc_range,
     y=bis_curve,
+    mode="lines",
     name="BIS Standard",
-    line=dict(color="orange",width=3)
+    line=dict(color="orange", width=3)
 ))
 
 fig_hypo.add_trace(go.Scatter(
     x=frc_range,
     y=who_curve,
+    mode="lines",
     name="WHO Guideline",
-    line=dict(color="green",width=3)
+    line=dict(color="green", width=3)
 ))
 
 fig_hypo.add_trace(go.Scatter(
     x=frc_range,
     y=awwa_curve,
+    mode="lines",
     name="AWWA Practice",
-    line=dict(color="purple",width=3)
+    line=dict(color="purple", width=3)
 ))
+
+# ------------------------------------------------------------
+# CURRENT PLANT OPERATION
+# ------------------------------------------------------------
 
 fig_hypo.add_trace(go.Scatter(
     x=[current_frc],
-    y=[ai_hypo_kg_day*1],
+    y=[plant_hypo_kg],
     mode="markers",
     marker=dict(size=14, color="yellow"),
     name="Current Operation"
 ))
-
-fig_hypo.update_layout(
-template="plotly_dark",
-title="AI Hypochlorite Dosing Recommendation",
-xaxis_title="Free Residual Chlorine (ppm)",
-yaxis_title="Hypochlorite Dose",
-height=500
-)
-
-st.plotly_chart(fig_hypo,use_container_width=True)
-
-# ============================================================
-# AI OPERATION PANEL
-# ============================================================
-
-st.subheader("AI Operation Recommendation")
-
-deviation = abs(ai_today_alum-jar_today)/jar_today*100
-
-if deviation > 20:
-
-    st.error("🔴 Dosing significantly incorrect. Immediate correction required.")
-
-elif deviation > 10:
-
-    st.warning("🟡 Slight deviation detected. Adjust dosing gradually.")
-
-else:
-
-    st.success("🟢 Dosing within recommended range.")
+st.subheader("Chlorination Recommendation")
 
 if current_frc < 0.2:
-
     st.error("🔴 Residual chlorine below safe limit. Increase hypochlorite dosing.")
 
 elif current_frc > 1:
-
-    st.warning("🟡 Chlorine too high. Reduce dosing.")
+    st.warning("🟡 Chlorine level too high. Reduce dosing.")
 
 else:
+    st.success("🟢 Residual chlorine within recommended range.")
 
-    st.success("🟢 Residual chlorine within safe BIS & WHO limits.")
+# ------------------------------------------------------------
+# LAYOUT
+# ------------------------------------------------------------
+
+fig_hypo.update_layout(
+    template="plotly_dark",
+    title="Hypochlorite Dose vs Residual Chlorine",
+    xaxis_title="Free Residual Chlorine (ppm)",
+    yaxis_title="Hypochlorite Dose (kg/day)",
+    yaxis=dict(range=[0,1000]), # scale for your plant
+    height=450
+)
+
+st.plotly_chart(fig_hypo, use_container_width=True)
+
+# ------------------------------------------------------------
+# RECOMMENDATION
+# ------------------------------------------------------------
+
+st.subheader("Chlorination Recommendation")
+
+if current_frc < 0.2:
+    st.error("🔴 Residual chlorine below safe limit. Increase hypochlorite dosing.")
+
+elif current_frc > 1:
+    st.warning("🟡 Chlorine level too high. Reduce dosing.")
+
+else:
+    st.success("🟢 Residual chlorine within recommended range.")
 # WATER TOWERS
 # ===============================
 st.subheader("🗼 Distribution Water Towers")
