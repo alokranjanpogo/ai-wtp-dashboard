@@ -597,6 +597,7 @@ if lat_col and lon_col:
 import pandas as pd
 import plotly.express as px
 
+st.subheader("📍 Washout GIS Map")
 washout = pd.read_excel("Wahout_points.xlsx")
 
 # Safe date conversion
