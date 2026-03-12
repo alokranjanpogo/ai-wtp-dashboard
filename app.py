@@ -509,14 +509,41 @@ ai_curve = (
 
 fig_alum = go.Figure()
 
-fig_alum.add_trace(go.Scatter(x=x_range,y=bis_curve,name="BIS Standard",line=dict(color="orange",width=3)))
-fig_alum.add_trace(go.Scatter(x=x_range,y=cpheeo_curve,name="CPHEEO Standard",line=dict(color="green",width=3)))
-fig_alum.add_trace(go.Scatter(x=x_range,y=awwa_curve,name="AWWA Standard",line=dict(color="purple",width=3)))
+fig_alum.add_trace(go.Scatter(
+    x=jar_turb,
+    y=jar_dose,
+    mode="lines+markers",
+    name="Jar Test (Lab)",
+    line=dict(color="red", width=4)
+))
 
-fig_alum.add_trace(go.Scatter(x=x_range,y=jar_curve_plot,name="Jar Test",line=dict(color="red",width=4)))
+fig_alum.add_trace(go.Scatter(
+    x=x_range,
+    y=bis_curve,
+    name="BIS Standard",
+    line=dict(color="orange", width=3)
+))
 
-fig_alum.add_trace(go.Scatter(x=x_range,y=ai_curve,name="AI Recommended",line=dict(color="blue",width=4)))
+fig_alum.add_trace(go.Scatter(
+    x=x_range,
+    y=cpheeo_curve,
+    name="CPHEEO Standard",
+    line=dict(color="green", width=3)
+))
 
+fig_alum.add_trace(go.Scatter(
+    x=x_range,
+    y=awwa_curve,
+    name="AWWA Standard",
+    line=dict(color="purple", width=3)
+))
+
+fig_alum.add_trace(go.Scatter(
+    x=x_range,
+    y=ai_curve,
+    name="AI Recommended",
+    line=dict(color="blue", width=4)
+))
 fig_alum.add_trace(go.Scatter(
 x=[aerator_turbidity],
 y=[ai_today_alum],
@@ -535,6 +562,19 @@ height=500
 
 st.plotly_chart(fig_alum,use_container_width=True)
 
+st.subheader("AI Recommendation")
+
+if abs(ai_today_alum - jar_today) > 5:
+
+    st.error("🔴 Alum dosing significantly deviates from lab jar test. Adjust dosing.")
+
+elif abs(ai_today_alum - jar_today) > 2:
+
+    st.warning("🟡 Slight deviation from jar test results.")
+
+else:
+
+    st.success("🟢 Alum dosing aligned with lab jar test and standards.")
 # ============================================================
 # HYPOCHLORITE DOSING MODEL
 # ============================================================
@@ -569,24 +609,41 @@ c3.metric("Chlorine Dose",f"{ai_chlorine:.2f} mg/L")
 # HYPO GRAPH
 # ============================================================
 
-frc_range = np.linspace(0.2,1,100)
+frc_range = np.linspace(0.2,1.0,100)
 
-bis_curve = frc_range/hypo_strength
-who_curve = frc_range/hypo_strength
-awwa_curve = frc_range/hypo_strength*1.1
+bis_curve = frc_range / hypo_strength
+who_curve = (frc_range*1.05) / hypo_strength
+awwa_curve = (frc_range*1.1) / hypo_strength
 
 fig_hypo = go.Figure()
 
-fig_hypo.add_trace(go.Scatter(x=frc_range,y=bis_curve,name="BIS",line=dict(color="orange",width=3)))
-fig_hypo.add_trace(go.Scatter(x=frc_range,y=who_curve,name="WHO",line=dict(color="green",width=3)))
-fig_hypo.add_trace(go.Scatter(x=frc_range,y=awwa_curve,name="AWWA",line=dict(color="purple",width=3)))
+fig_hypo.add_trace(go.Scatter(
+    x=frc_range,
+    y=bis_curve,
+    name="BIS Chlorination",
+    line=dict(color="orange", width=3)
+))
 
 fig_hypo.add_trace(go.Scatter(
-x=[current_frc],
-y=[plant_hypo_kg],
-mode="markers",
-marker=dict(size=14,color="yellow"),
-name="Current Operation"
+    x=frc_range,
+    y=who_curve,
+    name="WHO Guideline",
+    line=dict(color="green", width=3)
+))
+
+fig_hypo.add_trace(go.Scatter(
+    x=frc_range,
+    y=awwa_curve,
+    name="AWWA Practice",
+    line=dict(color="purple", width=3)
+))
+
+fig_hypo.add_trace(go.Scatter(
+    x=[current_frc],
+    y=[ai_hypo_kg_day],
+    mode="markers",
+    marker=dict(size=14, color="yellow"),
+    name="Current Operation"
 ))
 
 fig_hypo.update_layout(
