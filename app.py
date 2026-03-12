@@ -384,30 +384,46 @@ current_frc = float(consumer_frc)
 conductivity_today = 350
 
 # ============================================================
-# LOAD JAR TEST DATA (SAFE)
+# LOAD JAR TEST DATA (CRASH-PROOF)
 # ============================================================
 
-jar_df = pd.read_excel("DATASHEET.xlsx")
+try:
 
-# Convert columns to numeric safely
-jar_df.iloc[:,0] = pd.to_numeric(jar_df.iloc[:,0], errors="coerce")
-jar_df.iloc[:,1] = pd.to_numeric(jar_df.iloc[:,1], errors="coerce")
+    jar_df = pd.read_excel("DATASHEET.xlsx")
 
-# Remove rows with invalid data
-jar_df = jar_df.dropna()
+    # Select first two columns
+    jar_turb = pd.to_numeric(jar_df.iloc[:,0], errors="coerce")
+    jar_dose = pd.to_numeric(jar_df.iloc[:,1], errors="coerce")
 
-# Extract arrays
-jar_turb = jar_df.iloc[:,0].values.astype(float)
-jar_dose = jar_df.iloc[:,1].values.astype(float)
+    # Remove invalid rows
+    valid = (~jar_turb.isna()) & (~jar_dose.isna())
 
-# Sort for safety
-sort_idx = np.argsort(jar_turb)
-jar_turb = jar_turb[sort_idx]
-jar_dose = jar_dose[sort_idx]
+    jar_turb = jar_turb[valid].values
+    jar_dose = jar_dose[valid].values
 
-# Polynomial curve
-jar_poly = np.polyfit(jar_turb, jar_dose, 2)
-jar_curve = np.poly1d(jar_poly)
+    # Sort data
+    if len(jar_turb) > 0:
+        idx = np.argsort(jar_turb)
+        jar_turb = jar_turb[idx]
+        jar_dose = jar_dose[idx]
+
+except:
+    jar_turb = np.array([])
+    jar_dose = np.array([])
+
+# ------------------------------------------------------------
+# CREATE JAR CURVE
+# ------------------------------------------------------------
+
+if len(jar_turb) >= 3:
+
+    jar_poly = np.polyfit(jar_turb, jar_dose, 2)
+    jar_curve = np.poly1d(jar_poly)
+
+else:
+
+    # fallback if jar test data missing
+    jar_curve = lambda x: 0.2*x + 8
 
 # ============================================================
 # STANDARDS DATABASE
