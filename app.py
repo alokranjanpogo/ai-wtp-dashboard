@@ -561,13 +561,6 @@ fig_alum.add_trace(go.Scatter(
 ))
 
 fig_alum.add_trace(go.Scatter(
-    x=jar_turb,
-    y=jar_dose,
-    mode="lines+markers",
-    name="Jar Test (Lab)",
-    line=dict(color="red", width=4)
-))
-fig_alum.add_trace(go.Scatter(
     x=x_range,
     y=ai_curve,
     name="AI Recommended",
@@ -604,6 +597,11 @@ elif abs(ai_today_alum - jar_today) > 2:
 else:
 
     st.success("🟢 Alum dosing aligned with lab jar test and standards.")
+
+st.caption(
+"Standards referenced: BIS Drinking Water Specification, "
+"CPHEEO Manual on Water Supply, and AWWA Water Treatment Practice."
+)
 # ============================================================
 # HYPOCHLORITE DOSING MODEL
 # ============================================================
@@ -649,11 +647,11 @@ hypo_strength = 0.12 # 12%
 
 frc_range = np.linspace(0.2,1.0,100)
 
-# convert chlorine requirement to hypo kg/day
+# kg/day calculation
+bis_curve = (frc_range * flow * 1000) / hypo_strength
+who_curve = (frc_range * flow * 1050) / hypo_strength
+awwa_curve = (frc_range * flow * 1100) / hypo_strength
 
-bis_curve = (frc_range * flow) / hypo_strength
-who_curve = (frc_range * flow * 1.05) / hypo_strength
-awwa_curve = (frc_range * flow * 1.1) / hypo_strength
 fig_hypo = go.Figure()
 
 fig_hypo.add_trace(go.Scatter(
@@ -679,7 +677,7 @@ fig_hypo.add_trace(go.Scatter(
 
 fig_hypo.add_trace(go.Scatter(
     x=[current_frc],
-    y=[ai_hypo_kg_day],
+    y=[ai_hypo_kg_day*1000],
     mode="markers",
     marker=dict(size=14, color="yellow"),
     name="Current Operation"
