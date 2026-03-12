@@ -598,48 +598,46 @@ if lat_col and lon_col:
 # WASHOUT GIS MAP
 # ===============================
 
-st.subheader("🚰 Washout Points GIS Map")
 
-# Read Excel file from same folder as app.py
-washout = pd.read_excel("Washout points (1).xlsx")
+st.subheader("📍 Washout Monitoring GIS Map")
 
-# Auto detect columns
-lat_col = next((c for c in washout.columns if "lat" in c.lower()), None)
-lon_col = next((c for c in washout.columns if "lon" in c.lower()), None)
-name_col = next((c for c in washout.columns if "name" in c.lower() or "location" in c.lower()), None)
-turb_col = next((c for c in washout.columns if "turb" in c.lower()), None)
-frc_col = next((c for c in washout.columns if "frc" in c.lower()), None)
-total_col = next((c for c in washout.columns if "total" in c.lower()), None)
-ecoli_col = next((c for c in washout.columns if "coli" in c.lower()), None)
+# Read Excel File
+washout = pd.read_excel("washout_monitoring_example.xlsx")
 
-# Convert numeric safely
-if turb_col:
-    washout[turb_col] = pd.to_numeric(washout[turb_col], errors="coerce")
+# Convert date columns
+washout["Prev_Washout_Date"] = pd.to_datetime(washout["Prev_Washout_Date"])
+washout["Next_Due_Date"] = pd.to_datetime(washout["Next_Due_Date"])
 
-if frc_col:
-    washout[frc_col] = pd.to_numeric(washout[frc_col], errors="coerce")
+# Today's date
+today = pd.Timestamp.today()
 
-# Classification
+# Classification Logic
 def classify(row):
 
-    if total_col and str(row[total_col]).strip().lower() in ["present","yes","1"]:
-        return "Not OK"
+    if row["Next_Due_Date"] < today:
+        return "Overdue"
 
-    if ecoli_col and str(row[ecoli_col]).strip().lower() in ["present","yes","1"]:
-        return "Not OK"
+    elif row["Next_Due_Date"] <= today + pd.Timedelta(days=10):
+        return "Due Soon"
 
-    if turb_col and pd.notna(row[turb_col]) and row[turb_col] > 1.5:
-        return "Not OK"
+    else:
+        return "OK"
 
-    if frc_col and pd.notna(row[frc_col]) and (row[frc_col] < 0.2 or row[frc_col] > 1.0):
-        return "Not OK"
-
-    return "OK"
-
+# Apply classification
 washout["Status"] = washout.apply(classify, axis=1)
 
-# Show status count (for debugging)
+# Debug status count
+st.write("Washout Status Summary")
 st.write(washout["Status"].value_counts())
+
+# Column names used in your big code
+lat_col = "Latitude"
+lon_col = "Longitude"
+name_col = "Location"
+turb_col = "Turbidity"
+frc_col = "FRC"
+total_col = "Total_Coliform"
+ecoli_col = "Ecoli"
 
 # Plot Map
 fig = px.scatter_mapbox(
@@ -649,17 +647,30 @@ fig = px.scatter_mapbox(
     color="Status",
     color_discrete_map={
         "OK": "green",
-        "Not OK": "red"
+        "Due Soon": "yellow",
+        "Overdue": "red"
     },
     hover_name=name_col,
-    hover_data=[turb_col, frc_col, total_col, ecoli_col],
+    hover_data={
+        turb_col: True,
+        frc_col: True,
+        total_col: True,
+        ecoli_col: True,
+        "Prev_Washout_Date": True,
+        "Next_Due_Date": True,
+        "Status": True
+    },
     zoom=12,
     height=600
 )
 
+# Map Style
 fig.update_layout(mapbox_style="open-street-map")
+
+# Marker Size
 fig.update_traces(marker=dict(size=14))
 
+# Show Map
 st.plotly_chart(fig, use_container_width=True)
 # ===============================
 # SUMP LEVEL MONITORING
