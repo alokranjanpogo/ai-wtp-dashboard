@@ -389,24 +389,26 @@ conductivity_today = 350
 
 try:
 
-    jar_df = pd.read_excel("DATASHEET.xlsx")
+    # ============================================================
+# LOAD JAR TEST DATA (LAB)
+# ============================================================
 
-    # Select first two columns
-    jar_turb = pd.to_numeric(jar_df.iloc[:,0], errors="coerce")
-    jar_dose = pd.to_numeric(jar_df.iloc[:,1], errors="coerce")
+jar_df = pd.read_excel("DATASHEET.xlsx")
 
-    # Remove invalid rows
-    valid = (~jar_turb.isna()) & (~jar_dose.isna())
+# Convert to numeric
+jar_df.iloc[:,0] = pd.to_numeric(jar_df.iloc[:,0], errors="coerce")
+jar_df.iloc[:,1] = pd.to_numeric(jar_df.iloc[:,1], errors="coerce")
 
-    jar_turb = jar_turb[valid].values
-    jar_dose = jar_dose[valid].values
+# Remove invalid rows
+jar_df = jar_df.dropna()
 
-    # Sort data
-    if len(jar_turb) > 0:
-        idx = np.argsort(jar_turb)
-        jar_turb = jar_turb[idx]
-        jar_dose = jar_dose[idx]
+jar_turb = jar_df.iloc[:,0].values
+jar_dose = jar_df.iloc[:,1].values
 
+# Sort turbidity
+sort_idx = np.argsort(jar_turb)
+jar_turb = jar_turb[sort_idx]
+jar_dose = jar_dose[sort_idx]
 except:
     jar_turb = np.array([])
     jar_dose = np.array([])
@@ -498,16 +500,24 @@ x_range = np.linspace(0,300,300)
 # EXTEND JAR TEST LINE (LAB)
 # ============================================================
 
-# interpolate within lab range
+# Ensure jar data exists
+if len(jar_turb) < 2:
+
+    # fallback assumed data
+    jar_turb = np.array([5,10,20,40,80])
+    jar_dose = np.array([6,8,12,18,25])
+    
+# ============================================================
+# JAR TEST CURVE EXTENSION
+# ============================================================
+
 jar_interp = np.interp(x_range, jar_turb, jar_dose)
 
-# slope from last two lab points
+# slope from last two points
 slope = (jar_dose[-1] - jar_dose[-2]) / (jar_turb[-1] - jar_turb[-2])
 
-# extend beyond last turbidity value
 jar_extended = jar_dose[-1] + slope * (x_range - jar_turb[-1])
 
-# combine interpolation and extension
 jar_curve_plot = np.where(
     x_range <= jar_turb[-1],
     jar_interp,
