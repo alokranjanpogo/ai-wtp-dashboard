@@ -595,25 +595,29 @@ if lat_col and lon_col:
     st.plotly_chart(fig_map, use_container_width=True)
 
 # ===============================
-# WASHOUT STATUS CLASSIFICATION
+# WASHOUT GIS MAP
 # ===============================
 
-# Read excel
-washout = pd.read_excel("washout_monitoring_example.xlsx")
+import pandas as pd
+import plotly.express as px
+
+# Read your Excel file
+washout = pd.read_excel("Wahout_points.xlsx")
 
 # Convert date columns
-washout["Prev_Washout_Date"] = pd.to_datetime(washout["Prev_Washout_Date"])
-washout["Next_Due_Date"] = pd.to_datetime(washout["Next_Due_Date"])
+washout["Prv_Washout Date"] = pd.to_datetime(washout["Prv_Washout Date"])
+washout["Due_Washout Date"] = pd.to_datetime(washout["Due_Washout Date"])
 
+# Today date
 today = pd.Timestamp.today()
 
-# Status logic
+# Status classification
 def classify(row):
 
-    if row["Next_Due_Date"] < today:
+    if row["Due_Washout Date"] < today:
         return "Overdue"
 
-    elif row["Next_Due_Date"] <= today + pd.Timedelta(days=10):
+    elif row["Due_Washout Date"] <= today + pd.Timedelta(days=10):
         return "Due Soon"
 
     else:
@@ -621,14 +625,10 @@ def classify(row):
 
 washout["Status"] = washout.apply(classify, axis=1)
 
-
-# ===============================
-# GIS MAP
-# ===============================
-
+# Plot GIS Map
 fig = px.scatter_mapbox(
     washout,
-    lat="Latitude",
+    lat="Lattitude",
     lon="Longitude",
     color="Status",
     color_discrete_map={
@@ -638,8 +638,9 @@ fig = px.scatter_mapbox(
     },
     hover_name="Location",
     hover_data=[
-        "Prev_Washout_Date",
-        "Next_Due_Date",
+        "Sl no.",
+        "Prv_Washout Date",
+        "Due_Washout Date",
         "Status"
     ],
     zoom=12,
@@ -647,10 +648,9 @@ fig = px.scatter_mapbox(
 )
 
 fig.update_layout(mapbox_style="open-street-map")
-fig.update_traces(marker=dict(size=14))
+fig.update_traces(marker=dict(size=15))
 
 st.plotly_chart(fig, use_container_width=True)
-# ===============================
 # SUMP LEVEL MONITORING
 # ===============================
 st.subheader("💧 Clear Water Sump Status")
