@@ -677,7 +677,7 @@ fig_hypo.add_trace(go.Scatter(
 
 fig_hypo.add_trace(go.Scatter(
     x=[current_frc],
-    y=[ai_hypo_kg_day*1000],
+    y=[ai_hypo_kg_day*1],
     mode="markers",
     marker=dict(size=14, color="yellow"),
     name="Current Operation"
