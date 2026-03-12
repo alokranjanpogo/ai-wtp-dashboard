@@ -166,92 +166,57 @@ colp[0].metric("Production (MLD)",production_mld)
 colp[1].metric("Flow (m³/hr)",f"{production_m3_hr:.0f}")
 
 # ============================================================
-# DATE – TURBIDITY – CONDUCTIVITY SLICER
+# RAW WATER QUALITY SLICER (ERROR SAFE)
 # ============================================================
 
 st.subheader("📅 Raw Water Quality Selector")
 
-# ------------------------------------------------------------
-# LOAD EXCEL DATA
-# ------------------------------------------------------------
+# Load Excel
+history_df = pd.read_excel("plant_raw_water_history.xlsx")
 
-history_df = pd.read_excel("plant_raw_water_history.xlsx", sheet_name="RawWater")
+# Convert date safely
+history_df["Date"] = pd.to_datetime(history_df["Date"], dayfirst=True)
 
-# Combine Date + Time into datetime
-history_df["DateTime"] = pd.to_datetime(
-    history_df["Date"].astype(str) + " " + history_df["Time"].astype(str)
-)
+# If time column exists combine it
+if "Time" in history_df.columns:
 
-# Sort values
+    history_df["DateTime"] = pd.to_datetime(
+        history_df["Date"].astype(str) + " " + history_df["Time"].astype(str),
+        errors="coerce"
+    )
+
+else:
+
+    history_df["DateTime"] = history_df["Date"]
+
+# Drop invalid rows
+history_df = history_df.dropna(subset=["DateTime"])
+
+# Sort
 history_df = history_df.sort_values("DateTime")
 
 # ------------------------------------------------------------
-# DATE SLICER
+# SLICER
 # ------------------------------------------------------------
 
 selected_time = st.select_slider(
-    "Select Date & Time",
+    "Select Date",
     options=history_df["DateTime"],
     value=history_df["DateTime"].iloc[-1]
 )
 
-# ------------------------------------------------------------
-# EXTRACT SELECTED VALUES
-# ------------------------------------------------------------
+# Extract row
+row = history_df[history_df["DateTime"] == selected_time]
 
-selected_row = history_df[history_df["DateTime"] == selected_time]
+intake_turb = float(row["Turbidity (NTU)"].values[0])
+conductivity_today = float(row["Conductivity (µS/cm)"].values[0])
 
-intake_turb = float(selected_row["Turbidity (NTU)"].values[0])
-conductivity_today = float(selected_row["Conductivity (µS/cm)"].values[0])
-
-# ------------------------------------------------------------
-# DISPLAY CURRENT VALUES
-# ------------------------------------------------------------
-
-c1, c2, c3 = st.columns(3)
+# Display
+c1,c2,c3 = st.columns(3)
 
 c1.metric("Date", selected_time.strftime("%d-%b-%Y"))
-c2.metric("Raw Turbidity (NTU)", f"{intake_turb:.2f}")
-c3.metric("Conductivity (µS/cm)", f"{conductivity_today:.0f}")
-
-# ------------------------------------------------------------
-# TREND GRAPH
-# ------------------------------------------------------------
-
-fig_trend = go.Figure()
-
-fig_trend.add_trace(go.Scatter(
-    x=history_df["DateTime"],
-    y=history_df["Turbidity (NTU)"],
-    mode="lines",
-    name="Turbidity",
-    line=dict(color="cyan", width=3)
-))
-
-fig_trend.add_trace(go.Scatter(
-    x=history_df["DateTime"],
-    y=history_df["Conductivity (µS/cm)"],
-    mode="lines",
-    name="Conductivity",
-    yaxis="y2",
-    line=dict(color="orange", width=3)
-))
-
-fig_trend.update_layout(
-    template="plotly_dark",
-    title="Raw Water Quality Trend",
-    xaxis_title="Date",
-    yaxis_title="Turbidity (NTU)",
-    yaxis2=dict(
-        title="Conductivity (µS/cm)",
-        overlaying="y",
-        side="right"
-    ),
-    height=450
-)
-
-st.plotly_chart(fig_trend, use_container_width=True)
-
+c2.metric("Raw Turbidity", f"{intake_turb:.2f} NTU")
+c3.metric("Conductivity", f"{conductivity_today:.0f} µS/cm")
 # ===============================
 # GAUGE FUNCTION WITH ZONES
 # ===============================
