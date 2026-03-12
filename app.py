@@ -648,9 +648,9 @@ hypo_strength = 0.12 # 12%
 frc_range = np.linspace(0.2,1.0,100)
 
 # kg/day calculation
-bis_curve = (frc_range * flow * 1000) / hypo_strength
-who_curve = (frc_range * flow * 1050) / hypo_strength
-awwa_curve = (frc_range * flow * 1100) / hypo_strength
+bis_curve = (frc_range * flow * 1) / hypo_strength
+who_curve = (frc_range * flow * 1.05) / hypo_strength
+awwa_curve = (frc_range * flow * 1.1) / hypo_strength
 
 fig_hypo = go.Figure()
 
