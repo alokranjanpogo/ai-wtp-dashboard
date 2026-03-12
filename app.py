@@ -595,23 +595,19 @@ if lat_col and lon_col:
     st.plotly_chart(fig_map, use_container_width=True)
 
 # ===============================
-# WASHOUT GIS MAP
+# WASHOUT STATUS CLASSIFICATION
 # ===============================
 
-
-st.subheader("📍 Washout Monitoring GIS Map")
-
-# Read Excel File
+# Read excel
 washout = pd.read_excel("washout_monitoring_example.xlsx")
 
 # Convert date columns
 washout["Prev_Washout_Date"] = pd.to_datetime(washout["Prev_Washout_Date"])
 washout["Next_Due_Date"] = pd.to_datetime(washout["Next_Due_Date"])
 
-# Today's date
 today = pd.Timestamp.today()
 
-# Classification Logic
+# Status logic
 def classify(row):
 
     if row["Next_Due_Date"] < today:
@@ -623,54 +619,36 @@ def classify(row):
     else:
         return "OK"
 
-# Apply classification
 washout["Status"] = washout.apply(classify, axis=1)
 
-# Debug status count
-st.write("Washout Status Summary")
-st.write(washout["Status"].value_counts())
 
-# Column names used in your big code
-lat_col = "Latitude"
-lon_col = "Longitude"
-name_col = "Location"
-turb_col = "Turbidity"
-frc_col = "FRC"
-total_col = "Total_Coliform"
-ecoli_col = "Ecoli"
+# ===============================
+# GIS MAP
+# ===============================
 
-# Plot Map
 fig = px.scatter_mapbox(
     washout,
-    lat=lat_col,
-    lon=lon_col,
+    lat="Latitude",
+    lon="Longitude",
     color="Status",
     color_discrete_map={
         "OK": "green",
         "Due Soon": "yellow",
         "Overdue": "red"
     },
-    hover_name=name_col,
-    hover_data={
-        turb_col: True,
-        frc_col: True,
-        total_col: True,
-        ecoli_col: True,
-        "Prev_Washout_Date": True,
-        "Next_Due_Date": True,
-        "Status": True
-    },
+    hover_name="Location",
+    hover_data=[
+        "Prev_Washout_Date",
+        "Next_Due_Date",
+        "Status"
+    ],
     zoom=12,
     height=600
 )
 
-# Map Style
 fig.update_layout(mapbox_style="open-street-map")
-
-# Marker Size
 fig.update_traces(marker=dict(size=14))
 
-# Show Map
 st.plotly_chart(fig, use_container_width=True)
 # ===============================
 # SUMP LEVEL MONITORING
