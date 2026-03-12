@@ -539,6 +539,13 @@ fig_alum.add_trace(go.Scatter(
 ))
 
 fig_alum.add_trace(go.Scatter(
+    x=jar_turb,
+    y=jar_dose,
+    mode="lines+markers",
+    name="Jar Test (Lab)",
+    line=dict(color="red", width=4)
+))
+fig_alum.add_trace(go.Scatter(
     x=x_range,
     y=ai_curve,
     name="AI Recommended",
@@ -611,31 +618,38 @@ c3.metric("Chlorine Dose",f"{ai_chlorine:.2f} mg/L")
 
 frc_range = np.linspace(0.2,1.0,100)
 
-bis_curve = frc_range / hypo_strength
-who_curve = (frc_range*1.05) / hypo_strength
-awwa_curve = (frc_range*1.1) / hypo_strength
+flow_m3_day = 18000
+hypo_strength = 0.12
+
+# Convert FRC to hypo dose
+
+bis_curve = (frc_range * flow_m3_day) / (hypo_strength * 1000)
+
+who_curve = (frc_range * 1.1 * flow_m3_day) / (hypo_strength * 1000)
+
+awwa_curve = (frc_range * 1.2 * flow_m3_day) / (hypo_strength * 1000)
 
 fig_hypo = go.Figure()
 
 fig_hypo.add_trace(go.Scatter(
     x=frc_range,
     y=bis_curve,
-    name="BIS Chlorination",
-    line=dict(color="orange", width=3)
+    name="BIS Standard",
+    line=dict(color="orange",width=3)
 ))
 
 fig_hypo.add_trace(go.Scatter(
     x=frc_range,
     y=who_curve,
     name="WHO Guideline",
-    line=dict(color="green", width=3)
+    line=dict(color="green",width=3)
 ))
 
 fig_hypo.add_trace(go.Scatter(
     x=frc_range,
     y=awwa_curve,
     name="AWWA Practice",
-    line=dict(color="purple", width=3)
+    line=dict(color="purple",width=3)
 ))
 
 fig_hypo.add_trace(go.Scatter(
