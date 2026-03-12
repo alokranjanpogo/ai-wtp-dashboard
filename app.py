@@ -494,6 +494,25 @@ st.metric("Recommended PAC Dose",f"{pac_dose:.2f} mg/L")
 # ============================================================
 
 x_range = np.linspace(0,300,300)
+# ============================================================
+# EXTEND JAR TEST LINE (LAB)
+# ============================================================
+
+# interpolate within lab range
+jar_interp = np.interp(x_range, jar_turb, jar_dose)
+
+# slope from last two lab points
+slope = (jar_dose[-1] - jar_dose[-2]) / (jar_turb[-1] - jar_turb[-2])
+
+# extend beyond last turbidity value
+jar_extended = jar_dose[-1] + slope * (x_range - jar_turb[-1])
+
+# combine interpolation and extension
+jar_curve_plot = np.where(
+    x_range <= jar_turb[-1],
+    jar_interp,
+    jar_extended
+)
 
 jar_curve_plot = jar_curve(x_range)
 bis_curve = np.interp(x_range,std_turb,bis_dose)
@@ -510,9 +529,9 @@ ai_curve = (
 fig_alum = go.Figure()
 
 fig_alum.add_trace(go.Scatter(
-    x=jar_turb,
-    y=jar_dose,
-    mode="lines+markers",
+    x=x_range,
+    y=jar_curve_plot,
+    mode="lines",
     name="Jar Test (Lab)",
     line=dict(color="red", width=4)
 ))
@@ -618,17 +637,20 @@ c3.metric("Chlorine Dose",f"{ai_chlorine:.2f} mg/L")
 
 frc_range = np.linspace(0.2,1.0,100)
 
-flow_m3_day = 18000
-hypo_strength = 0.12
+# ============================================================
+# HYPOCHLORITE STANDARD CURVES
+# ============================================================
 
-# Convert FRC to hypo dose
+flow = 18000 # m3/day (18 MLD)
+hypo_strength = 0.12 # 12%
 
-bis_curve = (frc_range * flow_m3_day) / (hypo_strength * 1000)
+frc_range = np.linspace(0.2,1.0,100)
 
-who_curve = (frc_range * 1.1 * flow_m3_day) / (hypo_strength * 1000)
+# convert chlorine requirement to hypo kg/day
 
-awwa_curve = (frc_range * 1.2 * flow_m3_day) / (hypo_strength * 1000)
-
+bis_curve = (frc_range * flow) / hypo_strength
+who_curve = (frc_range * flow * 1.05) / hypo_strength
+awwa_curve = (frc_range * flow * 1.1) / hypo_strength
 fig_hypo = go.Figure()
 
 fig_hypo.add_trace(go.Scatter(
