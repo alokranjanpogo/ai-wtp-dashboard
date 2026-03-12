@@ -384,35 +384,28 @@ current_frc = float(consumer_frc)
 conductivity_today = 350
 
 # ============================================================
-# LOAD JAR TEST DATA (CRASH-PROOF)
-# ============================================================
-
-try:
-
-    # ============================================================
 # LOAD JAR TEST DATA (LAB)
 # ============================================================
 
-jar_df = pd.read_excel("DATASHEET.xlsx")
+try:
+    jar_df = pd.read_excel("DATASHEET.xlsx")
 
-# Convert to numeric
-jar_df.iloc[:,0] = pd.to_numeric(jar_df.iloc[:,0], errors="coerce")
-jar_df.iloc[:,1] = pd.to_numeric(jar_df.iloc[:,1], errors="coerce")
+    jar_df.iloc[:,0] = pd.to_numeric(jar_df.iloc[:,0], errors="coerce")
+    jar_df.iloc[:,1] = pd.to_numeric(jar_df.iloc[:,1], errors="coerce")
 
-# Remove invalid rows
-jar_df = jar_df.dropna()
+    jar_df = jar_df.dropna()
 
-jar_turb = jar_df.iloc[:,0].values
-jar_dose = jar_df.iloc[:,1].values
+    jar_turb = jar_df.iloc[:,0].values
+    jar_dose = jar_df.iloc[:,1].values
 
-# Sort turbidity
-sort_idx = np.argsort(jar_turb)
-jar_turb = jar_turb[sort_idx]
-jar_dose = jar_dose[sort_idx]
+    sort_idx = np.argsort(jar_turb)
+    jar_turb = jar_turb[sort_idx]
+    jar_dose = jar_dose[sort_idx]
+
 except:
-    jar_turb = np.array([])
-    jar_dose = np.array([])
-
+    jar_turb = np.array([5,10,20,40,80])
+    jar_dose = np.array([6,8,12,18,25])
+    
 # ------------------------------------------------------------
 # CREATE JAR CURVE
 # ------------------------------------------------------------
