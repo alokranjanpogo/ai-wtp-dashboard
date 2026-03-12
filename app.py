@@ -594,24 +594,17 @@ if lat_col and lon_col:
     fig_map.update_layout(mapbox_style="open-street-map")
     st.plotly_chart(fig_map, use_container_width=True)
 
-# ===============================
-# WASHOUT GIS MAP
-# ===============================
-
 import pandas as pd
 import plotly.express as px
 
-# Read your Excel file
 washout = pd.read_excel("Wahout_points.xlsx")
 
-# Convert date columns
-washout["Prv_Washout Date"] = pd.to_datetime(washout["Prv_Washout Date"])
-washout["Due_Washout Date"] = pd.to_datetime(washout["Due_Washout Date"])
+# Safe date conversion
+washout["Prv_Washout Date"] = pd.to_datetime(washout["Prv_Washout Date"], errors="coerce")
+washout["Due_Washout Date"] = pd.to_datetime(washout["Due_Washout Date"], errors="coerce")
 
-# Today date
 today = pd.Timestamp.today()
 
-# Status classification
 def classify(row):
 
     if row["Due_Washout Date"] < today:
@@ -625,7 +618,6 @@ def classify(row):
 
 washout["Status"] = washout.apply(classify, axis=1)
 
-# Plot GIS Map
 fig = px.scatter_mapbox(
     washout,
     lat="Lattitude",
