@@ -384,18 +384,28 @@ current_frc = float(consumer_frc)
 conductivity_today = 350
 
 # ============================================================
-# LOAD JAR TEST DATA
+# LOAD JAR TEST DATA (SAFE)
 # ============================================================
 
 jar_df = pd.read_excel("DATASHEET.xlsx")
 
-jar_turb = jar_df.iloc[:,0].values
-jar_dose = jar_df.iloc[:,1].values
+# Convert columns to numeric safely
+jar_df.iloc[:,0] = pd.to_numeric(jar_df.iloc[:,0], errors="coerce")
+jar_df.iloc[:,1] = pd.to_numeric(jar_df.iloc[:,1], errors="coerce")
 
+# Remove rows with invalid data
+jar_df = jar_df.dropna()
+
+# Extract arrays
+jar_turb = jar_df.iloc[:,0].values.astype(float)
+jar_dose = jar_df.iloc[:,1].values.astype(float)
+
+# Sort for safety
 sort_idx = np.argsort(jar_turb)
 jar_turb = jar_turb[sort_idx]
 jar_dose = jar_dose[sort_idx]
 
+# Polynomial curve
 jar_poly = np.polyfit(jar_turb, jar_dose, 2)
 jar_curve = np.poly1d(jar_poly)
 
