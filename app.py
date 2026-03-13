@@ -157,13 +157,15 @@ else:
 # PRODUCTION
 # ===============================
 st.subheader("🏭 TOTAL WATER PRODUCTION")
-production_mld = 18-23
-production_m3_hr = production_mld*1000/16.5
-production_lps = production_m3_hr*1000/3600
+
+production_mld = 18 # value can vary between 18–23
+production_m3_hr = 1100
+production_lps = production_m3_hr * 1000 / 3600
 
 colp = st.columns(3)
-colp[0].metric("Production (MLD)",production_mld)
-colp[1].metric("Flow (m³/hr)",f"{production_m3_hr:.0f}")
+colp[0].metric("Production (MLD)", production_mld)
+colp[1].metric("Flow (m³/hr)", f"{production_m3_hr:.0f}")
+colp[2].metric("Flow (LPS)", f"{production_lps:.0f}")
 
 # ============================================================
 # RAW WATER QUALITY SLICER (ERROR SAFE)
