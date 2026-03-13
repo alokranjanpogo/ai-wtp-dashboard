@@ -9,7 +9,7 @@ from streamlit_autorefresh import st_autorefresh
 # ===============================
 # AUTO REFRESH
 # ===============================
-st_autorefresh(interval=3000, key="scada_refresh")
+st_autorefresh(interval=9000, key="scada_refresh")
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
 st.markdown("""
@@ -157,8 +157,8 @@ else:
 # PRODUCTION
 # ===============================
 st.subheader("🏭 TOTAL WATER PRODUCTION")
-production_mld = 18
-production_m3_hr = production_mld*1000/24
+production_mld = 18-23
+production_m3_hr = production_mld*1000/16.5
 production_lps = production_m3_hr*1000/3600
 
 colp = st.columns(3)
