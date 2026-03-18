@@ -818,57 +818,46 @@ for i in range(6):
     tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
 
 # ===============================
-# 🤖 AI FEEDBACK & LEARNING MODULE
+# 🤖 AI FEEDBACK + LIVE WEATHER + LEARNING SYSTEM
 # ===============================
 
-import streamlit as st
 import pandas as pd
 import requests
 from datetime import datetime
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import LabelEncoder
-
-st.markdown("## 🤖 AI Feedback & Learning System")
-
-# ===============================
-# INPUT SECTION
-# ===============================
-col1, col2 = st.columns(2)
-
-with col1:
-    dose = st.slider("Dose Applied (mg/L)", 0.0, 100.0, 10.0)
-    final_turbidity = st.number_input("Final Turbidity at Plant End (NTU)", 0.0, 50.0, 1.0)
-    frc = st.number_input("Final Residual Chlorine (mg/L)", 0.0, 5.0, 0.5)
-
-with col2:
-    raw_turbidity = st.number_input("Raw Water Turbidity (NTU)", 0.0, 500.0, 50.0)
-
-submit = st.button("Submit Feedback")
+import streamlit as st
 
 # ===============================
-# WEATHER FUNCTION
+# 🌦 WEATHER FUNCTION (AUTO UPDATE)
 # ===============================
+@st.cache_data(ttl=30)
 def get_weather():
     try:
-        API_KEY = "your_api_key_here" # 🔴 Replace with your API key
+        API_KEY = "your_actual_api_key" # 🔴 PUT YOUR API KEY
         city = "Jamshedpur"
         
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
         data = requests.get(url).json()
-        
-        weather = data['weather'][0]['main']
-        
-        if weather in ["Rain", "Drizzle", "Thunderstorm"]:
-            return "Rainy"
-        elif weather in ["Clouds"]:
-            return "Cloudy"
+
+        weather_main = data['weather'][0]['main']
+        temp = data['main']['temp']
+
+        if weather_main in ["Rain", "Drizzle", "Thunderstorm"]:
+            condition = "Rainy"
+        elif weather_main in ["Clouds"]:
+            condition = "Cloudy"
         else:
-            return "Clear"
+            condition = "Clear"
+
+        return condition, temp
+
     except:
-        return "Unknown"
+        return "Unknown", 0
+
 
 # ===============================
-# SAVE DATA FUNCTION
+# 💾 SAVE FEEDBACK
 # ===============================
 def save_feedback(dose, raw_ntu, final_ntu, frc, weather, status):
     
@@ -887,87 +876,159 @@ def save_feedback(dose, raw_ntu, final_ntu, frc, weather, status):
     except:
         df.to_csv("feedback_data.csv", index=False)
 
+
 # ===============================
-# TRAIN MODEL
+# 🧠 ADVANCED MODEL TRAINING
 # ===============================
 def train_model():
     try:
         df = pd.read_csv("feedback_data.csv")
-        
-        if len(df) < 5:
-            return None, None
-        
+
+        if len(df) < 10:
+            return None, None, None
+
+        # Encode weather
         le = LabelEncoder()
         df['Weather_encoded'] = le.fit_transform(df['Weather'])
-        
-        X = df[['Dose', 'Raw_NTU', 'Weather_encoded']]
+
+        # Weighted learning (important)
+        df['Weight'] = df['Status'].apply(lambda x: 2 if x=="Achieved" else 1)
+
+        # Features
+        X = df[['Dose', 'Raw_NTU', 'FRC', 'Weather_encoded']]
         y = df['Final_NTU']
-        
-        model = RandomForestRegressor(n_estimators=50)
-        model.fit(X, y)
-        
-        return model, le
-    
+
+        model = GradientBoostingRegressor()
+        model.fit(X, y, sample_weight=df['Weight'])
+
+        return model, le, df
+
     except:
-        return None, None
+        return None, None, None
+
 
 # ===============================
-# GENERATE REMARK
+# 🤖 AI DECISION ENGINE
 # ===============================
-def generate_remark(dose, raw_ntu, weather, model, le):
-    
+def generate_remark(dose, raw_ntu, frc, weather, model, le):
+
     if model is None:
-        return "⚠️ Not enough data yet. System is learning..."
-    
+        return "⚠️ Learning in progress (need more data)"
+
     weather_encoded = le.transform([weather])[0]
-    
-    predicted_ntu = model.predict([[dose, raw_ntu, weather_encoded]])[0]
-    
-    if predicted_ntu < 1:
-        return f"✅ Predicted NTU: {round(predicted_ntu,2)} → Dose is optimal"
-    
+
+    predicted_ntu = model.predict([[dose, raw_ntu, frc, weather_encoded]])[0]
+
+    if predicted_ntu < 1 and frc >= 0.2:
+        return f"✅ Predicted NTU: {round(predicted_ntu,2)} → Optimal dosing"
+
+    elif predicted_ntu >= 1 and weather == "Rainy":
+        new_dose = dose * 1.2
+        return f"🌧 Rain impact → Increase dose to ~{round(new_dose,2)} mg/L"
+
     elif predicted_ntu >= 1:
-        suggested_dose = dose * 1.15
-        return f"⚠️ Predicted NTU: {round(predicted_ntu,2)} → Increase dose to ~{round(suggested_dose,2)} mg/L"
-    
+        new_dose = dose * 1.1
+        return f"⚠️ Underdosing → Increase to ~{round(new_dose,2)} mg/L"
+
+    elif frc < 0.2:
+        return "⚠️ Low FRC → Increase chlorine dosing"
+
     else:
         return "✔️ Stable condition"
 
+
 # ===============================
-# MAIN EXECUTION
+# 🎛 UI SECTION (AFTER HYPO GRAPH)
+# ===============================
+st.markdown("## 🤖 AI Feedback & Learning System")
+
+left_col, right_col = st.columns([2,1])
+
+# ===============================
+# LEFT SIDE → FEEDBACK INPUT
+# ===============================
+with left_col:
+    col1, col2 = st.columns(2)
+
+    with col1:
+        dose = st.slider("Dose Applied (mg/L)", 0.0, 100.0, 10.0)
+        final_turbidity = st.number_input("Final Turbidity (NTU)", 0.0, 50.0, 1.0)
+        frc = st.number_input("Final Residual Chlorine (mg/L)", 0.0, 5.0, 0.5)
+
+    with col2:
+        raw_turbidity = st.number_input("Raw Water Turbidity (NTU)", 0.0, 500.0, 50.0)
+
+    submit = st.button("Submit Feedback")
+
+# ===============================
+# RIGHT SIDE → LIVE WEATHER (AUTO)
+# ===============================
+@st.experimental_fragment(run_every="30s")
+def weather_panel():
+    condition, temp = get_weather()
+
+    st.metric("🌡 Temp (°C)", f"{temp}")
+
+    if condition == "Rainy":
+        st.error("🌧 Rainy → High turbidity expected")
+    elif condition == "Cloudy":
+        st.warning("☁️ Cloudy → Moderate condition")
+    elif condition == "Clear":
+        st.success("☀️ Clear → Stable condition")
+    else:
+        st.info("Fetching weather...")
+
+with right_col:
+    st.markdown("### 🌦 Live Weather")
+    weather_panel()
+
+
+# ===============================
+# 🚀 MAIN EXECUTION
 # ===============================
 if submit:
-    
-    weather = get_weather()
-    
-    # Target logic (Turbidity + FRC both important)
+
+    weather, _ = get_weather()
+
+    # Target condition
     if final_turbidity < 1 and frc >= 0.2:
         status = "Achieved"
     else:
         status = "Not Achieved"
-    
+
     # Save feedback
     save_feedback(dose, raw_turbidity, final_turbidity, frc, weather, status)
-    
+
     # Train model
-    model, le = train_model()
-    
-    # Generate AI remark
-    remark = generate_remark(dose, raw_turbidity, weather, model, le)
-    
+    model, le, df = train_model()
+
+    # Generate remark
+    remark = generate_remark(dose, raw_turbidity, frc, weather, model, le)
+
     # ===============================
-    # OUTPUT SECTION
+    # 📊 OUTPUT
     # ===============================
     st.markdown("### 📊 AI Analysis Result")
-    
+
     col3, col4, col5 = st.columns(3)
-    
+
     col3.metric("Status", status)
     col4.metric("Weather", weather)
     col5.metric("Final NTU", round(final_turbidity,2))
-    
+
     st.info(f"💧 FRC: {frc} mg/L")
     st.warning(remark)
+
+    # Model confidence
+    if df is not None:
+        X = df[['Dose','Raw_NTU','FRC','Weather_encoded']]
+        y = df['Final_NTU']
+        confidence = model.score(X,y)
+        st.success(f"🧠 Model Confidence: {round(confidence*100,1)}%")
+
+    # Learning message
+    if df is None or len(df) < 10:
+        st.info("📚 System is learning... Add more feedback")
 
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
