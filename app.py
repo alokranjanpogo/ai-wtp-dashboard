@@ -830,16 +830,25 @@ from streamlit_autorefresh import st_autorefresh
 import streamlit as st
 
 # ===============================
-# 🌦 WEATHER FUNCTION
+# 🌦 WEATHER FUNCTION (FIXED)
 # ===============================
 @st.cache_data(ttl=30)
 def get_weather():
     try:
-        API_KEY = "your_actual_api_key" # 🔴 PUT YOUR API KEY
+        API_KEY = "your_actual_api_key" # 🔴 PUT YOUR API KEY HERE
         city = "Jamshedpur"
         
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
-        data = requests.get(url).json()
+        
+        response = requests.get(url, timeout=5)
+
+        if response.status_code != 200:
+            return "API Error", 0
+        
+        data = response.json()
+
+        if "weather" not in data or "main" not in data:
+            return "No Data", 0
 
         weather_main = data['weather'][0]['main']
         temp = data['main']['temp']
@@ -848,13 +857,15 @@ def get_weather():
             condition = "Rainy"
         elif weather_main in ["Clouds"]:
             condition = "Cloudy"
-        else:
+        elif weather_main in ["Clear"]:
             condition = "Clear"
+        else:
+            condition = weather_main
 
         return condition, temp
 
-    except:
-        return "Unknown", 0
+    except Exception as e:
+        return "Error", 0
 
 
 # ===============================
@@ -879,7 +890,7 @@ def save_feedback(dose, raw_ntu, final_ntu, frc, weather, status):
 
 
 # ===============================
-# 🧠 MODEL TRAINING
+# 🧠 MODEL TRAINING (ADVANCED)
 # ===============================
 def train_model():
     try:
@@ -936,7 +947,7 @@ def generate_remark(dose, raw_ntu, frc, weather, model, le):
 
 
 # ===============================
-# 🔄 AUTO REFRESH (30 sec)
+# 🔄 AUTO REFRESH
 # ===============================
 st_autorefresh(interval=30000, key="weather_refresh")
 
@@ -948,9 +959,7 @@ st.markdown("## 🤖 AI Feedback & Learning System")
 
 left_col, right_col = st.columns([2,1])
 
-# ===============================
 # LEFT SIDE → INPUT
-# ===============================
 with left_col:
     col1, col2 = st.columns(2)
 
@@ -964,24 +973,25 @@ with left_col:
 
     submit = st.button("Submit Feedback")
 
-# ===============================
 # RIGHT SIDE → WEATHER
-# ===============================
 with right_col:
     st.markdown("### 🌦 Live Weather")
 
     condition, temp = get_weather()
 
-    st.metric("🌡 Temp (°C)", f"{temp}")
-
-    if condition == "Rainy":
-        st.error("🌧 Rainy → High turbidity expected")
-    elif condition == "Cloudy":
-        st.warning("☁️ Cloudy → Moderate condition")
-    elif condition == "Clear":
-        st.success("☀️ Clear → Stable condition")
+    if condition in ["Error", "API Error", "No Data"]:
+        st.error("⚠️ Weather not loading (Check API / Internet)")
     else:
-        st.info("Fetching weather...")
+        st.metric("🌡 Temp (°C)", f"{round(temp,1)}")
+
+        if condition == "Rainy":
+            st.error("🌧 Rainy → High turbidity expected")
+        elif condition == "Cloudy":
+            st.warning("☁️ Cloudy → Moderate condition")
+        elif condition == "Clear":
+            st.success("☀️ Clear → Stable condition")
+        else:
+            st.info(condition)
 
 
 # ===============================
@@ -1021,7 +1031,6 @@ if submit:
 
     if df is None or len(df) < 10:
         st.info("📚 System is learning... Add more feedback")
-
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
 # ===============================
