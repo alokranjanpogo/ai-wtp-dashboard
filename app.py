@@ -826,10 +826,11 @@ import requests
 from datetime import datetime
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import LabelEncoder
+from streamlit_autorefresh import st_autorefresh
 import streamlit as st
 
 # ===============================
-# 🌦 WEATHER FUNCTION (AUTO UPDATE)
+# 🌦 WEATHER FUNCTION
 # ===============================
 @st.cache_data(ttl=30)
 def get_weather():
@@ -878,7 +879,7 @@ def save_feedback(dose, raw_ntu, final_ntu, frc, weather, status):
 
 
 # ===============================
-# 🧠 ADVANCED MODEL TRAINING
+# 🧠 MODEL TRAINING
 # ===============================
 def train_model():
     try:
@@ -887,14 +888,11 @@ def train_model():
         if len(df) < 10:
             return None, None, None
 
-        # Encode weather
         le = LabelEncoder()
         df['Weather_encoded'] = le.fit_transform(df['Weather'])
 
-        # Weighted learning (important)
         df['Weight'] = df['Status'].apply(lambda x: 2 if x=="Achieved" else 1)
 
-        # Features
         X = df[['Dose', 'Raw_NTU', 'FRC', 'Weather_encoded']]
         y = df['Final_NTU']
 
@@ -908,7 +906,7 @@ def train_model():
 
 
 # ===============================
-# 🤖 AI DECISION ENGINE
+# 🤖 AI DECISION
 # ===============================
 def generate_remark(dose, raw_ntu, frc, weather, model, le):
 
@@ -938,14 +936,20 @@ def generate_remark(dose, raw_ntu, frc, weather, model, le):
 
 
 # ===============================
-# 🎛 UI SECTION (AFTER HYPO GRAPH)
+# 🔄 AUTO REFRESH (30 sec)
+# ===============================
+st_autorefresh(interval=30000, key="weather_refresh")
+
+
+# ===============================
+# 🎛 UI SECTION
 # ===============================
 st.markdown("## 🤖 AI Feedback & Learning System")
 
 left_col, right_col = st.columns([2,1])
 
 # ===============================
-# LEFT SIDE → FEEDBACK INPUT
+# LEFT SIDE → INPUT
 # ===============================
 with left_col:
     col1, col2 = st.columns(2)
@@ -961,10 +965,11 @@ with left_col:
     submit = st.button("Submit Feedback")
 
 # ===============================
-# RIGHT SIDE → LIVE WEATHER (AUTO)
+# RIGHT SIDE → WEATHER
 # ===============================
-@st.experimental_fragment(run_every="30s")
-def weather_panel():
+with right_col:
+    st.markdown("### 🌦 Live Weather")
+
     condition, temp = get_weather()
 
     st.metric("🌡 Temp (°C)", f"{temp}")
@@ -978,10 +983,6 @@ def weather_panel():
     else:
         st.info("Fetching weather...")
 
-with right_col:
-    st.markdown("### 🌦 Live Weather")
-    weather_panel()
-
 
 # ===============================
 # 🚀 MAIN EXECUTION
@@ -990,24 +991,17 @@ if submit:
 
     weather, _ = get_weather()
 
-    # Target condition
     if final_turbidity < 1 and frc >= 0.2:
         status = "Achieved"
     else:
         status = "Not Achieved"
 
-    # Save feedback
     save_feedback(dose, raw_turbidity, final_turbidity, frc, weather, status)
 
-    # Train model
     model, le, df = train_model()
 
-    # Generate remark
     remark = generate_remark(dose, raw_turbidity, frc, weather, model, le)
 
-    # ===============================
-    # 📊 OUTPUT
-    # ===============================
     st.markdown("### 📊 AI Analysis Result")
 
     col3, col4, col5 = st.columns(3)
@@ -1019,14 +1013,12 @@ if submit:
     st.info(f"💧 FRC: {frc} mg/L")
     st.warning(remark)
 
-    # Model confidence
     if df is not None:
         X = df[['Dose','Raw_NTU','FRC','Weather_encoded']]
         y = df['Final_NTU']
         confidence = model.score(X,y)
         st.success(f"🧠 Model Confidence: {round(confidence*100,1)}%")
 
-    # Learning message
     if df is None or len(df) < 10:
         st.info("📚 System is learning... Add more feedback")
 
