@@ -769,41 +769,35 @@ from sklearn.preprocessing import LabelEncoder
 from streamlit_autorefresh import st_autorefresh
 import streamlit as st
 
-@st.cache_data(ttl=60)
-def get_weather():
-    try:
-        API_KEY = "your_actual_api_key" # 🔴 MUST be correct
-        city = "Jamshedpur"
+import requests
+import streamlit as st
 
-        # ✅ USE HTTPS (IMPORTANT FIX)
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
+st.subheader("🌦️ Live Weather")
 
-        response = requests.get(url, timeout=5)
+API_KEY = "your_api_key_here" # <-- put your API key
+CITY = "Jamshedpur"
 
-        # DEBUG PRINT
-        # st.write(response.text)
+try:
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}&units=metric"
+    response = requests.get(url, timeout=5)
 
-        if response.status_code != 200:
-            return "API Error", 0
-
+    if response.status_code == 200:
         data = response.json()
 
-        weather_main = data.get('weather', [{}])[0].get('main', 'Unknown')
-        temp = data.get('main', {}).get('temp', 0)
+        temp = data["main"]["temp"]
+        humidity = data["main"]["humidity"]
+        condition = data["weather"][0]["description"]
 
-        if weather_main in ["Rain", "Drizzle", "Thunderstorm"]:
-            condition = "Rainy"
-        elif weather_main in ["Clouds"]:
-            condition = "Cloudy"
-        elif weather_main == "Clear":
-            condition = "Clear"
-        else:
-            condition = weather_main
+        st.success(f"📍 {CITY}")
+        st.metric("🌡️ Temperature (°C)", temp)
+        st.metric("💧 Humidity (%)", humidity)
+        st.write(f"🌥️ Condition: {condition}")
 
-        return condition, temp
+    else:
+        st.error("⚠️ Weather API Error")
 
-    except Exception as e:
-        return "Error", 0
+except:
+    st.warning("⚠️ Weather not loading (Check API / Internet)")
 
 # ===============================
 # 💾 SAVE FEEDBACK
