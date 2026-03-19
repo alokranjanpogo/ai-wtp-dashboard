@@ -595,90 +595,33 @@ st.caption(
 "CPHEEO Manual on Water Supply, and AWWA Water Treatment Practice."
 )
 # ============================================================
-# HYPOCHLORITE DOSING MODEL
-# ============================================================
-
-st.subheader("AI Sodium Hypochlorite Dosage")
-
-production_MLD = 18
-flow_m3_day = production_MLD*1000
-
-hypo_strength = 0.12
-plant_hypo_kg = 775
-
-chlorine_dose = (plant_hypo_kg*hypo_strength*1000)/flow_m3_day
-
-bis_frc = 0.2
-who_frc = 0.5
-awwa_frc = 0.6
-
-base_demand = chlorine_dose - 0.5
-
-ai_chlorine = base_demand + who_frc
-ai_hypo_mgL = ai_chlorine/hypo_strength
-ai_hypo_kg_day = (ai_hypo_mgL*flow_m3_day)/1000
-
-c1,c2,c3 = st.columns(3)
-
-c1.metric("Plant Hypo Dose",f"{plant_hypo_kg} kg/day")
-c2.metric("AI Hypo Dose",f"{ai_hypo_kg_day:,.0f} kg/day")
-c3.metric("Chlorine Dose",f"{ai_chlorine:.2f} mg/L")
-
-# ============================================================
-# AI SODIUM HYPOCHLORITE DOSING (PLANT BASED GRAPH)
-# ============================================================
-
-st.subheader("AI Hypochlorite Dosing Recommendation")
-
-# ------------------------------------------------------------
-# PLANT PARAMETERS
-# ------------------------------------------------------------
-
-max_flow_MLD = 23
-flow_m3_day = max_flow_MLD * 1000 # convert to m3/day
-hypo_strength = 0.12 # 12% available chlorine
-
-# plant current operation
-plant_hypo_kg = 800 # kg/day
-current_frc = consumer_frc # measured FRC
-
-# ------------------------------------------------------------
-# FRC RANGE
-# ------------------------------------------------------------
-
-frc_range = np.linspace(0.2,1.0,100)
-
-# ------------------------------------------------------------
-# STANDARD CURVES (kg/day)
-# ------------------------------------------------------------
-
-bis_curve = (frc_range * flow_m3_day) / (hypo_strength * 1000)
-
-who_curve = (frc_range * flow_m3_day * 1.05) / (hypo_strength * 1000)
-
-awwa_curve = (frc_range * flow_m3_day * 1.1) / (hypo_strength * 1000)
-
-
-# ============================================================
-# DYNAMIC HYPOCHLORITE DOSING MODEL
+# CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
 # ============================================================
 
 st.subheader("Dynamic Hypochlorite Dose vs Residual Chlorine")
 
-# -----------------------------
-# PLANT PARAMETERS
-# -----------------------------
+import numpy as np
+import plotly.graph_objects as go
 
-flow_MLD = 23
-flow_m3_day = flow_MLD * 1000
+# -----------------------------
+# FIXED PARAMETERS
+# -----------------------------
+operation_hours = 16.5
 hypo_strength = 0.12
 
 # -----------------------------
-# SLICERS (PARAMETERS)
+# SLICERS
 # -----------------------------
 
+flow_m3_hr = st.slider(
+    "Flow Rate (m³/hr)",
+    500,1500,1100,50
+)
+
+flow_m3_day = flow_m3_hr * operation_hours
+
 frc_selected = st.slider(
-    "Select Free Residual Chlorine (ppm)",
+    "Free Residual Chlorine (ppm)",
     0.2,1.0,0.5,0.05
 )
 
@@ -692,32 +635,40 @@ conductivity = st.slider(
     200,600,350,10
 )
 
+pH = st.slider(
+    "pH",
+    6.0,9.0,7.2,0.1
+)
+
 # -----------------------------
-# CHLORINE DEMAND MODEL
+# STANDARD SELECTION
 # -----------------------------
 
-base_demand = 3
+standards = st.multiselect(
+    "Select Standards to Display",
+    ["BIS", "WHO", "AWWA"],
+    default=["WHO","BIS"]
+)
+
+# -----------------------------
+# CHLORINE DEMAND MODEL (REALISTIC)
+# -----------------------------
+
+base_demand = 2.5
 
 nitrite_effect = nitrite * 1.5
-conductivity_effect = (conductivity-300)/200
+conductivity_effect = (conductivity - 300)/250
+ph_effect = (pH - 7.0) * 0.8
 
-chlorine_demand = base_demand + nitrite_effect + conductivity_effect
+chlorine_demand = base_demand + nitrite_effect + conductivity_effect + ph_effect
 
 # -----------------------------
-# FRC RANGE FOR GRAPH
+# SINGLE CURVE (CORRECT)
 # -----------------------------
 
 frc_range = np.linspace(0.2,1.0,100)
 
-# -----------------------------
-# STANDARD CURVES
-# -----------------------------
-
-bis_curve = ((chlorine_demand + frc_range) * flow_m3_day) / (hypo_strength*1000)
-
-who_curve = ((chlorine_demand + frc_range)*1.05 * flow_m3_day) / (hypo_strength*1000)
-
-awwa_curve = ((chlorine_demand + frc_range)*1.1 * flow_m3_day) / (hypo_strength*1000)
+dose_curve = ((chlorine_demand + frc_range) * flow_m3_day) / (hypo_strength*1000)
 
 # -----------------------------
 # GRAPH
@@ -725,26 +676,29 @@ awwa_curve = ((chlorine_demand + frc_range)*1.1 * flow_m3_day) / (hypo_strength*
 
 fig_hypo = go.Figure()
 
+# MAIN SINGLE CURVE
 fig_hypo.add_trace(go.Scatter(
     x=frc_range,
-    y=bis_curve,
-    name="BIS Standard",
-    line=dict(color="orange",width=3)
+    y=dose_curve,
+    name="Dose Curve (Demand + Residual)",
+    line=dict(color="cyan", width=4)
 ))
 
-fig_hypo.add_trace(go.Scatter(
-    x=frc_range,
-    y=who_curve,
-    name="WHO Guideline",
-    line=dict(color="green",width=3)
-))
+# -----------------------------
+# STANDARD LINES (CORRECT WAY)
+# -----------------------------
 
-fig_hypo.add_trace(go.Scatter(
-    x=frc_range,
-    y=awwa_curve,
-    name="AWWA Practice",
-    line=dict(color="purple",width=3)
-))
+if "BIS" in standards:
+    fig_hypo.add_vline(x=0.5, line_dash="dash", line_color="orange",
+                       annotation_text="BIS (0.5 mg/L)")
+
+if "WHO" in standards:
+    fig_hypo.add_vline(x=0.5, line_dash="dot", line_color="green",
+                       annotation_text="WHO (0.2–0.5 mg/L)")
+
+if "AWWA" in standards:
+    fig_hypo.add_vline(x=0.6, line_dash="dashdot", line_color="purple",
+                       annotation_text="AWWA (0.6 mg/L)")
 
 # -----------------------------
 # CURRENT OPERATING POINT
@@ -756,59 +710,45 @@ fig_hypo.add_trace(go.Scatter(
     x=[frc_selected],
     y=[dose_selected],
     mode="markers",
-    marker=dict(size=14,color="yellow"),
+    marker=dict(size=14, color="yellow"),
     name="Selected Condition"
 ))
 
+# -----------------------------
+# GRAPH LAYOUT
+# -----------------------------
+
 fig_hypo.update_layout(
     template="plotly_dark",
-    title="Hypochlorite Dose vs Residual Chlorine",
+    title="Hypochlorite Dose vs Residual Chlorine (Correct Model)",
     xaxis_title="Free Residual Chlorine (ppm)",
     yaxis_title="NaOCl Dose (kg/day)",
-    yaxis=dict(range=[0,1000])
-)
-
-st.plotly_chart(fig_hypo,use_container_width=True)
-st.subheader("Chlorination Recommendation")
-
-if current_frc < 0.2:
-    st.error("🔴 Residual chlorine below safe limit. Increase hypochlorite dosing.")
-
-elif current_frc > 1:
-    st.warning("🟡 Chlorine level too high. Reduce dosing.")
-
-else:
-    st.success("🟢 Residual chlorine within recommended range.")
-
-# ------------------------------------------------------------
-# LAYOUT
-# ------------------------------------------------------------
-
-fig_hypo.update_layout(
-    template="plotly_dark",
-    title="Hypochlorite Dose vs Residual Chlorine",
-    xaxis_title="Free Residual Chlorine (ppm)",
-    yaxis_title="Hypochlorite Dose (kg/day)",
-    yaxis=dict(range=[0,1000]), # scale for your plant
-    height=450
+    height=500
 )
 
 st.plotly_chart(fig_hypo, use_container_width=True)
 
-# ------------------------------------------------------------
+# -----------------------------
 # RECOMMENDATION
-# ------------------------------------------------------------
+# -----------------------------
 
 st.subheader("Chlorination Recommendation")
 
-if current_frc < 0.2:
-    st.error("🔴 Residual chlorine below safe limit. Increase hypochlorite dosing.")
+if frc_selected < 0.2:
+    st.error("🔴 Below safe limit (WHO/BIS). Increase dosing.")
 
-elif current_frc > 1:
-    st.warning("🟡 Chlorine level too high. Reduce dosing.")
+elif frc_selected > 0.8:
+    st.warning("🟡 Too high. Risk of taste/odor issues.")
 
 else:
-    st.success("🟢 Residual chlorine within recommended range.")
+    st.success("🟢 Within acceptable disinfection range.")
+
+# -----------------------------
+# OUTPUT METRICS
+# -----------------------------
+
+st.metric("Required Hypo Dose", f"{dose_selected:,.0f} kg/day")
+st.metric("Chlorine Demand", f"{chlorine_demand:.2f} mg/L")
 # WATER TOWERS
 # ===============================
 st.subheader("🗼 Distribution Water Towers")
