@@ -431,13 +431,7 @@ st.info(f"""
 👉 Status confirms compliance with water quality standard.
 """)
 
-# ===============================
-# OPTIONAL TREND PLACEHOLDER
-# ===============================
 
-st.markdown("### 📈 Future Scope")
-
-st.write("You can add time-series data here for trend analysis (PI vs Time).")
 # ============================================================
 # PREVIOUS 4 DAYS TURBIDITY TREND
 # ============================================================
