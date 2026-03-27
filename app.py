@@ -304,6 +304,140 @@ for i in range(6):
     fc[i].write(f"Removal Efficiency: {filter_eff_list[i]*100:.1f}%")
     fc[i].write(f"Status: {filter_status_list[i]}")
 
+import streamlit as st
+
+# ===============================
+# FUNCTIONS
+# ===============================
+
+def calculate_efficiency(t_in, t_out):
+    if t_in == 0:
+        return 0
+    return ((t_in - t_out) / t_in) * 100
+
+
+def get_limit(unit_type):
+    return 15 if unit_type == "Clarifier" else 1
+
+
+def performance_index(t_out, limit):
+    if t_out == 0:
+        return float('inf')
+    return limit / t_out
+
+
+def performance_status(t_out, limit):
+    return "OK" if t_out <= limit else "NOT OK"
+
+
+def performance_grade(pi):
+    if pi >= 1.5:
+        return "Excellent"
+    elif pi >= 1.0:
+        return "Good"
+    elif pi >= 0.7:
+        return "Average"
+    else:
+        return "Poor"
+
+
+def get_color(status, pi):
+    if status == "NOT OK":
+        return "red"
+    elif pi >= 1.5:
+        return "green"
+    elif pi >= 1.0:
+        return "orange"
+    else:
+        return "red"
+
+
+# ===============================
+# STREAMLIT UI
+# ===============================
+
+st.set_page_config(page_title="Water Treatment Performance", layout="wide")
+
+st.title("💧 Water Treatment Performance Dashboard")
+
+st.markdown("### 🏭 Unit Selection")
+
+unit_type = st.selectbox("Select Unit", ["Clarifier", "Filter Bed"])
+
+# Inputs
+st.markdown("### 📥 Input Parameters")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    t_in = st.number_input("Inlet Turbidity (NTU)", min_value=0.0, value=100.0)
+
+with col2:
+    t_out = st.number_input("Outlet Turbidity (NTU)", min_value=0.0, value=10.0)
+
+# ===============================
+# CALCULATIONS
+# ===============================
+
+limit = get_limit(unit_type)
+
+eff = calculate_efficiency(t_in, t_out)
+pi = performance_index(t_out, limit)
+status = performance_status(t_out, limit)
+grade = performance_grade(pi)
+color = get_color(status, pi)
+
+# ===============================
+# DISPLAY METRICS
+# ===============================
+
+st.markdown("### 📊 Performance Results")
+
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric("Efficiency (%)", f"{eff:.2f}")
+col2.metric("Performance Index", f"{pi:.2f}")
+col3.metric("Status", status)
+col4.metric("Grade", grade)
+
+# ===============================
+# VISUAL INDICATOR
+# ===============================
+
+st.markdown("### 🚦 Performance Indicator")
+
+if color == "green":
+    st.success("Excellent Performance ✅")
+elif color == "orange":
+    st.warning("Moderate Performance ⚠️")
+else:
+    st.error("Poor Performance ❌")
+
+# ===============================
+# INTERPRETATION BOX
+# ===============================
+
+st.markdown("### 🧠 Interpretation")
+
+st.info(f"""
+- **Unit Selected:** {unit_type}  
+- **Standard Limit:** {limit} NTU  
+- **Performance Index (PI):** {pi:.2f}  
+
+👉 PI > 1 → Within standard  
+👉 PI < 1 → Exceeds standard  
+
+👉 Efficiency shows removal performance,  
+👉 Status confirms compliance with water quality standard.
+""")
+
+# ===============================
+# OPTIONAL TREND PLACEHOLDER
+# ===============================
+
+st.markdown("### 📈 Future Scope")
+
+st.write("You can add time-series data here for trend analysis (PI vs Time).")
 # ============================================================
 # PREVIOUS 4 DAYS TURBIDITY TREND
 # ============================================================
