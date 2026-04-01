@@ -6,4 +6,6 @@ plotly
 openpyxl
 streamlit-autorefresh
 ultralytics
-
+opencv-python-headless
+torch
+torchvision
