@@ -1253,5 +1253,107 @@ fig_sump.update_layout(height=350, paper_bgcolor="#050A18")
 st.plotly_chart(fig_sump, use_container_width=True)
 
 st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Production")
+# ==============================
+# 🌊 AI INTAKE DEBRIS MODULE
+# ==============================
 
+from ultralytics import YOLO
+from PIL import Image
+
+@st.cache_resource
+def load_model():
+    return YOLO("best.pt")
+
+debris_model = load_model()
+
+st.markdown("---")
+st.header("🌊 AI Intake Monitoring System")
+
+uploaded_img = st.file_uploader("Upload Intake Image", type=["jpg","png","jpeg"], key="intake")
+
+if uploaded_img:
+    img = Image.open(uploaded_img)
+    st.image(img, caption="Intake Image", use_container_width=True)
+
+    if st.button("🔍 Run AI Analysis"):
+
+        results = debris_model(img)
+
+        detected = []
+        total_area = 0
+
+        for r in results:
+            if r.boxes is not None:
+                for box in r.boxes:
+                    label = r.names[int(box.cls[0])]
+                    detected.append(label)
+
+                    x1, y1, x2, y2 = box.xyxy[0]
+                    area = (x2 - x1) * (y2 - y1)
+                    total_area += area
+
+        # ==========================
+        # 📊 INTELLIGENT ANALYSIS
+        # ==========================
+        st.subheader("📊 AI Detection Summary")
+        st.write("Detected Objects:", detected)
+
+        debris_count = len(detected)
+
+        # Calculate density (smart feature)
+        density = total_area / (img.size[0] * img.size[1])
+
+        st.write(f"Debris Density: {round(density,3)}")
+
+        # ==========================
+        # 🧠 AI DECISION ENGINE
+        # ==========================
+        st.subheader("⚠️ AI Identified Issues")
+
+        issues = []
+        actions = []
+
+        # --- Plastic detection ---
+        if any(x in detected for x in ["plastic", "bottle", "bag"]):
+            issues.append("Plastic accumulation → Intake blockage risk")
+            actions.append("Install / clean trash racks immediately")
+
+        # --- Organic load ---
+        if any(x in detected for x in ["leaf", "plant"]):
+            issues.append("High organic load → Increased coagulant demand")
+            actions.append("Increase alum/PAC dosing temporarily")
+
+        # --- High density ---
+        if density > 0.15:
+            issues.append("High debris density → Clarifier overload risk")
+            actions.append("Reduce intake flow rate")
+
+        # --- Extreme condition ---
+        if density > 0.25 or debris_count > 8:
+            issues.append("Extreme debris condition → Filter choking risk")
+            actions.append("Prepare for frequent backwashing")
+
+        # --- No detection ---
+        if debris_count == 0:
+            issues.append("No visible debris → System stable")
+            actions.append("Maintain normal operation")
+
+        # ==========================
+        # OUTPUT
+        # ==========================
+        for i in issues:
+            st.write("•", i)
+
+        st.subheader("🛠 Recommended Actions")
+
+        for a in actions:
+            st.write("•", a)
+
+        # ==========================
+        # IMAGE OUTPUT
+        # ==========================
+        st.subheader("📦 Detection Output")
+
+        for r in results:
+            st.image(r.plot(), use_container_width=True)
 
