@@ -886,24 +886,19 @@ for i in range(6):
     tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
 
 # ===============================
-# 🤖 AI FEEDBACK + LIVE WEATHER + LEARNING SYSTEM
-# ===============================
-
-import pandas as pd
-import requests
-from datetime import datetime
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.preprocessing import LabelEncoder
-from streamlit_autorefresh import st_autorefresh
-import streamlit as st
-
-# ===============================
 # 🤖 AI FEEDBACK + WEATHER GRAPH
 # ===============================
 
 import streamlit as st
 import smtplib
 import time
+
+# 🔹 AI + DATA IMPORTS
+import pandas as pd
+import os
+from sklearn.linear_model import LinearRegression
+import numpy as np
+import requests
 
 st.markdown("## 🤖 AI Feedback & Learning System")
 
@@ -912,7 +907,6 @@ left_col, right_col = st.columns([2,1])
 # ===============================
 # 📧 EMAIL FUNCTION
 # ===============================
-
 def send_email_alert(message):
     sender = "alokranjan18april@gmail.com"
     password = "wpnrabqfbtkhsqpe"
@@ -923,7 +917,6 @@ def send_email_alert(message):
         server.starttls()
         server.login(sender, password)
 
-        # 👇 IMPORTANT FIX
         server.sendmail(sender, receiver, message.encode('utf-8'))
 
         server.quit()
@@ -938,10 +931,22 @@ def send_email_alert(message):
 if "last_alert_time" not in st.session_state:
     st.session_state.last_alert_time = 0
 
-ALERT_COOLDOWN = 300   # 5 min
+ALERT_COOLDOWN = 300 # 5 min
 
 # ===============================
-# LEFT SIDE → YOUR EXISTING CODE
+# 🧠 LEARNING STORAGE
+# ===============================
+DATA_FILE = "feedback_data.csv"
+
+if os.path.exists(DATA_FILE):
+    df = pd.read_csv(DATA_FILE)
+else:
+    df = pd.DataFrame(columns=[
+        "raw_turbidity", "dose", "final_turbidity", "frc"
+    ])
+
+# ===============================
+# LEFT SIDE → MAIN SYSTEM
 # ===============================
 with left_col:
     
@@ -962,12 +967,67 @@ with left_col:
     # ===============================
     if submit:
 
-        # Example logic (you can replace with your AI model)
+        # Existing performance logic
         performance_index = 100 - (final_turbidity * 20)
-
         st.write(f"Performance Index: {performance_index:.2f}")
 
-        # 🚨 CONDITION
+        # ===============================
+        # 📊 SAVE FEEDBACK
+        # ===============================
+        new_data = pd.DataFrame([{
+            "raw_turbidity": raw_turbidity,
+            "dose": dose,
+            "final_turbidity": final_turbidity,
+            "frc": frc
+        }])
+
+        df = pd.concat([df, new_data], ignore_index=True)
+        df.to_csv(DATA_FILE, index=False)
+
+        st.info(f"🧠 Learning in progress... Total samples: {len(df)}")
+
+        # ===============================
+        # 🤖 TRAIN MODEL
+        # ===============================
+        if len(df) >= 5:
+
+            X = df[["raw_turbidity", "dose"]]
+            y_turbidity = df["final_turbidity"]
+            y_frc = df["frc"]
+
+            model_turb = LinearRegression()
+            model_frc = LinearRegression()
+
+            model_turb.fit(X, y_turbidity)
+            model_frc.fit(X, y_frc)
+
+            st.success("🤖 AI Model Trained")
+
+            # ===============================
+            # 🎯 DOSE OPTIMIZATION
+            # ===============================
+            test_doses = np.linspace(1, 100, 50)
+            best_dose = None
+
+            for d in test_doses:
+                pred_turb = model_turb.predict([[raw_turbidity, d]])[0]
+                pred_frc = model_frc.predict([[raw_turbidity, d]])[0]
+
+                if pred_turb <= 1 and 0.2 <= pred_frc <= 1:
+                    best_dose = d
+                    break
+
+            if best_dose:
+                st.success(f"✅ Recommended Dose: {best_dose:.2f} mg/L")
+            else:
+                st.warning("⚠️ No optimal dose found yet (learning...)")
+
+        else:
+            st.warning("📊 Not enough data to train AI (need ≥5 samples)")
+
+        # ===============================
+        # 🚨 EMAIL ALERT
+        # ===============================
         if final_turbidity > 1 or frc < 0.2:
 
             current_time = time.time()
@@ -994,175 +1054,31 @@ Immediate attention required!
         else:
             st.success("✅ System Normal")
 
+
 # ===============================
-# RIGHT SIDE → WEATHER GRAPH
+# 🌤 RIGHT SIDE → LIVE WEATHER
 # ===============================
 with right_col:
-    st.markdown("### 🌦 Live Weather")
-    pass
-# ===============================
-# 💾 SAVE FEEDBACK
-# ===============================
-def save_feedback(dose, raw_ntu, final_ntu, frc, weather, status):
-    
-    df = pd.DataFrame({
-        "Date": [datetime.now()],
-        "Dose": [dose],
-        "Raw_NTU": [raw_ntu],
-        "Final_NTU": [final_ntu],
-        "FRC": [frc],
-        "Weather": [weather],
-        "Status": [status]
-    })
-    
+
+    st.markdown("### 🌤 Live Weather")
+
+    API_KEY = "7701bfb5d9ef5dcf6ca56485597594ce" # 🔴 PUT YOUR KEY HERE
+    CITY = "Jamshedpur"
+
     try:
-        df.to_csv("feedback_data.csv", mode='a', header=False, index=False)
-    except:
-        df.to_csv("feedback_data.csv", index=False)
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}&units=metric"
+        data = requests.get(url).json()
 
+        temp = data["main"]["temp"]
+        humidity = data["main"]["humidity"]
+        weather = data["weather"][0]["description"]
 
-# ===============================
-# 🧠 MODEL TRAINING (ADVANCED)
-# ===============================
-def train_model():
-    try:
-        df = pd.read_csv("feedback_data.csv")
-
-        if len(df) < 10:
-            return None, None, None
-
-        le = LabelEncoder()
-        df['Weather_encoded'] = le.fit_transform(df['Weather'])
-
-        df['Weight'] = df['Status'].apply(lambda x: 2 if x=="Achieved" else 1)
-
-        X = df[['Dose', 'Raw_NTU', 'FRC', 'Weather_encoded']]
-        y = df['Final_NTU']
-
-        model = GradientBoostingRegressor()
-        model.fit(X, y, sample_weight=df['Weight'])
-
-        return model, le, df
+        st.metric("🌡 Temperature", f"{temp} °C")
+        st.metric("💧 Humidity", f"{humidity} %")
+        st.write(f"☁ Condition: {weather}")
 
     except:
-        return None, None, None
-
-
-# ===============================
-# 🤖 AI DECISION
-# ===============================
-def generate_remark(dose, raw_ntu, frc, weather, model, le):
-
-    if model is None:
-        return "⚠️ Learning in progress (need more data)"
-
-    weather_encoded = le.transform([weather])[0]
-
-    predicted_ntu = model.predict([[dose, raw_ntu, frc, weather_encoded]])[0]
-
-    if predicted_ntu < 1 and frc >= 0.2:
-        return f"✅ Predicted NTU: {round(predicted_ntu,2)} → Optimal dosing"
-
-    elif predicted_ntu >= 1 and weather == "Rainy":
-        new_dose = dose * 1.2
-        return f"🌧 Rain impact → Increase dose to ~{round(new_dose,2)} mg/L"
-
-    elif predicted_ntu >= 1:
-        new_dose = dose * 1.1
-        return f"⚠️ Underdosing → Increase to ~{round(new_dose,2)} mg/L"
-
-    elif frc < 0.2:
-        return "⚠️ Low FRC → Increase chlorine dosing"
-
-    else:
-        return "✔️ Stable condition"
-
-
-# ===============================
-# 🔄 AUTO REFRESH
-# ===============================
-st_autorefresh(interval=30000, key="weather_refresh")
-
-
-# ===============================
-# 🎛 UI SECTION
-# ===============================
-st.markdown("## 🤖 AI Feedback & Learning System")
-
-left_col, right_col = st.columns([2,1])
-
-# LEFT SIDE → INPUT
-with left_col:
-    col1, col2 = st.columns(2)
-
-    with col1:
-        dose = st.slider("Dose Applied (mg/L)", 0.0, 100.0, 10.0)
-        final_turbidity = st.number_input("Final Turbidity (NTU)", 0.0, 50.0, 1.0)
-        frc = st.number_input("Final Residual Chlorine (mg/L)", 0.0, 5.0, 0.5)
-
-    with col2:
-        raw_turbidity = st.number_input("Raw Water Turbidity (NTU)", 0.0, 500.0, 50.0)
-
-    submit = st.button("Submit Feedback")
-
-# RIGHT SIDE → WEATHER
-with right_col:
-    st.markdown("### 🌦 Live Weather")
-
-    condition, temp = get_weather()
-
-    if condition in ["Error", "API Error", "No Data"]:
-        st.error("⚠️ Weather not loading (Check API / Internet)")
-    else:
-        st.metric("🌡 Temp (°C)", f"{round(temp,1)}")
-
-        if condition == "Rainy":
-            st.error("🌧 Rainy → High turbidity expected")
-        elif condition == "Cloudy":
-            st.warning("☁️ Cloudy → Moderate condition")
-        elif condition == "Clear":
-            st.success("☀️ Clear → Stable condition")
-        else:
-            st.info(condition)
-
-
-# ===============================
-# 🚀 MAIN EXECUTION
-# ===============================
-if submit:
-
-    weather, _ = get_weather()
-
-    if final_turbidity < 1 and frc >= 0.2:
-        status = "Achieved"
-    else:
-        status = "Not Achieved"
-
-    save_feedback(dose, raw_turbidity, final_turbidity, frc, weather, status)
-
-    model, le, df = train_model()
-
-    remark = generate_remark(dose, raw_turbidity, frc, weather, model, le)
-
-    st.markdown("### 📊 AI Analysis Result")
-
-    col3, col4, col5 = st.columns(3)
-
-    col3.metric("Status", status)
-    col4.metric("Weather", weather)
-    col5.metric("Final NTU", round(final_turbidity,2))
-
-    st.info(f"💧 FRC: {frc} mg/L")
-    st.warning(remark)
-
-    if df is not None:
-        X = df[['Dose','Raw_NTU','FRC','Weather_encoded']]
-        y = df['Final_NTU']
-        confidence = model.score(X,y)
-        st.success(f"🧠 Model Confidence: {round(confidence*100,1)}%")
-
-    if df is None or len(df) < 10:
-        st.info("📚 System is learning... Add more feedback")
+        st.error("Weather data not loading ⚠️")
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
 # ===============================
