@@ -897,42 +897,109 @@ from sklearn.preprocessing import LabelEncoder
 from streamlit_autorefresh import st_autorefresh
 import streamlit as st
 
-@st.cache_data(ttl=60)
-def get_weather():
+# ===============================
+# 🤖 AI FEEDBACK + WEATHER GRAPH
+# ===============================
+
+import streamlit as st
+import smtplib
+import time
+
+st.markdown("## 🤖 AI Feedback & Learning System")
+
+left_col, right_col = st.columns([2,1])
+
+# ===============================
+# 📧 EMAIL FUNCTION
+# ===============================
+
+def send_email_alert(message):
+    sender = "alokranjan18april@gmail.com"
+    password = "wpnrabqfbtkhsqpe"
+    receiver = "alok.ranjan6@tatasteel.com"
+
     try:
-        API_KEY = "your_actual_api_key" # 🔴 MUST be correct
-        city = "Jamshedpur"
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender, password)
 
-        # ✅ USE HTTPS (IMPORTANT FIX)
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric"
+        # 👇 IMPORTANT FIX
+        server.sendmail(sender, receiver, message.encode('utf-8'))
 
-        response = requests.get(url, timeout=5)
-
-        # DEBUG PRINT
-        # st.write(response.text)
-
-        if response.status_code != 200:
-            return "API Error", 0
-
-        data = response.json()
-
-        weather_main = data.get('weather', [{}])[0].get('main', 'Unknown')
-        temp = data.get('main', {}).get('temp', 0)
-
-        if weather_main in ["Rain", "Drizzle", "Thunderstorm"]:
-            condition = "Rainy"
-        elif weather_main in ["Clouds"]:
-            condition = "Cloudy"
-        elif weather_main == "Clear":
-            condition = "Clear"
-        else:
-            condition = weather_main
-
-        return condition, temp
+        server.quit()
+        st.success("MAIL SENT SUCCESSFULLY ✅")
 
     except Exception as e:
-        return "Error", 0
+        st.error(f"Email error: {e}")
 
+# ===============================
+# ⏱ COOLDOWN SYSTEM
+# ===============================
+if "last_alert_time" not in st.session_state:
+    st.session_state.last_alert_time = 0
+
+ALERT_COOLDOWN = 300   # 5 min
+
+# ===============================
+# LEFT SIDE → YOUR EXISTING CODE
+# ===============================
+with left_col:
+    
+    col1, col2 = st.columns(2)
+
+    with col1:
+        dose = st.slider("Dose Applied (mg/L)", 0.0, 100.0, 10.0)
+        final_turbidity = st.number_input("Final Turbidity (NTU)", 0.0, 50.0, 1.0)
+        frc = st.number_input("Final Residual Chlorine (mg/L)", 0.0, 5.0, 0.5)
+
+    with col2:
+        raw_turbidity = st.number_input("Raw Water Turbidity (NTU)", 0.0, 500.0, 50.0)
+
+    submit = st.button("Submit Feedback")
+
+    # ===============================
+    # 🤖 AI LOGIC + EMAIL ALERT
+    # ===============================
+    if submit:
+
+        # Example logic (you can replace with your AI model)
+        performance_index = 100 - (final_turbidity * 20)
+
+        st.write(f"Performance Index: {performance_index:.2f}")
+
+        # 🚨 CONDITION
+        if final_turbidity > 1 or frc < 0.2:
+
+            current_time = time.time()
+
+            if current_time - st.session_state.last_alert_time > ALERT_COOLDOWN:
+
+                message = f"""Subject:Water Quality Alert
+
+Turbidity: {final_turbidity} NTU
+FRC: {frc} mg/L
+
+Immediate attention required!
+"""
+
+                send_email_alert(message)
+
+                st.session_state.last_alert_time = current_time
+
+                st.error("🚨 Email Alert Sent!")
+
+            else:
+                st.warning("⏳ Alert already sent recently")
+
+        else:
+            st.success("✅ System Normal")
+
+# ===============================
+# RIGHT SIDE → WEATHER GRAPH
+# ===============================
+with right_col:
+    st.markdown("### 🌦 Live Weather")
+    pass
 # ===============================
 # 💾 SAVE FEEDBACK
 # ===============================
