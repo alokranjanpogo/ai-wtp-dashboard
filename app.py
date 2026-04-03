@@ -1062,7 +1062,7 @@ with right_col:
 
     st.markdown("### 🌤 Live Weather")
 
-    API_KEY = "7701bfb5d9ef5dcf6ca56485597594ce" # 🔴 PUT YOUR KEY HERE
+    API_KEY = "f899db331049be78181d1afddbc92935" # 🔴 PUT YOUR KEY HERE
     CITY = "Jamshedpur"
 
     try:
