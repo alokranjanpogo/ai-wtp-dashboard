@@ -21,7 +21,7 @@ h1,h2,h3 {color:#00F5FF;}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🏭 WTP MOHARDA – LIVE SCADA HMI PANEL")
+st.title("🏭 WTP MOHARDA – LIVE HMI PANEL")
 st.markdown(f"### ⏱ {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
 
 # ===============================
