@@ -1242,6 +1242,8 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 
 from ultralytics import YOLO
 from PIL import Image
+import numpy as np
+import streamlit as st
 
 @st.cache_resource
 def load_model():
@@ -1260,20 +1262,26 @@ if uploaded_img:
 
     if st.button("🔍 Run AI Analysis"):
 
-        results = debris_model(img)
+        # Convert image to numpy (important for YOLO stability)
+        img_np = np.array(img)
+
+        results = debris_model(img_np)
 
         detected = []
-        total_area = 0
+        total_area = 0.0 # ensure float
 
         for r in results:
             if r.boxes is not None:
                 for box in r.boxes:
+
                     label = r.names[int(box.cls[0])]
                     detected.append(label)
 
-                    x1, y1, x2, y2 = box.xyxy[0]
+                    # Convert tensor → float
+                    x1, y1, x2, y2 = box.xyxy[0].tolist()
+
                     area = (x2 - x1) * (y2 - y1)
-                    total_area += area
+                    total_area += float(area)
 
         # ==========================
         # 📊 INTELLIGENT ANALYSIS
@@ -1283,10 +1291,15 @@ if uploaded_img:
 
         debris_count = len(detected)
 
-        # Calculate density (smart feature)
-        density = total_area / (img.size[0] * img.size[1])
+        # Avoid division by zero
+        img_area = img.size[0] * img.size[1]
 
-        st.write(f"Debris Density: {round(density,3)}")
+        if img_area > 0:
+            density = total_area / img_area
+        else:
+            density = 0
+
+        st.write(f"Debris Density: {round(float(density),3)}")
 
         # ==========================
         # 🧠 AI DECISION ENGINE
@@ -1339,4 +1352,3 @@ if uploaded_img:
 
         for r in results:
             st.image(r.plot(), use_container_width=True)
-
