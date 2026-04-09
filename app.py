@@ -524,7 +524,7 @@ fig_turb.update_layout(
 
 st.plotly_chart(fig_turb, use_container_width=True)
 # ============================================================
-# AI RECOMMENDED CHEMICAL DOSING (FINAL VERSION)
+# AI RECOMMENDED CHEMICAL DOSING (ADVANCED INDUSTRIAL VERSION)
 # ============================================================
 
 st.subheader("🧠 AI Recommended Alum Dosing System")
@@ -533,19 +533,19 @@ st.subheader("🧠 AI Recommended Alum Dosing System")
 # INPUTS
 # ============================================================
 
-flow_mld = 18  # FIXED as requested
+flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
 aerator_turbidity = float(intake_turb)
-current_frc = float(consumer_frc)
 
-# -------------------------------
-# 🎚️ pH SLICER (NEW)
-# -------------------------------
+# pH slicer
 ph = st.slider("Select Raw Water pH", 4.5, 9.0, 7.0, 0.1)
 
+# Industrial discharge toggle (NEW)
+industrial_load = st.toggle("⚠️ Industrial Discharge Present", value=False)
+
 # ============================================================
-# LOAD JAR TEST DATA (DO NOT MODIFY - YOUR ORIGINAL)
+# LOAD JAR TEST DATA (UNCHANGED)
 # ============================================================
 
 try:
@@ -568,10 +568,10 @@ except:
     jar_dose = np.array([6,8,12,18,25])
 
 # ============================================================
-# SAFE JAR CURVE (REALISTIC - NO POLYNOMIAL)
+# EXTENDED RANGE (UPTO 500 NTU)
 # ============================================================
 
-x_range = np.linspace(0,300,300)
+x_range = np.linspace(0,500,500)
 
 jar_interp = np.interp(x_range, jar_turb, jar_dose)
 
@@ -584,40 +584,55 @@ jar_curve_plot = np.where(
     jar_extended
 )
 
-jar_curve_plot = np.clip(jar_curve_plot, 0, 100)
+jar_curve_plot = np.clip(jar_curve_plot, 0, 150)
 
-# Current jar value
 jar_today = float(np.interp(aerator_turbidity, jar_turb, jar_dose))
 
 # ============================================================
-# STANDARD DATABASE (CPHEEO + BIS + AWWA)
+# STANDARDS (EXTENDED)
 # ============================================================
 
-std_turb = np.array([5,10,20,40,60,80,100,150,200,300])
+std_turb = np.array([5,10,20,40,60,80,100,150,200,300,400,500])
 
-bis_dose = np.array([6,8,12,18,22,26,30,35,40,45])
-cpheeo_dose = np.array([8,10,15,22,26,30,35,40,45,50])
-awwa_dose = np.array([10,12,18,24,28,32,38,45,50,55])
+bis_dose = np.array([6,8,12,18,22,26,30,35,40,45,50,55])
+cpheeo_dose = np.array([8,10,15,22,26,30,35,40,45,50,60,70])
+awwa_dose = np.array([10,12,18,24,28,32,38,45,50,55,65,75])
 
-# Interpolation
 bis_today = float(np.interp(aerator_turbidity,std_turb,bis_dose))
 cpheeo_today = float(np.interp(aerator_turbidity,std_turb,cpheeo_dose))
 awwa_today = float(np.interp(aerator_turbidity,std_turb,awwa_dose))
 
 # ============================================================
-# pH CORRECTION (VERY IMPORTANT ENGINEERING ADDITION)
+# pH CORRECTION
 # ============================================================
 
-# Optimum pH ~ 5.5–7 → else increase dose
 if ph < 5.5:
-    ph_factor = 1.15
+    ph_factor = 1.2
 elif ph > 7.5:
-    ph_factor = 1.10
+    ph_factor = 1.1
 else:
     ph_factor = 1.0
 
 # ============================================================
-# AI ALUM DOSING (WEIGHTED ENGINEERING MODEL)
+# INDUSTRIAL LOAD FACTOR (NEW LOGIC)
+# ============================================================
+
+industrial_factor = 1.0
+if industrial_load:
+    industrial_factor = 1.25   # more organic + colloidal load
+
+# ============================================================
+# TURBIDITY BOOST (FOR EXTREME CONDITIONS)
+# ============================================================
+
+turbidity_factor = 1.0
+if aerator_turbidity > 150:
+    turbidity_factor = 1.2
+if aerator_turbidity > 300:
+    turbidity_factor = 1.35
+
+# ============================================================
+# FINAL AI DOSING
 # ============================================================
 
 ai_today_alum = (
@@ -625,49 +640,50 @@ ai_today_alum = (
     0.25 * bis_today +
     0.2 * awwa_today +
     0.15 * jar_today
-) * ph_factor
+) * ph_factor * industrial_factor * turbidity_factor
 
-ai_today_alum = np.clip(ai_today_alum, 5, 80)
+# EXTENDED LIMIT
+ai_today_alum = np.clip(ai_today_alum, 5, 150)
 
 # ============================================================
-# CHEMICAL REQUIREMENT (18 MLD BASIS)
+# CHEMICAL REQUIREMENT
 # ============================================================
 
 alum_kg_day = (ai_today_alum * flow_m3_day) / 1000
 
 # ============================================================
-# PAC RECOMMENDATION
+# PAC (SMART RECOMMENDATION)
 # ============================================================
 
 pac_dose = 0.6 * ai_today_alum
 pac_kg_day = (pac_dose * flow_m3_day) / 1000
 
 # ============================================================
-# DISPLAY METRICS
+# DISPLAY
 # ============================================================
 
 c1,c2,c3,c4 = st.columns(4)
 
-c1.metric("Jar Test Dose", f"{jar_today:.2f} mg/L")
-c2.metric("CPHEEO Dose", f"{cpheeo_today:.2f} mg/L")
-c3.metric("AWWA Dose", f"{awwa_today:.2f} mg/L")
-c4.metric("BIS Dose", f"{bis_today:.2f} mg/L")
+c1.metric("Jar Test", f"{jar_today:.1f} mg/L")
+c2.metric("CPHEEO", f"{cpheeo_today:.1f} mg/L")
+c3.metric("AWWA", f"{awwa_today:.1f} mg/L")
+c4.metric("BIS", f"{bis_today:.1f} mg/L")
 
 st.markdown("---")
 
 c5,c6 = st.columns(2)
 
-c5.metric("🧠 AI Recommended Alum Dose", f"{ai_today_alum:.2f} mg/L")
-c6.metric("📦 Alum Required (18 MLD)", f"{alum_kg_day:,.0f} kg/day")
+c5.metric("🧠 AI Alum Dose", f"{ai_today_alum:.1f} mg/L")
+c6.metric("📦 Alum Required", f"{alum_kg_day:,.0f} kg/day")
 
 st.metric(
-    "⚡ Recommended PAC Dose",
-    f"{pac_dose:.2f} mg/L",
-    help="PAC requires lower dose due to higher charge neutralization efficiency"
+    "⚡ PAC Dose",
+    f"{pac_dose:.1f} mg/L",
+    help="Lower dose due to higher coagulation efficiency (polymeric action)"
 )
 
 # ============================================================
-# GRAPH (BEST VERSION)
+# GRAPH (EXTREME READY)
 # ============================================================
 
 bis_curve = np.interp(x_range,std_turb,bis_dose)
@@ -684,25 +700,24 @@ ai_curve = (
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(x=x_range,y=jar_curve_plot,name="Jar Test",line=dict(color="red",width=4)))
-fig.add_trace(go.Scatter(x=x_range,y=bis_curve,name="BIS",line=dict(dash="dot")))
-fig.add_trace(go.Scatter(x=x_range,y=cpheeo_curve,name="CPHEEO",line=dict(dash="dot")))
-fig.add_trace(go.Scatter(x=x_range,y=awwa_curve,name="AWWA",line=dict(dash="dot")))
+fig.add_trace(go.Scatter(x=x_range,y=cpheeo_curve,name="CPHEEO"))
+fig.add_trace(go.Scatter(x=x_range,y=awwa_curve,name="AWWA"))
+fig.add_trace(go.Scatter(x=x_range,y=bis_curve,name="BIS"))
 
 fig.add_trace(go.Scatter(x=x_range,y=ai_curve,name="AI Recommended",line=dict(color="cyan",width=4)))
 
-# Operating point
 fig.add_trace(go.Scatter(
     x=[aerator_turbidity],
     y=[ai_today_alum],
     mode="markers+text",
     marker=dict(size=14,color="yellow"),
-    text=["Operating Point"],
+    text=["Operating"],
     textposition="top center"
 ))
 
 fig.update_layout(
     template="plotly_dark",
-    title="💧 Alum Dosing Optimization Curve",
+    title="💧 Alum Dosing (Normal → Extreme Conditions)",
     xaxis_title="Turbidity (NTU)",
     yaxis_title="Dose (mg/L)",
     height=520
@@ -711,48 +726,42 @@ fig.update_layout(
 st.plotly_chart(fig,use_container_width=True)
 
 # ============================================================
-# AI EXPLANATION BLOCK (VERY IMPORTANT)
+# AI LOGIC (FIXED STRING)
 # ============================================================
 
 st.subheader("📘 AI Recommendation Logic")
 
 st.info(f"""
-This recommendation is based on a hybrid engineering model combining:
+Hybrid model based on:
 
-• CPHEEO Guidelines → Primary design reference for Indian water treatment  
-• BIS Standards → Ensures drinking water compliance (<5 NTU output)  
-• AWWA Practice → International dosing trends and sludge estimation  
-• Jar Test Data → Plant-specific real-time lab validation  
+• CPHEEO → Design standards  
+• BIS → Drinking water compliance  
+• AWWA → Global practice  
+• Jar Test → Real plant validation  
 
-🔬 As per research, optimum alum dose typically lies between **20–30 mg/L for 50–80 NTU** and must always be validated using jar testing. :contentReference[oaicite:0]{index=0}  
+Typical range: 20–30 mg/L (moderate turbidity)
 
-⚙️ AI Weightage Applied:
-- 40% CPHEEO (design basis)
-- 25% BIS (quality control)
-- 20% AWWA (global practice)
-- 15% Jar Test (real plant data)
+⚠️ Adjustments applied:
+- pH correction factor = {ph_factor}
+- Industrial factor = {industrial_factor}
+- High turbidity factor = {turbidity_factor}
 
-🧪 pH Correction Applied:
-- Optimal coagulation occurs at pH 5.5–7
-- Current pH = {ph}
-
-📊 Final Recommendation:
-👉 {ai_today_alum:.2f} mg/L Alum for {flow_mld} MLD plant
-👉 {alum_kg_day:,.0f} kg/day requirement
+Final Dose = {ai_today_alum:.1f} mg/L
+Alum Required = {alum_kg_day:,.0f} kg/day
 """)
 
 # ============================================================
-# ALERT BLOCK
+# ALERT
 # ============================================================
 
-if abs(ai_today_alum - jar_today) > 5:
-    st.error("🔴 Large deviation from Jar Test → Immediate correction required")
+if ai_today_alum > 80:
+    st.error("🔴 Very high dosing → Check raw water quality / consider PAC")
 
-elif abs(ai_today_alum - jar_today) > 2:
-    st.warning("🟡 Moderate deviation from Jar Test")
+elif abs(ai_today_alum - jar_today) > 5:
+    st.warning("🟡 Deviation from Jar Test")
 
 else:
-    st.success("🟢 AI dosing aligned with Jar Test and standards")
+    st.success("🟢 Optimal dosing")
 
 # ============================================================
 # CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
