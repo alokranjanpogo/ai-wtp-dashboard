@@ -9,3 +9,11 @@ ultralytics
 opencv-python-headless
 torch
 torchvision
+tensorflow
+pillow
+ultralytics
+torchvision
+torch
+opencv-python-headless
+requests
+scikit-learn
