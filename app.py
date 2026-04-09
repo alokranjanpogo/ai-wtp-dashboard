@@ -12,15 +12,37 @@ from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=9000, key="scada_refresh")
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
+import datetime
+import pandas as pd
+import streamlit as st
+
+# ===============================
+# STYLING (UPGRADED UI)
+# ===============================
 st.markdown("""
 <style>
 body {background-color:#050A18;}
 h1,h2,h3 {color:#00F5FF;}
+
 .blink {animation: blinker 1s linear infinite;}
 @keyframes blinker {50% {opacity:0;}}
+
+button[kind="secondary"] {
+    background-color:#001F3F;
+    color:#00F5FF;
+    border-radius:10px;
+    height:45px;
+    font-weight:bold;
+}
+button[kind="secondary"]:hover {
+    background-color:#003366;
+}
 </style>
 """, unsafe_allow_html=True)
 
+# ===============================
+# TITLE
+# ===============================
 st.title("🏭 WTP MOHARDA – LIVE HMI PANEL")
 st.markdown(f"### ⏱ {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
 
@@ -34,7 +56,7 @@ gis = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
 gis.columns = gis.columns.str.strip()
 
 # ===============================
-# REAL PROCESS CALCULATIONS
+# CALCULATIONS
 # ===============================
 turb = plant[plant["Parameter"].str.lower() == "turbidity"]
 frc = plant[plant["Parameter"].str.lower() == "frc"]
@@ -43,29 +65,24 @@ intake_turb = turb["Intake"].mean()
 clarifier_turb = turb["Clarifier"].mean()
 clearwater_turb = turb["Clear Water"].mean()
 
-sump_turb = clearwater_turb
-
-clar_eff = (intake_turb - clarifier_turb) / intake_turb
+clar_eff = (intake_turb - clarifier_turb) / intake_turb if intake_turb != 0 else 0
 
 filter_eff_list = []
+filter_turb_list = []
+
 for i in range(1,7):
     f_avg = turb[f"Filter {i}"].mean()
-    eff = (clarifier_turb - f_avg) / clarifier_turb
+    filter_turb_list.append(f_avg)
+
+    eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
     filter_eff_list.append(eff)
 
 avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
 consumer_frc = frc["Clear Water"].mean()
 
-filter_turb_list = []
-for i in range(1,7):
-    f_avg = turb[f"Filter {i}"].mean()
-    filter_turb_list.append(f_avg)
-
 # ===============================
-# SCADA STYLE ALARM PANEL (SAFE)
+# ALARM LOGIC
 # ===============================
-st.subheader("🚨 PLANT ALARM STATUS")
-
 alarm_list = []
 critical_count = 0
 warning_count = 0
@@ -78,29 +95,22 @@ elif clar_eff < 0.7:
     alarm_list.append(("WARNING", f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)"))
     warning_count += 1
 
-# ===============================
-# FILTER ALARM LOGIC (CORRECTED)
-# ===============================
-
+# Filters
 for i in range(1, 7):
 
     f_avg = turb[f"Filter {i}"].mean()
     eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
 
-    # --- Turbidity Based Alarm ---
     if f_avg > 5:
         alarm_list.append(("CRITICAL", f"Filter {i} Turbidity Above 5 NTU ({f_avg:.2f})"))
         critical_count += 1
-
     elif f_avg > 1:
         alarm_list.append(("WARNING", f"Filter {i} Turbidity Above 1 NTU ({f_avg:.2f})"))
         warning_count += 1
 
-    # --- Efficiency Based Alarm ---
     if eff < 0.6:
         alarm_list.append(("CRITICAL", f"Filter {i} Efficiency LOW ({eff*100:.1f}%)"))
         critical_count += 1
-
     elif eff < 0.8:
         alarm_list.append(("WARNING", f"Filter {i} Efficiency Moderate ({eff*100:.1f}%)"))
         warning_count += 1
@@ -128,9 +138,19 @@ if ecoli_col:
         critical_count += 1
 
 # ===============================
-# DISPLAY
+# TOGGLE BUTTON
 # ===============================
+if "show_alarm" not in st.session_state:
+    st.session_state.show_alarm = False
 
+def toggle_alarm():
+    st.session_state.show_alarm = not st.session_state.show_alarm
+
+st.button("🚨 Plant Alarm Status", on_click=toggle_alarm)
+
+# ===============================
+# SUMMARY PANEL
+# ===============================
 col1, col2, col3 = st.columns(3)
 
 if critical_count > 0:
@@ -143,16 +163,45 @@ else:
 col2.metric("Critical Alarms", critical_count)
 col3.metric("Warning Alarms", warning_count)
 
-# Alarm List Display
-if len(alarm_list) > 0:
-    for level, message in alarm_list:
-        if level == "CRITICAL":
-            st.error(f"🔴 {message}")
-        else:
-            st.warning(f"🟡 {message}")
-else:
-    st.success("No Active Alarms")
+# ===============================
+# ALARM DISPLAY (TOGGLE)
+# ===============================
+if st.session_state.show_alarm:
 
+    st.markdown("### 🚨 Active Alarm Details")
+
+    if len(alarm_list) > 0:
+
+        for level, message in alarm_list:
+
+            if level == "CRITICAL":
+                st.markdown(f"""
+                <div style='
+                    background-color:#2b0000;
+                    padding:12px;
+                    border-left:6px solid red;
+                    border-radius:10px;
+                    margin-bottom:10px;
+                    color:white;
+                    font-size:16px;
+                '>🔴 {message}</div>
+                """, unsafe_allow_html=True)
+
+            else:
+                st.markdown(f"""
+                <div style='
+                    background-color:#2b2b00;
+                    padding:12px;
+                    border-left:6px solid yellow;
+                    border-radius:10px;
+                    margin-bottom:10px;
+                    color:white;
+                    font-size:16px;
+                '>🟡 {message}</div>
+                """, unsafe_allow_html=True)
+
+    else:
+        st.success("✅ No Active Alarms")
 # ===============================
 # PRODUCTION
 # ===============================
