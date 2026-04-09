@@ -523,37 +523,29 @@ fig_turb.update_layout(
 )
 
 st.plotly_chart(fig_turb, use_container_width=True)
-# ===============================
-# CHEMICAL DOSAGE
-# ===============================
-st.subheader("🧪 Recommended Dosage")
-alum=max(10,min(8+1.2*intake_turb,70))
-chlorine=1.5+1.2*intake_turb
-c1,c2=st.columns(2)
-c1.metric("Recommended Alum Dose (mg/L)",f"{alum:.1f}")
-c2.metric("Recommended Chlorine Dose (mg/L)",f"{chlorine:.2f}")
-
 # ============================================================
-# AI RECOMMENDED DOSAGE PANEL (STANDARDS + LAB VALIDATION)
+# AI RECOMMENDED CHEMICAL DOSING (FINAL VERSION)
 # ============================================================
 
-st.subheader("AI Recommended Chemical Dosage")
+st.subheader("🧠 AI Recommended Alum Dosing System")
 
-# ------------------------------------------------------------
+# ============================================================
 # INPUTS
-# ------------------------------------------------------------
+# ============================================================
 
-flow_m3_hr = 1100
-operating_hours = 16.5
-flow_m3_day = flow_m3_hr * operating_hours
+flow_mld = 18  # FIXED as requested
+flow_m3_day = flow_mld * 1000
 
 aerator_turbidity = float(intake_turb)
 current_frc = float(consumer_frc)
 
-conductivity_today = 350
+# -------------------------------
+# 🎚️ pH SLICER (NEW)
+# -------------------------------
+ph = st.slider("Select Raw Water pH", 4.5, 9.0, 7.0, 0.1)
 
 # ============================================================
-# LOAD JAR TEST DATA (LAB)
+# LOAD JAR TEST DATA (DO NOT MODIFY - YOUR ORIGINAL)
 # ============================================================
 
 try:
@@ -574,110 +566,16 @@ try:
 except:
     jar_turb = np.array([5,10,20,40,80])
     jar_dose = np.array([6,8,12,18,25])
-    
-# ------------------------------------------------------------
-# CREATE JAR CURVE
-# ------------------------------------------------------------
-
-if len(jar_turb) >= 3:
-
-    jar_poly = np.polyfit(jar_turb, jar_dose, 2)
-    jar_curve = np.poly1d(jar_poly)
-
-else:
-
-    # fallback if jar test data missing
-    jar_curve = lambda x: 0.2*x + 8
 
 # ============================================================
-# STANDARDS DATABASE
-# ============================================================
-
-std_turb = np.array([5,10,20,40,60,80,100,150,200,300])
-
-bis_dose = np.array([6,8,12,18,22,26,30,35,40,45])
-cpheeo_dose = np.array([8,10,15,22,26,30,35,40,45,50])
-awwa_dose = np.array([10,12,18,24,28,32,38,45,50,55])
-
-# ============================================================
-# INTERPOLATION
-# ============================================================
-
-bis_today = float(np.interp(aerator_turbidity,std_turb,bis_dose))
-cpheeo_today = float(np.interp(aerator_turbidity,std_turb,cpheeo_dose))
-awwa_today = float(np.interp(aerator_turbidity,std_turb,awwa_dose))
-
-jar_today = float(jar_curve(aerator_turbidity))
-
-# ============================================================
-# AI ALUM DOSING
-# ============================================================
-
-ai_today_alum = (
-0.4 * cpheeo_today +
-0.3 * bis_today +
-0.2 * awwa_today +
-0.1 * jar_today
-)
-
-solid_alum_kg_day = (ai_today_alum * flow_m3_day) / 1000
-
-# ============================================================
-# PAC OPTIMIZATION
-# ============================================================
-
-pac_dose = 0.6 * ai_today_alum
-pac_kg_day = (pac_dose * flow_m3_day) / 1000
-
-# ============================================================
-# SLUDGE PRODUCTION ESTIMATION
-# ============================================================
-
-sludge_factor = 0.6
-sludge_kg_day = sludge_factor * solid_alum_kg_day
-
-# ------------------------------------------------------------
-# METRICS
-# ------------------------------------------------------------
-
-c1,c2,c3,c4 = st.columns(4)
-
-c1.metric("Jar Test Dose",f"{jar_today:.2f} mg/L")
-c2.metric("AI Alum Dose",f"{ai_today_alum:.2f} mg/L")
-c3.metric("Alum Required",f"{solid_alum_kg_day:,.0f} kg/day")
-c4.metric("Sludge Production",f"{sludge_kg_day:,.0f} kg/day")
-
-# ------------------------------------------------------------
-# PAC METRIC
-# ------------------------------------------------------------
-
-st.metric("Recommended PAC Dose",f"{pac_dose:.2f} mg/L")
-
-# ============================================================
-# ALUM GRAPH
+# SAFE JAR CURVE (REALISTIC - NO POLYNOMIAL)
 # ============================================================
 
 x_range = np.linspace(0,300,300)
-# ============================================================
-# EXTEND JAR TEST LINE (LAB)
-# ============================================================
-
-# Ensure jar data exists
-if len(jar_turb) < 2:
-
-    # fallback assumed data
-    jar_turb = np.array([5,10,20,40,80])
-    jar_dose = np.array([6,8,12,18,25])
-    
-# ============================================================
-# JAR TEST CURVE EXTENSION
-# ============================================================
 
 jar_interp = np.interp(x_range, jar_turb, jar_dose)
 
-# slope from last two points
 slope = (jar_dose[-1] - jar_dose[-2]) / (jar_turb[-1] - jar_turb[-2])
-
 jar_extended = jar_dose[-1] + slope * (x_range - jar_turb[-1])
 
 jar_curve_plot = np.where(
@@ -686,91 +584,176 @@ jar_curve_plot = np.where(
     jar_extended
 )
 
-jar_curve_plot = jar_curve(x_range)
+jar_curve_plot = np.clip(jar_curve_plot, 0, 100)
+
+# Current jar value
+jar_today = float(np.interp(aerator_turbidity, jar_turb, jar_dose))
+
+# ============================================================
+# STANDARD DATABASE (CPHEEO + BIS + AWWA)
+# ============================================================
+
+std_turb = np.array([5,10,20,40,60,80,100,150,200,300])
+
+bis_dose = np.array([6,8,12,18,22,26,30,35,40,45])
+cpheeo_dose = np.array([8,10,15,22,26,30,35,40,45,50])
+awwa_dose = np.array([10,12,18,24,28,32,38,45,50,55])
+
+# Interpolation
+bis_today = float(np.interp(aerator_turbidity,std_turb,bis_dose))
+cpheeo_today = float(np.interp(aerator_turbidity,std_turb,cpheeo_dose))
+awwa_today = float(np.interp(aerator_turbidity,std_turb,awwa_dose))
+
+# ============================================================
+# pH CORRECTION (VERY IMPORTANT ENGINEERING ADDITION)
+# ============================================================
+
+# Optimum pH ~ 5.5–7 → else increase dose
+if ph < 5.5:
+    ph_factor = 1.15
+elif ph > 7.5:
+    ph_factor = 1.10
+else:
+    ph_factor = 1.0
+
+# ============================================================
+# AI ALUM DOSING (WEIGHTED ENGINEERING MODEL)
+# ============================================================
+
+ai_today_alum = (
+    0.4 * cpheeo_today +
+    0.25 * bis_today +
+    0.2 * awwa_today +
+    0.15 * jar_today
+) * ph_factor
+
+ai_today_alum = np.clip(ai_today_alum, 5, 80)
+
+# ============================================================
+# CHEMICAL REQUIREMENT (18 MLD BASIS)
+# ============================================================
+
+alum_kg_day = (ai_today_alum * flow_m3_day) / 1000
+
+# ============================================================
+# PAC RECOMMENDATION
+# ============================================================
+
+pac_dose = 0.6 * ai_today_alum
+pac_kg_day = (pac_dose * flow_m3_day) / 1000
+
+# ============================================================
+# DISPLAY METRICS
+# ============================================================
+
+c1,c2,c3,c4 = st.columns(4)
+
+c1.metric("Jar Test Dose", f"{jar_today:.2f} mg/L")
+c2.metric("CPHEEO Dose", f"{cpheeo_today:.2f} mg/L")
+c3.metric("AWWA Dose", f"{awwa_today:.2f} mg/L")
+c4.metric("BIS Dose", f"{bis_today:.2f} mg/L")
+
+st.markdown("---")
+
+c5,c6 = st.columns(2)
+
+c5.metric("🧠 AI Recommended Alum Dose", f"{ai_today_alum:.2f} mg/L")
+c6.metric("📦 Alum Required (18 MLD)", f"{alum_kg_day:,.0f} kg/day")
+
+st.metric(
+    "⚡ Recommended PAC Dose",
+    f"{pac_dose:.2f} mg/L",
+    help="PAC requires lower dose due to higher charge neutralization efficiency"
+)
+
+# ============================================================
+# GRAPH (BEST VERSION)
+# ============================================================
+
 bis_curve = np.interp(x_range,std_turb,bis_dose)
 cpheeo_curve = np.interp(x_range,std_turb,cpheeo_dose)
 awwa_curve = np.interp(x_range,std_turb,awwa_dose)
 
 ai_curve = (
-0.4*cpheeo_curve+
-0.3*bis_curve+
-0.2*awwa_curve+
-0.1*jar_curve_plot
+    0.4*cpheeo_curve +
+    0.25*bis_curve +
+    0.2*awwa_curve +
+    0.15*jar_curve_plot
 )
 
-fig_alum = go.Figure()
+fig = go.Figure()
 
-fig_alum.add_trace(go.Scatter(
-    x=x_range,
-    y=jar_curve_plot,
-    mode="lines",
-    name="Jar Test (Lab)",
-    line=dict(color="red", width=4)
+fig.add_trace(go.Scatter(x=x_range,y=jar_curve_plot,name="Jar Test",line=dict(color="red",width=4)))
+fig.add_trace(go.Scatter(x=x_range,y=bis_curve,name="BIS",line=dict(dash="dot")))
+fig.add_trace(go.Scatter(x=x_range,y=cpheeo_curve,name="CPHEEO",line=dict(dash="dot")))
+fig.add_trace(go.Scatter(x=x_range,y=awwa_curve,name="AWWA",line=dict(dash="dot")))
+
+fig.add_trace(go.Scatter(x=x_range,y=ai_curve,name="AI Recommended",line=dict(color="cyan",width=4)))
+
+# Operating point
+fig.add_trace(go.Scatter(
+    x=[aerator_turbidity],
+    y=[ai_today_alum],
+    mode="markers+text",
+    marker=dict(size=14,color="yellow"),
+    text=["Operating Point"],
+    textposition="top center"
 ))
 
-fig_alum.add_trace(go.Scatter(
-    x=x_range,
-    y=bis_curve,
-    name="BIS Standard",
-    line=dict(color="orange", width=3)
-))
-
-fig_alum.add_trace(go.Scatter(
-    x=x_range,
-    y=cpheeo_curve,
-    name="CPHEEO Standard",
-    line=dict(color="green", width=3)
-))
-
-fig_alum.add_trace(go.Scatter(
-    x=x_range,
-    y=awwa_curve,
-    name="AWWA Standard",
-    line=dict(color="purple", width=3)
-))
-
-fig_alum.add_trace(go.Scatter(
-    x=x_range,
-    y=ai_curve,
-    name="AI Recommended",
-    line=dict(color="blue", width=4)
-))
-fig_alum.add_trace(go.Scatter(
-x=[aerator_turbidity],
-y=[ai_today_alum],
-mode="markers",
-marker=dict(size=14,color="yellow"),
-name="Current Operating Point"
-))
-
-fig_alum.update_layout(
-template="plotly_dark",
-title="Alum Dosing Recommendation",
-xaxis_title="Raw Water Turbidity (NTU)",
-yaxis_title="Alum Dose (mg/L)",
-height=500
+fig.update_layout(
+    template="plotly_dark",
+    title="💧 Alum Dosing Optimization Curve",
+    xaxis_title="Turbidity (NTU)",
+    yaxis_title="Dose (mg/L)",
+    height=520
 )
 
-st.plotly_chart(fig_alum,use_container_width=True)
+st.plotly_chart(fig,use_container_width=True)
 
-st.subheader("AI Recommendation")
+# ============================================================
+# AI EXPLANATION BLOCK (VERY IMPORTANT)
+# ============================================================
+
+st.subheader("📘 AI Recommendation Logic")
+
+st.info(f"""
+This recommendation is based on a hybrid engineering model combining:
+
+• CPHEEO Guidelines → Primary design reference for Indian water treatment  
+• BIS Standards → Ensures drinking water compliance (<5 NTU output)  
+• AWWA Practice → International dosing trends and sludge estimation  
+• Jar Test Data → Plant-specific real-time lab validation  
+
+🔬 As per research, optimum alum dose typically lies between **20–30 mg/L for 50–80 NTU** and must always be validated using jar testing. :contentReference[oaicite:0]{index=0}  
+
+⚙️ AI Weightage Applied:
+- 40% CPHEEO (design basis)
+- 25% BIS (quality control)
+- 20% AWWA (global practice)
+- 15% Jar Test (real plant data)
+
+🧪 pH Correction Applied:
+- Optimal coagulation occurs at pH 5.5–7
+- Current pH = {ph}
+
+📊 Final Recommendation:
+👉 {ai_today_alum:.2f} mg/L Alum for {flow_mld} MLD plant
+👉 {alum_kg_day:,.0f} kg/day requirement
+""")
+
+# ============================================================
+# ALERT BLOCK
+# ============================================================
 
 if abs(ai_today_alum - jar_today) > 5:
-
-    st.error("🔴 Alum dosing significantly deviates from lab jar test. Adjust dosing.")
+    st.error("🔴 Large deviation from Jar Test → Immediate correction required")
 
 elif abs(ai_today_alum - jar_today) > 2:
-
-    st.warning("🟡 Slight deviation from jar test results.")
+    st.warning("🟡 Moderate deviation from Jar Test")
 
 else:
+    st.success("🟢 AI dosing aligned with Jar Test and standards")
 
-    st.success("🟢 Alum dosing aligned with lab jar test and standards.")
-
-st.caption(
-"Standards referenced: BIS Drinking Water Specification, "
-"CPHEEO Manual on Water Supply, and AWWA Water Treatment Practice."
-)
 # ============================================================
 # CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
 # ============================================================
