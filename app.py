@@ -1357,7 +1357,7 @@ if uploaded_img:
         st.write(f"Debris Density: {round(float(density),3)}")
 
         # ==========================
-        # 🧠 AI DECISION ENGINE
+        #  AI DECISION ENGINE
         # ==========================
         st.subheader("⚠️ AI Identified Issues")
 
@@ -1407,9 +1407,3 @@ if uploaded_img:
 
         for r in results:
             st.image(r.plot(), use_container_width=True)
-
-
-
-
-
-
