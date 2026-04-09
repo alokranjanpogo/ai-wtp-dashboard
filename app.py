@@ -409,7 +409,7 @@ st.set_page_config(page_title="Water Treatment Performance", layout="wide")
 
 st.subheader("💧 Water Treatment Performance Dashboard")
 
-st.markdown("### 🏭 Unit Selection")
+st.subsubheader("### 🏭 Unit Selection")
 
 unit_type = st.selectbox("Select Unit", ["Clarifier", "Filter Bed"])
 
