@@ -409,12 +409,12 @@ st.set_page_config(page_title="Water Treatment Performance", layout="wide")
 
 st.subheader("💧 Water Treatment Performance Dashboard")
 
-st.subsubheader("### 🏭 Unit Selection")
+st.subheader("### 🏭 Unit Selection")
 
 unit_type = st.selectbox("Select Unit", ["Clarifier", "Filter Bed"])
 
 # Inputs
-st.markdown("### 📥 Input Parameters")
+st.subheader("### 📥 Input Parameters")
 
 col1, col2 = st.columns(2)
 
@@ -440,7 +440,7 @@ color = get_color(status, pi)
 # DISPLAY METRICS
 # ===============================
 
-st.markdown("### 📊 Performance Results")
+st.subheader("### 📊 Performance Results")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -453,7 +453,7 @@ col4.metric("Grade", grade)
 # VISUAL INDICATOR
 # ===============================
 
-st.markdown("### 🚦 Performance Indicator")
+st.subheader("### 🚦 Performance Indicator")
 
 if color == "green":
     st.success("Excellent Performance ✅")
@@ -466,7 +466,7 @@ else:
 # INTERPRETATION BOX
 # ===============================
 
-st.markdown("### Interpretation")
+st.subheader("### Interpretation")
 
 st.info(f"""
 - **Unit Selected:** {unit_type}  
