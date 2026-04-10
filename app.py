@@ -1468,12 +1468,12 @@ if uploaded_img:
 
 import streamlit as st
 
-st.markdown("🖥️ Water Treatment AI Assistant")
+st.subheader("🖥️ Water Treatment AI Assistant")
 
 # ===============================
 # STEP 1: COMPLAINT
 # ===============================
-st.subheader("Step 1: Customer Complaint")
+st.markdown("Step 1: Customer Complaint")
 
 complaint = st.text_input("Enter issue (muddy, smell, worms, yellow, green layer)")
 
@@ -1482,7 +1482,7 @@ complaint = st.text_input("Enter issue (muddy, smell, worms, yellow, green layer
 # ===============================
 if complaint:
 
-    st.subheader("Step 2: Plant Data")
+    st.markdown("Step 2: Plant Data")
 
     col1, col2 = st.columns(2)
 
@@ -1497,7 +1497,7 @@ if complaint:
 # ===============================
 # STEP 3: DOSING + CONDITIONS
 # ===============================
-    st.subheader("Step 3: Chemical Dosing")
+    st.markdown("Step 3: Chemical Dosing")
 
     col3, col4 = st.columns(2)
 
@@ -1514,7 +1514,7 @@ if complaint:
 # ===============================
     if st.button("Run Diagnosis"):
 
-        st.subheader("Diagnosis & Action")
+        st.markdown("Diagnosis & Action")
 
         text = complaint.lower()
 
