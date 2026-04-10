@@ -1299,111 +1299,159 @@ from ultralytics import YOLO
 from PIL import Image
 import numpy as np
 import streamlit as st
+import os
 
+# ==============================
+# 🔁 MODEL LOADING (SAFE + CACHED)
+# ==============================
 @st.cache_resource
 def load_model():
-    return YOLO("best.pt")
+    model_path = "best.pt"
+    
+    if not os.path.exists(model_path):
+        return None
+        
+    return YOLO(model_path)
 
-debris_model = load_model()
 
+# ==============================
+# UI START
+# ==============================
 st.markdown("---")
 st.header("🌊 AI Intake Monitoring System")
 
-uploaded_img = st.file_uploader("Upload Intake Image", type=["jpg","png","jpeg"], key="intake")
+# ==============================
+# 🔄 CACHE RESET BUTTON
+# ==============================
+if st.button("♻️ Reset Model Cache"):
+    st.cache_resource.clear()
+    st.success("✅ Cache Cleared Successfully!")
 
+# ==============================
+# 📂 IMAGE UPLOAD
+# ==============================
+uploaded_img = st.file_uploader(
+    "Upload Intake Image", 
+    type=["jpg", "png", "jpeg"], 
+    key="intake"
+)
+
+# ==============================
+# 🖼 IMAGE DISPLAY
+# ==============================
 if uploaded_img:
-    img = Image.open(uploaded_img)
+    img = Image.open(uploaded_img).convert("RGB")
     st.image(img, caption="Intake Image", use_container_width=True)
 
+    # ==============================
+    # 🚀 RUN AI BUTTON
+    # ==============================
     if st.button("🔍 Run AI Analysis"):
 
-        # Convert image to numpy (important for YOLO stability)
-        img_np = np.array(img)
+        try:
+            # ==============================
+            # 🔥 LOAD MODEL HERE (CRITICAL FIX)
+            # ==============================
+            debris_model = load_model()
 
-        results = debris_model(img_np)
+            if debris_model is None:
+                st.error("❌ Model file 'best.pt' not found in directory")
+                st.stop()
 
-        detected = []
-        total_area = 0.0 # ensure float
+            # ==============================
+            # 🧠 MODEL INFERENCE
+            # ==============================
+            img_np = np.array(img)
+            results = debris_model(img_np)
 
-        for r in results:
-            if r.boxes is not None:
-                for box in r.boxes:
+            detected = []
+            total_area = 0.0
 
-                    label = r.names[int(box.cls[0])]
-                    detected.append(label)
+            # ==============================
+            # 📦 PROCESS DETECTIONS
+            # ==============================
+            for r in results:
+                if r.boxes is not None:
+                    for box in r.boxes:
 
-                    # Convert tensor → float
-                    x1, y1, x2, y2 = box.xyxy[0].tolist()
+                        label = r.names[int(box.cls[0])]
+                        detected.append(label)
 
-                    area = (x2 - x1) * (y2 - y1)
-                    total_area += float(area)
+                        x1, y1, x2, y2 = box.xyxy[0].tolist()
+                        area = (x2 - x1) * (y2 - y1)
+                        total_area += float(area)
 
-        # ==========================
-        # 📊 INTELLIGENT ANALYSIS
-        # ==========================
-        st.subheader("📊 AI Detection Summary")
-        st.write("Detected Objects:", detected)
+            # ==============================
+            # 📊 AI ANALYSIS
+            # ==============================
+            st.subheader("📊 AI Detection Summary")
 
-        debris_count = len(detected)
+            if detected:
+                st.write("Detected Objects:", detected)
+            else:
+                st.write("No objects detected")
 
-        # Avoid division by zero
-        img_area = img.size[0] * img.size[1]
+            debris_count = len(detected)
 
-        if img_area > 0:
-            density = total_area / img_area
-        else:
-            density = 0
+            img_area = img.size[0] * img.size[1]
+            density = total_area / img_area if img_area > 0 else 0
 
-        st.write(f"Debris Density: {round(float(density),3)}")
+            st.write(f"Debris Density: {round(float(density), 3)}")
 
-        # ==========================
-        #  AI DECISION ENGINE
-        # ==========================
-        st.subheader("⚠️ AI Identified Issues")
+            # ==============================
+            # ⚠️ DECISION ENGINE
+            # ==============================
+            st.subheader("⚠️ AI Identified Issues")
 
-        issues = []
-        actions = []
+            issues = []
+            actions = []
 
-        # --- Plastic detection ---
-        if any(x in detected for x in ["plastic", "bottle", "bag"]):
-            issues.append("Plastic accumulation → Intake blockage risk")
-            actions.append("Install / clean trash racks immediately")
+            # Plastic detection
+            if any(x in detected for x in ["plastic", "bottle", "bag"]):
+                issues.append("Plastic accumulation → Intake blockage risk")
+                actions.append("Install / clean trash racks immediately")
 
-        # --- Organic load ---
-        if any(x in detected for x in ["leaf", "plant"]):
-            issues.append("High organic load → Increased coagulant demand")
-            actions.append("Increase alum/PAC dosing temporarily")
+            # Organic load
+            if any(x in detected for x in ["leaf", "plant"]):
+                issues.append("High organic load → Increased coagulant demand")
+                actions.append("Increase alum/PAC dosing temporarily")
 
-        # --- High density ---
-        if density > 0.15:
-            issues.append("High debris density → Clarifier overload risk")
-            actions.append("Reduce intake flow rate")
+            # High density
+            if density > 0.15:
+                issues.append("High debris density → Clarifier overload risk")
+                actions.append("Reduce intake flow rate")
 
-        # --- Extreme condition ---
-        if density > 0.25 or debris_count > 8:
-            issues.append("Extreme debris condition → Filter choking risk")
-            actions.append("Prepare for frequent backwashing")
+            # Extreme condition
+            if density > 0.25 or debris_count > 8:
+                issues.append("Extreme debris condition → Filter choking risk")
+                actions.append("Prepare for frequent backwashing")
 
-        # --- No detection ---
-        if debris_count == 0:
-            issues.append("No visible debris → System stable")
-            actions.append("Maintain normal operation")
+            # No detection
+            if debris_count == 0:
+                issues.append("No visible debris → System stable")
+                actions.append("Maintain normal operation")
 
-        # ==========================
-        # OUTPUT
-        # ==========================
-        for i in issues:
-            st.write("•", i)
+            # ==============================
+            # 📢 SHOW ISSUES
+            # ==============================
+            for i in issues:
+                st.write("•", i)
 
-        st.subheader("🛠 Recommended Actions")
+            # ==============================
+            # 🛠 ACTIONS
+            # ==============================
+            st.subheader("🛠 Recommended Actions")
 
-        for a in actions:
-            st.write("•", a)
+            for a in actions:
+                st.write("•", a)
 
-        # ==========================
-        # IMAGE OUTPUT
-        # ==========================
-        st.subheader("📦 Detection Output")
+            # ==============================
+            # 📦 OUTPUT IMAGE
+            # ==============================
+            st.subheader("📦 Detection Output")
 
-        for r in results:
-            st.image(r.plot(), use_container_width=True)
+            for r in results:
+                st.image(r.plot(), use_container_width=True)
+
+        except Exception as e:
+            st.error(f"❌ Error occurred: {e}")
