@@ -1292,7 +1292,7 @@ st.plotly_chart(fig_sump, use_container_width=True)
 
 st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Production")
 # ==============================
-# 🌊 AI INTAKE DEBRIS MODULE
+# 🌊 AI INTAKE DEBRIS MODULE (DEBUG VERSION)
 # ==============================
 
 from ultralytics import YOLO
@@ -1300,49 +1300,60 @@ from PIL import Image
 import numpy as np
 import streamlit as st
 import os
+import sys
 
-# ==============================
-# LOAD MODEL (NO CACHE)
-# ==============================
-def load_model():
-    if not os.path.exists("best.pt"):
-        st.error("❌ best.pt not found")
-        st.stop()
-    return YOLO("best.pt")
-
-st.markdown("---")
 st.header("🌊 AI Intake Monitoring System")
 
 # ==============================
-# UPLOAD IMAGE
+# 🔍 STEP 1: ENVIRONMENT CHECK
 # ==============================
-uploaded_img = st.file_uploader(
-    "Upload Intake Image", 
-    type=["jpg", "png", "jpeg"]
-)
+st.subheader("🧠 Debug Info")
+
+st.write("Python Version:", sys.version)
+st.write("Current Directory:", os.getcwd())
+st.write("Files in Folder:", os.listdir())
 
 # ==============================
-# STORE IMAGE (IMPORTANT FIX)
+# 🔍 STEP 2: MODEL CHECK
 # ==============================
+MODEL_PATH = "best.pt"
+
+if not os.path.exists(MODEL_PATH):
+    st.error("❌ MODEL NOT FOUND → best.pt missing in this dashboard folder")
+    st.stop()
+else:
+    st.success("✅ Model file found")
+
+# ==============================
+# 🔍 STEP 3: LOAD MODEL (VISIBLE)
+# ==============================
+try:
+    model = YOLO(MODEL_PATH)
+    st.success("✅ Model Loaded Successfully")
+except Exception as e:
+    st.error(f"❌ Model Loading Failed: {e}")
+    st.stop()
+
+# ==============================
+# 📂 STEP 4: IMAGE UPLOAD
+# ==============================
+uploaded_img = st.file_uploader("Upload Image", type=["jpg","png","jpeg"])
+
 if uploaded_img:
-    st.session_state["img"] = Image.open(uploaded_img).convert("RGB")
+    try:
+        img = Image.open(uploaded_img).convert("RGB")
+        st.image(img, caption="Uploaded Image")
 
-# ==============================
-# DISPLAY IMAGE
-# ==============================
-if "img" in st.session_state:
-    img = st.session_state["img"]
-    st.image(img, caption="Intake Image", use_container_width=True)
-
-    # ==============================
-    # RUN AI (NO NESTING ISSUE NOW)
-    # ==============================
-    if st.button("🔍 Run AI Analysis"):
-
-        model = load_model()
+        # ==============================
+        # 🚀 DIRECT RUN (NO BUTTON)
+        # ==============================
+        st.info("Running AI automatically...")
 
         img_np = np.array(img)
+
         results = model(img_np)
+
+        st.success("✅ Model Inference Done")
 
         detected = []
         total_area = 0.0
@@ -1350,7 +1361,6 @@ if "img" in st.session_state:
         for r in results:
             if r.boxes is not None:
                 for box in r.boxes:
-
                     label = r.names[int(box.cls[0])]
                     detected.append(label)
 
@@ -1359,58 +1369,23 @@ if "img" in st.session_state:
                     total_area += float(area)
 
         # ==============================
-        # ANALYSIS
+        # 📊 RESULTS
         # ==============================
-        st.subheader("📊 AI Detection Summary")
+        st.subheader("📊 Detection Summary")
+        st.write("Detected:", detected)
 
-        st.write("Detected Objects:", detected)
-
-        debris_count = len(detected)
         img_area = img.size[0] * img.size[1]
         density = total_area / img_area if img_area > 0 else 0
 
-        st.write(f"Debris Density: {round(density,3)}")
+        st.write("Density:", round(density, 3))
 
         # ==============================
-        # DECISION ENGINE
-        # ==============================
-        st.subheader("⚠️ AI Identified Issues")
-
-        issues = []
-        actions = []
-
-        if any(x in detected for x in ["plastic", "bottle", "bag"]):
-            issues.append("Plastic accumulation → Intake blockage risk")
-            actions.append("Install / clean trash racks immediately")
-
-        if any(x in detected for x in ["leaf", "plant"]):
-            issues.append("High organic load → Increased coagulant demand")
-            actions.append("Increase alum/PAC dosing temporarily")
-
-        if density > 0.15:
-            issues.append("High debris density → Clarifier overload risk")
-            actions.append("Reduce intake flow rate")
-
-        if density > 0.25 or debris_count > 8:
-            issues.append("Extreme debris condition → Filter choking risk")
-            actions.append("Prepare for frequent backwashing")
-
-        if debris_count == 0:
-            issues.append("No visible debris → System stable")
-            actions.append("Maintain normal operation")
-
-        for i in issues:
-            st.write("•", i)
-
-        st.subheader("🛠 Recommended Actions")
-
-        for a in actions:
-            st.write("•", a)
-
-        # ==============================
-        # OUTPUT IMAGE
+        # 📦 OUTPUT IMAGE
         # ==============================
         st.subheader("📦 Detection Output")
 
         for r in results:
-            st.image(r.plot(), use_container_width=True)
+            st.image(r.plot())
+
+    except Exception as e:
+        st.error(f"❌ RUNTIME ERROR: {e}")
