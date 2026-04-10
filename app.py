@@ -407,7 +407,7 @@ def get_color(status, pi):
 
 st.set_page_config(page_title="Water Treatment Performance", layout="wide")
 
-st.subheader("💧 Water Treatment Performance Dashboard")
+st.header("💧 Water Treatment Performance Dashboard")
 
 st.subheader("### 🏭 Unit Selection")
 
