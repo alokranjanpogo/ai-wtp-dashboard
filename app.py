@@ -9,7 +9,7 @@ from streamlit_autorefresh import st_autorefresh
 # ===============================
 # AUTO REFRESH
 # ===============================
-st_autorefresh(interval=9000, key="scada_refresh")
+st_autorefresh(interval=90000, key="scada_refresh")
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
 import datetime
