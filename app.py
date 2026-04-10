@@ -522,6 +522,7 @@ fig_turb.update_layout(
     height=400
 )
 
+st.plotly_chart(fig_turb, use_container_width=True)
 # ============================================================
 # IMPORTS (VERY IMPORTANT)
 # ============================================================
