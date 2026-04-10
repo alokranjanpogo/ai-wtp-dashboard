@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 import datetime
+import pytz
 from streamlit_autorefresh import st_autorefresh
 
 # ===============================
@@ -44,7 +45,9 @@ button[kind="secondary"]:hover {
 # TITLE
 # ===============================
 st.title("🏭 WTP MOHARDA – LIVE HMI PANEL")
-st.markdown(f"### ⏱ {datetime.datetime.now().strftime('%d-%m-%Y %H:%M:%S')}")
+ist = pytz.timezone('Asia/Kolkata')
+current_time = datetime.datetime.now(ist)
+st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
 
 # ===============================
 # LOAD FILES
