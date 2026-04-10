@@ -522,12 +522,19 @@ fig_turb.update_layout(
     height=400
 )
 
-st.plotly_chart(fig_turb, use_container_width=True)
 # ============================================================
-#  AI DOSING DECISION PANEL (NEXT GEN UI)
+# IMPORTS (VERY IMPORTANT)
 # ============================================================
 
-st.subheader("Intelligent Alum Dosing Recommendation")
+import streamlit as st
+import numpy as np
+import plotly.graph_objects as go
+
+# ============================================================
+# TITLE
+# ============================================================
+
+st.subheader("🧠 Intelligent Alum Dosing Decision System")
 
 # ============================================================
 # INPUTS
@@ -536,21 +543,19 @@ st.subheader("Intelligent Alum Dosing Recommendation")
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
-turbidity = float(intake_turb)
+turbidity = float(intake_turb) # from your existing slider
 
-# pH slicer
 ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
 
-# Industrial load toggle
-industrial = st.toggle("Industrial Discharge Present")
+industrial = st.toggle("⚠️ Industrial Discharge Present")
 
 # ============================================================
-# 🧪 MANUAL JAR TEST INPUT (NEW BLOCK)
+# 🧪 JAR TEST INPUT (MANUAL)
 # ============================================================
 
 st.markdown("### 🧪 Jar Test Input")
 
-jar_available = st.toggle("Use Jar Test Data")
+jar_available = st.toggle("Use Jar Test")
 
 if jar_available:
     jar_dose = st.number_input("Enter Jar Test Dose (mg/L)", value=25.0)
@@ -558,11 +563,11 @@ else:
     jar_dose = None
 
 # ============================================================
-# STANDARD BASED MODEL (CLEAN + REALISTIC)
+# STANDARD MODELS (REALISTIC ENGINEERING)
 # ============================================================
 
 def cpheeo_model(t):
-    return 0.35*t + 5 # realistic linear growth
+    return 0.35*t + 5
 
 def awwa_model(t):
     return 0.40*t + 8
@@ -575,9 +580,10 @@ awwa = awwa_model(turbidity)
 bis = bis_model(turbidity)
 
 # ============================================================
-# pH CORRECTION
+# CORRECTIONS
 # ============================================================
 
+# pH correction
 if ph < 5.5:
     ph_factor = 1.2
 elif ph > 7.5:
@@ -585,14 +591,19 @@ elif ph > 7.5:
 else:
     ph_factor = 1.0
 
-# ============================================================
-# INDUSTRIAL FACTOR
-# ============================================================
-
+# industrial load
 industrial_factor = 1.25 if industrial else 1.0
 
+# turbidity boost
+if turbidity > 300:
+    turb_factor = 1.35
+elif turbidity > 150:
+    turb_factor = 1.2
+else:
+    turb_factor = 1.0
+
 # ============================================================
-# AI DECISION LOGIC (UPDATED)
+# AI DOSING LOGIC (SAFE + COMPLETE)
 # ============================================================
 
 if jar_available:
@@ -609,104 +620,147 @@ else:
         0.25 * bis
     )
 
-ai_dose = ai_dose * ph_factor * industrial_factor
-ai_dose = np.clip(ai_dose, 5, 150)
+ai_dose = ai_dose * ph_factor * industrial_factor * turb_factor
+ai_dose = float(np.clip(ai_dose, 5, 150)) # ALWAYS defined
 
 # ============================================================
 # CHEMICAL REQUIREMENT
 # ============================================================
 
 alum_kg_day = (ai_dose * flow_m3_day) / 1000
-
 pac_dose = 0.6 * ai_dose
 
 # ============================================================
-# LAYOUT (LEFT + RIGHT)
+# STATUS BAND
 # ============================================================
 
-left, right = st.columns([1,1.5])
+if ai_dose > 80:
+    st.error("🔴 High Chemical Demand")
+elif ai_dose > 40:
+    st.warning("🟡 Moderate Condition")
+else:
+    st.success("🟢 Normal Operation")
 
 # ============================================================
-# LEFT SIDE → MINI VISUAL
+# LAYOUT
+# ============================================================
+
+left, right = st.columns([1.1,1.4])
+
+# ============================================================
+# 📊 LEFT → CLEAN GRAPH
 # ============================================================
 
 with left:
 
-    st.markdown("### 📊 Operating Point")
+    st.markdown("### 📊 Dosing Decision Curve")
+
+    x = np.linspace(0, 300, 100)
+    y_ai = 0.3*x + 8 + 0.0005*(x**2)
 
     fig = go.Figure()
 
-    x = np.linspace(0,300,100)
-    y = 0.35*x + 5
+    # Optimal zone
+    fig.add_hrect(
+        y0=20, y1=30,
+        fillcolor="green", opacity=0.15,
+        line_width=0
+    )
 
-    fig.add_trace(go.Scatter(x=x, y=y, name="Reference Curve"))
+    # Warning zone
+    fig.add_hrect(
+        y0=30, y1=60,
+        fillcolor="yellow", opacity=0.1,
+        line_width=0
+    )
 
+    # Critical zone
+    fig.add_hrect(
+        y0=60, y1=120,
+        fillcolor="red", opacity=0.08,
+        line_width=0
+    )
+
+    # AI curve
+    fig.add_trace(go.Scatter(
+        x=x,
+        y=y_ai,
+        line=dict(color="cyan", width=4),
+        name="AI Curve"
+    ))
+
+    # Operating point (SAFE)
     fig.add_trace(go.Scatter(
         x=[turbidity],
         y=[ai_dose],
         mode="markers+text",
         marker=dict(size=14, color="yellow"),
-        text=["Current"],
+        text=["Operating"],
         textposition="top center"
     ))
 
     fig.update_layout(
         template="plotly_dark",
-        height=300,
-        margin=dict(l=10,r=10,t=30,b=10)
+        height=350,
+        margin=dict(l=10,r=10,t=40,b=10),
+        xaxis_title="Turbidity (NTU)",
+        yaxis_title="Alum Dose (mg/L)",
+        showlegend=False
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
-    st.metric("Recommended Dose", f"{ai_dose:.1f} mg/L")
+    st.metric("Dose", f"{ai_dose:.1f} mg/L")
     st.metric("Alum Required", f"{alum_kg_day:,.0f} kg/day")
 
 # ============================================================
-# RIGHT SIDE → EXPLANATION (BEST PART)
+# 📘 RIGHT → DECISION PANEL
 # ============================================================
 
 with right:
 
-    st.markdown("### 📘 Recommendation Breakdown")
+    st.markdown("### 📘 Recommendation Logic")
 
-    st.write(f"""
+    st.markdown(f"""
 **Input Conditions**
-- Turbidity: {turbidity} NTU  
-- pH: {ph}  
-- Industrial Load: {"Yes" if industrial else "No"}  
-
-**Standard Estimates**
-- CPHEEO: {cpheeo:.1f} mg/L  
-- AWWA: {awwa:.1f} mg/L  
-- BIS-based: {bis:.1f} mg/L  
+- Turbidity: **{turbidity} NTU**
+- pH: **{ph}**
+- Industrial Load: **{"Yes" if industrial else "No"}**
 """)
-
-    if jar_available:
-        st.success(f"Jar Test Applied: {jar_dose:.1f} mg/L (Highest Priority)")
-    else:
-        st.warning("Jar Test not used → Using standard-based estimation")
 
     st.markdown("---")
 
-    st.write(f"""
-###  Final AI Decision
+    st.markdown(f"""
+**Standard Estimates**
+- CPHEEO: {cpheeo:.1f} mg/L  
+- AWWA: {awwa:.1f} mg/L  
+- BIS: {bis:.1f} mg/L  
+""")
 
-Final Dose = **{ai_dose:.1f} mg/L**
+    if jar_available:
+        st.success(f"Jar Test Used: {jar_dose:.1f} mg/L")
+    else:
+        st.warning("Jar Test not used")
+
+    st.markdown("---")
+
+    st.markdown(f"""
+### 🧠 Final Decision
+
+👉 **{ai_dose:.1f} mg/L Alum**
 
 ✔ Adjusted for:
-- pH effect ({ph_factor})
-- Industrial load ({industrial_factor})
+- pH factor: {ph_factor}
+- Industrial load: {industrial_factor}
+- Turbidity factor: {turb_factor}
 
-✔ Selected because:
-- Ensures effective coagulation
-- Prevents underdosing (turbidity carryover)
-- Avoids overdosing (cost + residual Al)
+✔ Ensures:
+- Effective coagulation  
+- Controlled sludge  
+- Stable filtration  
 
-### ⚡ PAC Suggestion
-**{pac_dose:.1f} mg/L**
-
-👉 Lower dose due to higher charge neutralization efficiency  
-👉 Recommended when turbidity or organic load is high  
+📦 Alum Required: **{alum_kg_day:,.0f} kg/day**  
+⚡ PAC Dose: **{pac_dose:.1f} mg/L**
 """)
 
 # ============================================================
@@ -714,14 +768,13 @@ Final Dose = **{ai_dose:.1f} mg/L**
 # ============================================================
 
 if ai_dose > 80:
-    st.error("🔴 High Dose → Consider PAC or pre-treatment")
+    st.error("🔴 Consider PAC or Pre-treatment")
 
 elif jar_available and abs(ai_dose - jar_dose) > 5:
     st.warning("🟡 Deviation from Jar Test")
 
 else:
-    st.success("🟢 Optimal Operation")
-
+    st.success("🟢 Optimal dosing")
 # ============================================================
 # CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
 # ============================================================
