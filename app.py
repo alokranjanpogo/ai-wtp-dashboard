@@ -1468,7 +1468,7 @@ if uploaded_img:
 
 import streamlit as st
 
-st.subheader("🖥️ Water Treatment AI Assistant")
+st.header("🖥️ Water Treatment AI Assistant")
 
 # ===============================
 # STEP 1: COMPLAINT
