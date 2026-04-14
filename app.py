@@ -1369,19 +1369,23 @@ def load_model():
 st.markdown("---")
 st.header("🌊 AI Intake Monitoring System")
 
-uploaded_img = st.file_uploader("Upload Intake Image", type=["jpg","png","jpeg"], key="intake")
+uploaded_img = st.file_uploader("Upload Intake Image", type=["jpg","png","jpeg"])
 
 if uploaded_img:
     img = Image.open(uploaded_img)
-    st.image(img, caption="Intake Image", use_container_width=True)
+    img_np = np.array(img)
 
-    if st.button("🔍 Run AI Analysis"):
+    st.image(img, caption="Uploaded Image")
 
-        # Convert image to numpy (important for YOLO stability)
-        img_np = np.array(img)
-   
+    if st.button("Run AI Analysis"):
+        with st.spinner("Processing..."):
+            model = load_model()
+            results = model(img_np)
+
+        st.success("Done!")
+
         detected = []
-        total_area = 0.0 # ensure float
+        total_area = 0.0
 
         for r in results:
             if r.boxes is not None:
@@ -1390,11 +1394,15 @@ if uploaded_img:
                     label = r.names[int(box.cls[0])]
                     detected.append(label)
 
-                    # Convert tensor → float
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
-
                     area = (x2 - x1) * (y2 - y1)
                     total_area += float(area)
+
+        st.write("Detected Objects:", detected)
+        st.write("Total Area:", total_area)
+
+        for r in results:
+            st.image(r.plot(), caption="Detection Result")
 
         # ==========================
         # 📊 INTELLIGENT ANALYSIS
