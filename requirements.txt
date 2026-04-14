@@ -3,10 +3,10 @@ pandas
 numpy
 plotly
 pillow
-opencv-python-headless==4.9.0.80
-ultralytics==8.0.20
-torch==2.0.1
-torchvision==0.15.2
+opencv-python-headless
+ultralytics
+torch
+torchvision
 tensorflow
 scikit-learn
 openpyxl
