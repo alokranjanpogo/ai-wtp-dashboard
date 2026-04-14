@@ -1379,9 +1379,7 @@ if uploaded_img:
 
         # Convert image to numpy (important for YOLO stability)
         img_np = np.array(img)
-
-        results = debris_model(img_np)
-
+   
         detected = []
         total_area = 0.0 # ensure float
 
