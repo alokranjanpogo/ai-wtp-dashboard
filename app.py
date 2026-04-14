@@ -1356,16 +1356,15 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # 🌊 AI INTAKE DEBRIS MODULE
 # ==============================
 
-from ultralytics import YOLO
 from PIL import Image
 import numpy as np
 import streamlit as st
 
 @st.cache_resource
 def load_model():
+    from ultralytics import YOLO 
     return YOLO("best.pt")
 
-debris_model = load_model()
 
 st.markdown("---")
 st.header("🌊 AI Intake Monitoring System")
