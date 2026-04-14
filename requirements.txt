@@ -3,8 +3,8 @@ pandas
 numpy
 plotlY
 pillow
-opencv-python-headless
 ultralytics
+opencv-python-headless
 torch
 torchvision
 tensorflow
