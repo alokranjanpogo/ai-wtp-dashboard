@@ -1355,32 +1355,41 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # ==============================
 # 🌊 AI INTAKE DEBRIS MODULE
 # ==============================
+# ==========================
+# 🔥 SYSTEM FIX (VERY IMPORTANT)
+# ==========================
+import os
+os.environ["OPENCV_VIDEOIO_PRIORITY_MSMF"] = "0"
+os.environ["DISPLAY"] = ""
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-
+# ==========================
+# IMPORTS
+# ==========================
 import streamlit as st
 import numpy as np
-from PIL import Image
-import os
+from PIL import Image, ImageDraw
 
-st.set_page_config(page_title="AI Intake Debris System", layout="wide")
+st.set_page_config(page_title="AI Intake Monitoring System", layout="wide")
 
 st.title("🌊 AI Intake Monitoring System")
 
 # ==========================
-# SAFE YOLO LOADING
+# LOAD YOLO MODEL (SAFE)
 # ==========================
 @st.cache_resource
 def load_model():
     try:
         from ultralytics import YOLO
 
-        model_path = "best.pt"
+        model = YOLO("best.pt")
 
-        if not os.path.exists(model_path):
-            st.error("❌ Model file 'best.pt' not found in repo")
-            return None
+        # Disable cv2 usage
+        model.overrides["show"] = False
+        model.overrides["save"] = False
 
-        return YOLO(model_path)
+        return model
 
     except Exception as e:
         st.error(f"❌ YOLO Load Error: {e}")
@@ -1403,13 +1412,13 @@ if st.button("🚀 Run AI Diagnosis"):
 
     if uploaded_file is None:
         st.warning("⚠️ Please upload an image first")
-    
+
     elif model is None:
-        st.error("❌ Model not loaded properly")
+        st.error("❌ Model not loaded")
 
     else:
         # Read image
-        image = Image.open(uploaded_file)
+        image = Image.open(uploaded_file).convert("RGB")
         image_np = np.array(image)
 
         st.subheader("📷 Input Image")
@@ -1424,11 +1433,20 @@ if st.button("🚀 Run AI Diagnosis"):
             issues = []
             actions = []
 
-            # Analyze results
+            draw = ImageDraw.Draw(image)
+
             for r in results:
-                if len(r.boxes) > 0:
+                boxes = r.boxes
+
+                if boxes is not None and len(boxes) > 0:
                     issues.append("Debris detected at intake")
                     actions.append("Clean intake screen immediately")
+
+                    # Draw boxes manually (NO cv2)
+                    for box in boxes.xyxy:
+                        x1, y1, x2, y2 = box.tolist()
+                        draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
+
                 else:
                     issues.append("No debris detected")
                     actions.append("Maintain normal operation")
@@ -1445,16 +1463,17 @@ if st.button("🚀 Run AI Diagnosis"):
                 st.write("•", a)
 
             # ==========================
-            # IMAGE OUTPUT
+            # IMAGE OUTPUT (SAFE)
             # ==========================
             st.subheader("📦 Detection Output")
-
-            for r in results:
-                plotted = r.plot()
-                st.image(plotted, use_container_width=True)
+            st.image(image, use_container_width=True)
 
         except Exception as e:
             st.error(f"❌ Detection Error: {e}")
+
+
+
+       
 
 # ==========================================
 # 🖥️ WATER QUALITY AI - ADVANCED PRACTICAL VERSION
