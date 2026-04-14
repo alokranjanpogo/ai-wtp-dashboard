@@ -1355,46 +1355,26 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # ==============================
 # 🌊 AI INTAKE DEBRIS MODULE
 # ==============================
-# ==========================
-# 🔥 SYSTEM FIX (VERY IMPORTANT)
-# ==========================
-import os
-os.environ["OPENCV_VIDEOIO_PRIORITY_MSMF"] = "0"
-os.environ["DISPLAY"] = ""
-os.environ["QT_QPA_PLATFORM"] = "offscreen"
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
-# ==========================
-# IMPORTS
-# ==========================
 import streamlit as st
 import numpy as np
 from PIL import Image, ImageDraw
+import torch
 
 st.set_page_config(page_title="AI Intake Monitoring System", layout="wide")
 
 st.title("🌊 AI Intake Monitoring System")
 
 # ==========================
-# LOAD YOLO MODEL (SAFE)
+# LOAD MODEL (SAFE - NO CV2)
 # ==========================
 @st.cache_resource
 def load_model():
     try:
-        from ultralytics import YOLO
-
-        model = YOLO("best.pt")
-
-        # Disable cv2 usage
-        model.overrides["show"] = False
-        model.overrides["save"] = False
-
+        model = torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt')
         return model
-
     except Exception as e:
-        st.error(f"❌ YOLO Load Error: {e}")
+        st.error(f"Model Load Error: {e}")
         return None
-
 
 model = load_model()
 
@@ -1402,7 +1382,6 @@ model = load_model()
 # IMAGE INPUT
 # ==========================
 st.subheader("📤 Upload Intake Image")
-
 uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
 
 # ==========================
@@ -1411,45 +1390,41 @@ uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
 if st.button("🚀 Run AI Diagnosis"):
 
     if uploaded_file is None:
-        st.warning("⚠️ Please upload an image first")
+        st.warning("⚠️ Upload image first")
 
     elif model is None:
         st.error("❌ Model not loaded")
 
     else:
-        # Read image
         image = Image.open(uploaded_file).convert("RGB")
-        image_np = np.array(image)
 
         st.subheader("📷 Input Image")
         st.image(image, use_container_width=True)
 
         # ==========================
-        # YOLO DETECTION
+        # DETECTION
         # ==========================
         try:
-            results = model(image_np)
+            results = model(image)
+
+            detections = results.xyxy[0].cpu().numpy()
+
+            draw = ImageDraw.Draw(image)
 
             issues = []
             actions = []
 
-            draw = ImageDraw.Draw(image)
+            if len(detections) > 0:
+                issues.append("Debris detected at intake")
+                actions.append("Clean intake screen immediately")
 
-            for r in results:
-                boxes = r.boxes
+                for det in detections:
+                    x1, y1, x2, y2 = det[:4]
+                    draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
 
-                if boxes is not None and len(boxes) > 0:
-                    issues.append("Debris detected at intake")
-                    actions.append("Clean intake screen immediately")
-
-                    # Draw boxes manually (NO cv2)
-                    for box in boxes.xyxy:
-                        x1, y1, x2, y2 = box.tolist()
-                        draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
-
-                else:
-                    issues.append("No debris detected")
-                    actions.append("Maintain normal operation")
+            else:
+                issues.append("No debris detected")
+                actions.append("Maintain normal operation")
 
             # ==========================
             # OUTPUT
@@ -1462,18 +1437,11 @@ if st.button("🚀 Run AI Diagnosis"):
             for a in actions:
                 st.write("•", a)
 
-            # ==========================
-            # IMAGE OUTPUT (SAFE)
-            # ==========================
             st.subheader("📦 Detection Output")
             st.image(image, use_container_width=True)
 
         except Exception as e:
-            st.error(f"❌ Detection Error: {e}")
-
-
-
-       
+            st.error(f"Detection Error: {e}")
 
 # ==========================================
 # 🖥️ WATER QUALITY AI - ADVANCED PRACTICAL VERSION
