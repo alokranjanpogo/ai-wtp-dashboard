@@ -6,8 +6,6 @@ import plotly.express as px
 import datetime
 import pytz
 from streamlit_autorefresh import st_autorefresh
-import cv2
-st.write("cv2 working")
 
 # ===============================
 # AUTO REFRESH
@@ -1353,38 +1351,54 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # ==============================
 # 🌊 AI INTAKE DEBRIS MODULE
 # ==============================
-from ultralytics import YOLO
-from PIL import Image
-import numpy as np
+# ==============================
+# 🌊 AI INTAKE DEBRIS MODULE
+# ==============================
+
 import streamlit as st
+import numpy as np
+from PIL import Image
 import time
+import os
+
+# 🔥 Prevent OpenCV-related crashes (important)
+os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 
 # ==============================
-# SAFE MODEL LOADING
+# SAFE YOLO IMPORT
+# ==============================
+try:
+    from ultralytics import YOLO
+except Exception as e:
+    st.error(f"❌ YOLO Import Error: {e}")
+    st.stop()
+
+# ==============================
+# MODEL LOADING (FAST + SAFE)
 # ==============================
 @st.cache_resource
 def load_model():
     try:
-        model = YOLO("best.pt")
-        model.to("cpu") # 🔥 force CPU (prevents hanging)
+        model = YOLO("best.pt") # make sure file exists in repo
+        model.to("cpu") # force CPU
         return model
     except Exception as e:
-        st.error(f"Model loading failed: {e}")
+        st.error(f"❌ Model Loading Error: {e}")
         return None
 
-# Debug loading
+# Load model
 st.write("⏳ Loading AI model...")
-start_time = time.time()
+start = time.time()
 
 debris_model = load_model()
 
-if debris_model:
-    st.success(f"✅ Model loaded in {round(time.time()-start_time,2)} sec")
-else:
+if debris_model is None:
     st.stop()
 
+st.success(f"✅ Model loaded in {round(time.time()-start,2)} sec")
+
 # ==============================
-# UI
+# UI SECTION
 # ==============================
 st.markdown("---")
 st.header("🌊 AI Intake Monitoring System")
@@ -1395,19 +1409,22 @@ uploaded_img = st.file_uploader(
     key="intake"
 )
 
+# ==============================
+# PROCESS IMAGE
+# ==============================
 if uploaded_img:
+
     try:
         img = Image.open(uploaded_img).convert("RGB")
-        st.image(img, caption="Intake Image", use_container_width=True)
+        st.image(img, caption="Uploaded Image", use_container_width=True)
 
         if st.button("🔍 Run AI Analysis"):
 
             with st.spinner("Running AI detection..."):
 
-                img_np = np.array(img)
-
+                # 🔥 PASS PIL IMAGE (NO CV2 REQUIRED)
                 results = debris_model.predict(
-                    img_np,
+                    source=img,
                     conf=0.25,
                     device="cpu"
                 )
@@ -1483,8 +1500,7 @@ if uploaded_img:
                     st.image(r.plot(), use_container_width=True)
 
     except Exception as e:
-        st.error(f"Error processing image: {e}")
-
+        st.error(f"❌ Image Processing Error: {e}")
 # ==========================================
 # 🖥️ WATER QUALITY AI - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
