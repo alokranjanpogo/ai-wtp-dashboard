@@ -7,7 +7,6 @@ ultralytics
 opencv-python-headless
 torch
 torchvision
-tensorflow
 scikit-learn
 openpyxl
 requests
