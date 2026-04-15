@@ -15,10 +15,6 @@ st.write("cv2 working")
 st_autorefresh(interval=19000, key="scada_refresh")
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
-import datetime
-import pandas as pd
-import streamlit as st
-
 # ===============================
 # STYLING (UPGRADED UI)
 # ===============================
