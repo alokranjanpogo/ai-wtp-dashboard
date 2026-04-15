@@ -4,7 +4,6 @@ numpy
 plotlY
 pillow
 ultralytics
-opencv-python-headless==4.8.0.76
 scikit-learn
 openpyxl
 requests
