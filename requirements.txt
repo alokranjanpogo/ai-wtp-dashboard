@@ -4,9 +4,6 @@ numpy
 plotlY
 pillow
 ultralytics
-torch
-torchvision
-tensorflow
 scikit-learn
 openpyxl
 requests
