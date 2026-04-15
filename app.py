@@ -6,6 +6,8 @@ import plotly.express as px
 import datetime
 import pytz
 from streamlit_autorefresh import st_autorefresh
+import cv2
+st.write("cv2 working")
 
 # ===============================
 # AUTO REFRESH
