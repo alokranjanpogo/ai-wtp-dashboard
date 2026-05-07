@@ -1365,18 +1365,19 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("🌊 AI Intake Monitoring Dashboard")
+st.header("🌊 AI Intake Monitoring System")
 
 # =========================
 # CLASS NAMES
 # =========================
-# CHANGE THESE ACCORDING TO YOUR TRAINED MODEL
+# CHANGE ACCORDING TO YOUR TRAINED MODEL
 CLASS_NAMES = [
     "Plastic",
     "Bottle",
     "Bag",
     "Leaf",
-    "Plant"
+    "Plant",
+    "Wood"
 ]
 
 # =========================
@@ -1384,13 +1385,15 @@ CLASS_NAMES = [
 # =========================
 @st.cache_resource
 def load_model():
+
     session = ort.InferenceSession("best.onnx")
+
     return session
 
 session = load_model()
 
 # =========================
-# FILE UPLOAD
+# IMAGE UPLOAD
 # =========================
 uploaded_img = st.file_uploader(
     "Upload Intake Image",
@@ -1416,7 +1419,7 @@ def preprocess(img):
     return img_np
 
 # =========================
-# AI ANALYSIS
+# RUN AI
 # =========================
 if uploaded_img:
 
@@ -1433,7 +1436,7 @@ if uploaded_img:
         try:
 
             # =========================
-            # PREPROCESS IMAGE
+            # MODEL INFERENCE
             # =========================
             input_tensor = preprocess(img)
 
@@ -1447,232 +1450,231 @@ if uploaded_img:
             # =========================
             # EXTRACT OUTPUT
             # =========================
+            output = outputs[0][0]
+
+            confidence_threshold = 0.40
+
+            detected = []
+
+            plastic_count = 0
+            organic_count = 0
+            total_detection = 0
+
             # =========================
-# EXTRACT OUTPUT
-# =========================
-output = outputs[0][0]
+            # DETECTION LOOP
+            # =========================
+            for detection in output.T:
 
-confidence_threshold = 0.40
+                scores = detection[4:]
 
-detected = []
+                class_id = np.argmax(scores)
 
-plastic_count = 0
-organic_count = 0
-total_detection = 0
+                confidence = scores[class_id]
 
-# =========================
-# DETECTION LOOP
-# =========================
-for detection in output.T:
+                if confidence > confidence_threshold:
 
-    scores = detection[4:]
+                    total_detection += 1
 
-    class_id = np.argmax(scores)
+                    if class_id < len(CLASS_NAMES):
 
-    confidence = scores[class_id]
+                        label = CLASS_NAMES[class_id]
 
-    if confidence > confidence_threshold:
+                    else:
 
-        total_detection += 1
+                        label = f"Class {class_id}"
 
-        if class_id < len(CLASS_NAMES):
+                    detected.append(label)
 
-            label = CLASS_NAMES[class_id]
+                    # =========================
+                    # PLASTIC LOAD
+                    # =========================
+                    if label in ["Plastic", "Bottle", "Bag"]:
 
-        else:
+                        plastic_count += 1
 
-            label = f"Class {class_id}"
+                    # =========================
+                    # ORGANIC LOAD
+                    # =========================
+                    if label in ["Leaf", "Plant", "Wood"]:
 
-        detected.append(label)
+                        organic_count += 1
 
-        # =========================
-        # LOAD CLASSIFICATION
-        # =========================
-        if label in ["Plastic", "Bottle", "Bag"]:
+            # =========================
+            # LOAD CALCULATION
+            # =========================
+            if total_detection > 0:
 
-            plastic_count += 1
+                plastic_load = round(
+                    (plastic_count / total_detection) * 100,
+                    1
+                )
 
-        if label in ["Leaf", "Plant", "Wood"]:
+                organic_load = round(
+                    (organic_count / total_detection) * 100,
+                    1
+                )
 
-            organic_count += 1
+            else:
 
-# =========================
-# LOAD CALCULATIONS
-# =========================
-if total_detection > 0:
+                plastic_load = 0
+                organic_load = 0
 
-    plastic_load = round(
-        (plastic_count / total_detection) * 100,
-        1
-    )
+            # =========================
+            # BLOCKAGE RISK
+            # =========================
+            if plastic_load > 60:
 
-    organic_load = round(
-        (organic_count / total_detection) * 100,
-        1
-    )
+                blockage_risk = "HIGH"
 
-else:
+            elif plastic_load > 30:
 
-    plastic_load = 0
-    organic_load = 0
+                blockage_risk = "MODERATE"
 
-# =========================
-# RISK ANALYSIS
-# =========================
-if plastic_load > 60:
+            else:
 
-    blockage_risk = "HIGH"
+                blockage_risk = "LOW"
 
-elif plastic_load > 30:
+            # =========================
+            # INTAKE HEALTH
+            # =========================
+            if total_detection == 0:
 
-    blockage_risk = "MODERATE"
+                intake_health = "EXCELLENT"
 
-else:
+            elif plastic_load > 60 or total_detection > 10:
 
-    blockage_risk = "LOW"
+                intake_health = "CRITICAL"
 
-# =========================
-# OVERALL HEALTH
-# =========================
-if total_detection == 0:
+            elif plastic_load > 30:
 
-    intake_health = "EXCELLENT"
+                intake_health = "WARNING"
 
-elif plastic_load > 60 or total_detection > 8:
+            else:
 
-    intake_health = "CRITICAL"
+                intake_health = "NORMAL"
 
-elif plastic_load > 30:
+            # =========================
+            # DASHBOARD OUTPUT
+            # =========================
+            st.subheader("📊 AI Intake Monitoring Summary")
 
-    intake_health = "WARNING"
+            col1, col2, col3 = st.columns(3)
 
-else:
+            col1.metric(
+                "Plastic Load %",
+                plastic_load
+            )
 
-    intake_health = "NORMAL"
+            col2.metric(
+                "Organic Load %",
+                organic_load
+            )
 
-# =========================
-# DASHBOARD OUTPUT
-# =========================
-st.subheader("📊 AI Intake Monitoring Summary")
+            col3.metric(
+                "Total Debris Objects",
+                total_detection
+            )
 
-col1, col2, col3 = st.columns(3)
+            # =========================
+            # DETECTED MATERIALS
+            # =========================
+            st.subheader("🧾 Detected Materials")
 
-col1.metric(
-    "Plastic Load %",
-    plastic_load
-)
+            if len(detected) > 0:
 
-col2.metric(
-    "Organic Load %",
-    organic_load
-)
+                unique_detected = list(set(detected))
 
-col3.metric(
-    "Total Debris Objects",
-    total_detection
-)
+                for item in unique_detected:
 
-# =========================
-# DETECTED MATERIALS
-# =========================
-st.subheader("🧾 Detected Materials")
+                    st.success(item)
 
-if len(detected) > 0:
+            else:
 
-    unique_detected = list(set(detected))
+                st.info("No significant debris detected")
 
-    for item in unique_detected:
+            # =========================
+            # RISK ASSESSMENT
+            # =========================
+            st.subheader("⚠️ Intake Risk Assessment")
 
-        st.success(item)
+            st.warning(
+                f"Trash Rack Blockage Risk: {blockage_risk}"
+            )
 
-else:
+            st.warning(
+                f"Overall Intake Health: {intake_health}"
+            )
 
-    st.info("No significant debris detected")
+            # =========================
+            # PROCESS IMPACT
+            # =========================
+            st.subheader("🏭 Process Impact Analysis")
 
-# =========================
-# INTAKE CONDITION
-# =========================
-st.subheader("⚠️ Intake Risk Assessment")
+            if plastic_load > 50:
 
-st.warning(
-    f"Trash Rack Blockage Risk: {blockage_risk}"
-)
+                st.error(
+                    "High plastic accumulation may choke intake screens and filters"
+                )
 
-st.warning(
-    f"Overall Intake Health: {intake_health}"
-)
+            if organic_load > 40:
 
-# =========================
-# PROCESS IMPACT
-# =========================
-st.subheader("🏭 Process Impact Analysis")
+                st.warning(
+                    "High organic load may increase alum/PAC dosing"
+                )
 
-if plastic_load > 50:
+            if total_detection > 10:
 
-    st.error(
-        "High plastic accumulation may choke intake screens and filters"
-    )
+                st.error(
+                    "Heavy debris condition may overload clarifier"
+                )
 
-if organic_load > 40:
+            if total_detection == 0:
 
-    st.warning(
-        "High organic load may increase alum/PAC demand"
-    )
+                st.success(
+                    "Raw water intake condition stable"
+                )
 
-if total_detection > 10:
+            # =========================
+            # RECOMMENDED ACTIONS
+            # =========================
+            st.subheader("🛠 Recommended Actions")
 
-    st.error(
-        "Heavy debris condition may overload clarifier system"
-    )
+            if blockage_risk == "HIGH":
 
-if total_detection == 0:
+                st.error(
+                    "Immediate trash rack cleaning required"
+                )
 
-    st.success(
-        "Raw water intake condition stable"
-    )
+                st.error(
+                    "Reduce intake flow temporarily"
+                )
 
-# =========================
-# RECOMMENDED ACTIONS
-# =========================
-st.subheader("🛠 Recommended Actions")
+            elif blockage_risk == "MODERATE":
 
-if blockage_risk == "HIGH":
+                st.warning(
+                    "Schedule preventive intake cleaning"
+                )
 
-    st.error(
-        "Immediate trash rack cleaning required"
-    )
+            else:
 
-    st.error(
-        "Reduce intake flow temporarily"
-    )
+                st.success(
+                    "Maintain normal operation"
+                )
 
-elif blockage_risk == "MODERATE":
+            if organic_load > 40:
 
-    st.warning(
-        "Schedule preventive intake cleaning"
-    )
+                st.warning(
+                    "Increase alum/PAC dosing temporarily"
+                )
 
-else:
+            # =========================
+            # AI STATUS
+            # =========================
+            st.subheader("🤖 AI Monitoring Status")
 
-    st.success(
-        "Maintain normal operation"
-    )
-
-if organic_load > 40:
-
-    st.warning(
-        "Increase coagulant dosing temporarily"
-    )
-
-# =========================
-# FINAL AI STATUS
-# =========================
-st.subheader("🤖 AI Monitoring Status")
-
-st.success(
-    "Industrial AI Intake Monitoring Active"
-)
-            
+            st.success(
+                "Industrial AI Intake Monitoring Active"
+            )
 
         except Exception as e:
 
