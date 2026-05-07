@@ -4,9 +4,7 @@ numpy
 plotly
 pillow
 ultralytics
-opencv-python-headless
-torch
-torchvision
+onnxruntime
 scikit-learn
 openpyxl
 requests
