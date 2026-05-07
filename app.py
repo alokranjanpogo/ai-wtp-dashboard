@@ -1352,18 +1352,35 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # 🌊 AI INTAKE DEBRIS MODULE
 # ==============================
 
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+
 import streamlit as st
 from PIL import Image
 import numpy as np
-from ultralytics import YOLO
+
+# =========================
+# SAFE YOLO IMPORT
+# =========================
+try:
+    from ultralytics import YOLO
+except Exception as e:
+    st.error(f"YOLO Import Failed: {e}")
+    st.info("Check requirements.txt, packages.txt and runtime.txt")
+    st.stop()
 
 # =========================
 # PAGE CONFIG
 # =========================
-st.set_page_config(page_title="AI Intake Monitoring", layout="wide")
+st.set_page_config(
+    page_title="AI Intake Monitoring System",
+    layout="wide"
+)
+
+st.title("🌊 AI Intake Monitoring Dashboard")
 
 # =========================
-# LOAD MODEL
+# MODEL LOAD
 # =========================
 @st.cache_resource
 def load_model():
@@ -1371,52 +1388,51 @@ def load_model():
     return model
 
 try:
-    debris_model = load_model()
+    model = load_model()
+    st.success("✅ AI Model Loaded Successfully")
 except Exception as e:
-    st.error(f"Model Loading Failed: {e}")
+    st.error(f"Model Loading Error: {e}")
     st.stop()
 
 # =========================
-# UI
+# IMAGE UPLOAD
 # =========================
-st.markdown("---")
-st.header("🌊 AI Intake Monitoring System")
-
-uploaded_img = st.file_uploader(
+uploaded_file = st.file_uploader(
     "Upload Intake Image",
-    type=["jpg", "jpeg", "png"],
-    key="intake"
+    type=["jpg", "jpeg", "png"]
 )
 
 # =========================
-# IMAGE PROCESSING
+# PROCESS IMAGE
 # =========================
-if uploaded_img is not None:
+if uploaded_file is not None:
 
-    img = Image.open(uploaded_img).convert("RGB")
+    # Read Image
+    image = Image.open(uploaded_file).convert("RGB")
 
-    st.image(
-        img,
-        caption="Uploaded Intake Image",
-        use_container_width=True
-    )
+    # Display Uploaded Image
+    st.subheader("📷 Uploaded Image")
+    st.image(image, use_container_width=True)
 
-    if st.button("🔍 Run AI Analysis"):
+    if st.button("🔍 Run AI Monitoring"):
 
-        with st.spinner("Running AI Detection..."):
+        with st.spinner("Analyzing Intake Condition..."):
 
             try:
-                # Convert image to numpy
-                img_np = np.array(img)
 
-                # YOLO Prediction
-                results = debris_model.predict(
-                    source=img_np,
+                # Convert PIL → NumPy
+                image_np = np.array(image)
+
+                # =========================
+                # YOLO PREDICTION
+                # =========================
+                results = model.predict(
+                    source=image_np,
                     conf=0.30,
                     verbose=False
                 )
 
-                detected = []
+                detected_objects = []
                 total_area = 0.0
 
                 # =========================
@@ -1424,131 +1440,155 @@ if uploaded_img is not None:
                 # =========================
                 for r in results:
 
-                    if r.boxes is not None:
+                    boxes = r.boxes
 
-                        for box in r.boxes:
+                    if boxes is not None:
 
-                            label = r.names[int(box.cls[0])]
-                            detected.append(label)
+                        for box in boxes:
 
+                            cls_id = int(box.cls[0])
+                            label = r.names[cls_id]
+
+                            detected_objects.append(label)
+
+                            # Bounding Box Coordinates
                             x1, y1, x2, y2 = box.xyxy[0].tolist()
 
-                            area = max((x2 - x1), 0) * max((y2 - y1), 0)
+                            width = max((x2 - x1), 0)
+                            height = max((y2 - y1), 0)
 
-                            total_area += float(area)
+                            area = width * height
 
-                debris_count = len(detected)
-
-                # Density Calculation
-                img_area = img.size[0] * img.size[1]
-
-                density = (
-                    total_area / img_area
-                    if img_area > 0 else 0
-                )
+                            total_area += area
 
                 # =========================
-                # OUTPUT
+                # BASIC METRICS
+                # =========================
+                object_count = len(detected_objects)
+
+                img_width, img_height = image.size
+                image_area = img_width * img_height
+
+                if image_area > 0:
+                    debris_density = total_area / image_area
+                else:
+                    debris_density = 0
+
+                # =========================
+                # SUMMARY
                 # =========================
                 st.subheader("📊 AI Detection Summary")
 
-                st.write("Detected Objects:", detected)
+                st.write("### Detected Objects")
+                st.write(detected_objects)
 
-                st.metric(
+                col1, col2 = st.columns(2)
+
+                col1.metric(
+                    "Detected Objects",
+                    object_count
+                )
+
+                col2.metric(
                     "Debris Density",
-                    round(float(density), 3)
+                    round(float(debris_density), 3)
                 )
 
                 # =========================
-                # DECISION ENGINE
+                # AI ISSUE IDENTIFICATION
                 # =========================
                 st.subheader("⚠️ AI Identified Issues")
 
                 issues = []
-                actions = []
+                recommendations = []
 
-                # Plastic detection
+                # Plastic Detection
                 if any(
-                    x in detected
+                    x in detected_objects
                     for x in ["plastic", "bottle", "bag"]
                 ):
                     issues.append(
-                        "Plastic accumulation → Intake blockage risk"
+                        "Plastic waste detected near intake"
                     )
 
-                    actions.append(
-                        "Install / clean trash racks immediately"
+                    recommendations.append(
+                        "Clean trash racks immediately"
                     )
 
-                # Organic load
+                # Organic Detection
                 if any(
-                    x in detected
-                    for x in ["leaf", "plant"]
+                    x in detected_objects
+                    for x in ["leaf", "plant", "wood"]
                 ):
                     issues.append(
-                        "High organic load → Increased coagulant demand"
+                        "High organic matter observed"
                     )
 
-                    actions.append(
-                        "Increase alum/PAC dosing temporarily"
+                    recommendations.append(
+                        "Increase coagulant dosing temporarily"
                     )
 
-                # High density
-                if density > 0.15:
+                # High Density
+                if debris_density > 0.15:
                     issues.append(
-                        "High debris density → Clarifier overload risk"
+                        "Heavy debris concentration detected"
                     )
 
-                    actions.append(
+                    recommendations.append(
                         "Reduce intake flow rate"
                     )
 
-                # Extreme condition
-                if density > 0.25 or debris_count > 8:
+                # Critical Condition
+                if debris_density > 0.25 or object_count > 8:
                     issues.append(
-                        "Extreme debris condition → Filter choking risk"
+                        "Critical intake blockage risk"
                     )
 
-                    actions.append(
-                        "Prepare for frequent backwashing"
+                    recommendations.append(
+                        "Prepare emergency cleaning operation"
                     )
 
-                # Stable condition
-                if debris_count == 0:
+                # Normal Condition
+                if object_count == 0:
                     issues.append(
-                        "No visible debris → System stable"
+                        "No major debris detected"
                     )
 
-                    actions.append(
-                        "Maintain normal operation"
+                    recommendations.append(
+                        "System operating normally"
                     )
 
-                # Show Issues
+                # =========================
+                # DISPLAY ISSUES
+                # =========================
                 for issue in issues:
                     st.warning(issue)
 
-                # Show Actions
+                # =========================
+                # DISPLAY ACTIONS
+                # =========================
                 st.subheader("🛠 Recommended Actions")
 
-                for action in actions:
-                    st.success(action)
+                for rec in recommendations:
+                    st.success(rec)
 
                 # =========================
-                # DETECTION IMAGE
+                # DISPLAY DETECTION IMAGE
                 # =========================
                 st.subheader("📦 Detection Output")
 
                 for r in results:
-                    plotted = r.plot()
+
+                    plotted_image = r.plot()
 
                     st.image(
-                        plotted,
+                        plotted_image,
                         caption="AI Detection Result",
                         use_container_width=True
                     )
 
             except Exception as e:
-                st.error(f"AI Analysis Failed: {e}")
+                st.error(f"Detection Failed: {e}")
 # ==========================================
 # 🖥️ WATER QUALITY AI - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
