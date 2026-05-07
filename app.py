@@ -1352,152 +1352,122 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # 🌊 AI INTAKE DEBRIS MODULE
 # ==============================
 
-import streamlit as st
-import numpy as np
+# ==============================
+# 🌊 AI INTAKE DEBRIS MODULE
+# ==============================
+
+from ultralytics import YOLO
 from PIL import Image
-import time
-import os
+import numpy as np
+import streamlit as st
 
-# 🔥 Prevent OpenCV-related crashes (important)
-os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
-
-# ==============================
-# SAFE YOLO IMPORT
-# ==============================
-try:
-    from ultralytics import YOLO
-except Exception as e:
-    st.error(f"❌ YOLO Import Error: {e}")
-    st.stop()
-
-# ==============================
-# MODEL LOADING (FAST + SAFE)
-# ==============================
 @st.cache_resource
 def load_model():
-    try:
-        model = YOLO("best.pt") # make sure file exists in repo
-        model.to("cpu") # force CPU
-        return model
-    except Exception as e:
-        st.error(f"❌ Model Loading Error: {e}")
-        return None
-
-# Load model
-st.write("⏳ Loading AI model...")
-start = time.time()
+    return YOLO("best.pt")
 
 debris_model = load_model()
 
-if debris_model is None:
-    st.stop()
-
-st.success(f"✅ Model loaded in {round(time.time()-start,2)} sec")
-
-# ==============================
-# UI SECTION
-# ==============================
 st.markdown("---")
 st.header("🌊 AI Intake Monitoring System")
 
-uploaded_img = st.file_uploader(
-    "Upload Intake Image",
-    type=["jpg", "png", "jpeg"],
-    key="intake"
-)
+uploaded_img = st.file_uploader("Upload Intake Image", type=["jpg","png","jpeg"], key="intake")
 
-# ==============================
-# PROCESS IMAGE
-# ==============================
 if uploaded_img:
+    img = Image.open(uploaded_img)
+    st.image(img, caption="Intake Image", use_container_width=True)
 
-    try:
-        img = Image.open(uploaded_img).convert("RGB")
-        st.image(img, caption="Uploaded Image", use_container_width=True)
+    if st.button("🔍 Run AI Analysis"):
 
-        if st.button("🔍 Run AI Analysis"):
+        # Convert image to numpy (important for YOLO stability)
+        img_np = np.array(img)
 
-            with st.spinner("Running AI detection..."):
+        results = debris_model(img_np)
 
-                # 🔥 PASS PIL IMAGE (NO CV2 REQUIRED)
-                results = debris_model.predict(
-                    source=img,
-                    conf=0.25,
-                    device="cpu"
-                )
+        detected = []
+        total_area = 0.0 # ensure float
 
-                detected = []
-                total_area = 0.0
+        for r in results:
+            if r.boxes is not None:
+                for box in r.boxes:
 
-                for r in results:
-                    if r.boxes is not None:
-                        for box in r.boxes:
+                    label = r.names[int(box.cls[0])]
+                    detected.append(label)
 
-                            label = r.names[int(box.cls[0])]
-                            detected.append(label)
+                    # Convert tensor → float
+                    x1, y1, x2, y2 = box.xyxy[0].tolist()
 
-                            x1, y1, x2, y2 = box.xyxy[0].tolist()
-                            area = (x2 - x1) * (y2 - y1)
-                            total_area += float(area)
+                    area = (x2 - x1) * (y2 - y1)
+                    total_area += float(area)
 
-                # ==========================
-                # ANALYSIS
-                # ==========================
-                st.subheader("📊 AI Detection Summary")
+        # ==========================
+        # 📊 INTELLIGENT ANALYSIS
+        # ==========================
+        st.subheader("📊 AI Detection Summary")
+        st.write("Detected Objects:", detected)
 
-                debris_count = len(detected)
-                img_area = img.size[0] * img.size[1]
-                density = total_area / img_area if img_area > 0 else 0
+        debris_count = len(detected)
 
-                st.write("Detected Objects:", detected if detected else "None")
-                st.write(f"Debris Density: {round(density,3)}")
+        # Avoid division by zero
+        img_area = img.size[0] * img.size[1]
 
-                # ==========================
-                # DECISION ENGINE
-                # ==========================
-                st.subheader("⚠️ AI Identified Issues")
+        if img_area > 0:
+            density = total_area / img_area
+        else:
+            density = 0
 
-                issues = []
-                actions = []
+        st.write(f"Debris Density: {round(float(density),3)}")
 
-                if any(x in detected for x in ["plastic", "bottle", "bag"]):
-                    issues.append("Plastic accumulation → Intake blockage risk")
-                    actions.append("Install / clean trash racks immediately")
+        # ==========================
+        #  AI DECISION ENGINE
+        # ==========================
+        st.subheader("⚠️ AI Identified Issues")
 
-                if any(x in detected for x in ["leaf", "plant"]):
-                    issues.append("High organic load → Increased coagulant demand")
-                    actions.append("Increase alum/PAC dosing temporarily")
+        issues = []
+        actions = []
 
-                if density > 0.15:
-                    issues.append("High debris density → Clarifier overload risk")
-                    actions.append("Reduce intake flow rate")
+        # --- Plastic detection ---
+        if any(x in detected for x in ["plastic", "bottle", "bag"]):
+            issues.append("Plastic accumulation → Intake blockage risk")
+            actions.append("Install / clean trash racks immediately")
 
-                if density > 0.25 or debris_count > 8:
-                    issues.append("Extreme debris condition → Filter choking risk")
-                    actions.append("Prepare for frequent backwashing")
+        # --- Organic load ---
+        if any(x in detected for x in ["leaf", "plant"]):
+            issues.append("High organic load → Increased coagulant demand")
+            actions.append("Increase alum/PAC dosing temporarily")
 
-                if debris_count == 0:
-                    issues.append("No visible debris → System stable")
-                    actions.append("Maintain normal operation")
+        # --- High density ---
+        if density > 0.15:
+            issues.append("High debris density → Clarifier overload risk")
+            actions.append("Reduce intake flow rate")
 
-                for i in issues:
-                    st.write("•", i)
+        # --- Extreme condition ---
+        if density > 0.25 or debris_count > 8:
+            issues.append("Extreme debris condition → Filter choking risk")
+            actions.append("Prepare for frequent backwashing")
 
-                st.subheader("🛠 Recommended Actions")
+        # --- No detection ---
+        if debris_count == 0:
+            issues.append("No visible debris → System stable")
+            actions.append("Maintain normal operation")
 
-                for a in actions:
-                    st.write("•", a)
+        # ==========================
+        # OUTPUT
+        # ==========================
+        for i in issues:
+            st.write("•", i)
 
-                # ==========================
-                # OUTPUT IMAGE
-                # ==========================
-                st.subheader("📦 Detection Output")
+        st.subheader("🛠 Recommended Actions")
 
-                for r in results:
-                    st.image(r.plot(), use_container_width=True)
+        for a in actions:
+            st.write("•", a)
 
-    except Exception as e:
-        st.error(f"❌ Image Processing Error: {e}")
+        # ==========================
+        # IMAGE OUTPUT
+        # ==========================
+        st.subheader("📦 Detection Output")
+
+        for r in results:
+            st.image(r.plot(), use_container_width=True)
 # ==========================================
 # 🖥️ WATER QUALITY AI - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
