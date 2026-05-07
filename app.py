@@ -1352,23 +1352,46 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # 🌊 AI INTAKE DEBRIS MODULE
 # ==============================
 
-import onnxruntime as ort
-from PIL import Image
-import numpy as np
 import streamlit as st
+import onnxruntime as ort
+import numpy as np
+from PIL import Image
+
+# =========================
+# PAGE CONFIG
+# =========================
+st.set_page_config(
+    page_title="AI Intake Monitoring",
+    layout="wide"
+)
+
+st.title("🌊 AI Intake Monitoring Dashboard")
+
+# =========================
+# CLASS NAMES
+# =========================
+# CHANGE THESE ACCORDING TO YOUR TRAINED MODEL
+CLASS_NAMES = [
+    "Plastic",
+    "Bottle",
+    "Bag",
+    "Leaf",
+    "Plant"
+]
 
 # =========================
 # LOAD ONNX MODEL
 # =========================
 @st.cache_resource
 def load_model():
-    return ort.InferenceSession("best.onnx")
+    session = ort.InferenceSession("best.onnx")
+    return session
 
 session = load_model()
 
-st.markdown("---")
-st.header("🌊 AI Intake Monitoring System")
-
+# =========================
+# FILE UPLOAD
+# =========================
 uploaded_img = st.file_uploader(
     "Upload Intake Image",
     type=["jpg", "jpeg", "png"],
@@ -1393,7 +1416,7 @@ def preprocess(img):
     return img_np
 
 # =========================
-# RUN AI
+# AI ANALYSIS
 # =========================
 if uploaded_img:
 
@@ -1409,6 +1432,9 @@ if uploaded_img:
 
         try:
 
+            # =========================
+            # PREPROCESS IMAGE
+            # =========================
             input_tensor = preprocess(img)
 
             input_name = session.get_inputs()[0].name
@@ -1418,15 +1444,184 @@ if uploaded_img:
                 {input_name: input_tensor}
             )
 
-            st.subheader("📊 AI Monitoring Result")
+            # =========================
+            # EXTRACT OUTPUT
+            # =========================
+            output = outputs[0][0]
 
-            st.success("AI Model Running Successfully")
+            confidence_threshold = 0.40
 
-            st.write(outputs)
+            detected = []
+
+            total_confidence = 0
+
+            # =========================
+            # DETECTION LOOP
+            # =========================
+            for detection in output.T:
+
+                scores = detection[4:]
+
+                class_id = np.argmax(scores)
+
+                confidence = scores[class_id]
+
+                if confidence > confidence_threshold:
+
+                    if class_id < len(CLASS_NAMES):
+
+                        label = CLASS_NAMES[class_id]
+
+                    else:
+
+                        label = f"Class {class_id}"
+
+                    detected.append(label)
+
+                    total_confidence += confidence
+
+            # =========================
+            # REMOVE DUPLICATES
+            # =========================
+            detected = list(set(detected))
+
+            debris_count = len(detected)
+
+            # =========================
+            # DENSITY ESTIMATION
+            # =========================
+            density = round(
+                min(total_confidence / 10, 1.0),
+                2
+            )
+
+            # =========================
+            # SUMMARY
+            # =========================
+            st.subheader("📊 AI Detection Summary")
+
+            st.write("### Detected Objects")
+
+            if debris_count > 0:
+
+                for obj in detected:
+                    st.success(obj)
+
+            else:
+
+                st.warning("No debris detected")
+
+            # =========================
+            # METRICS
+            # =========================
+            col1, col2 = st.columns(2)
+
+            col1.metric(
+                "Detected Objects",
+                debris_count
+            )
+
+            col2.metric(
+                "Debris Density",
+                density
+            )
+
+            # =========================
+            # AI DECISION ENGINE
+            # =========================
+            st.subheader("⚠️ AI Identified Issues")
+
+            issues = []
+
+            actions = []
+
+            # Plastic Detection
+            if any(
+                x in detected
+                for x in ["Plastic", "Bottle", "Bag"]
+            ):
+
+                issues.append(
+                    "Plastic waste accumulation detected"
+                )
+
+                actions.append(
+                    "Clean intake trash racks immediately"
+                )
+
+            # Organic Load
+            if any(
+                x in detected
+                for x in ["Leaf", "Plant"]
+            ):
+
+                issues.append(
+                    "Organic load increased"
+                )
+
+                actions.append(
+                    "Increase alum/PAC dosing temporarily"
+                )
+
+            # High Density
+            if density > 0.5:
+
+                issues.append(
+                    "Heavy intake debris condition"
+                )
+
+                actions.append(
+                    "Reduce intake flow temporarily"
+                )
+
+            # Critical Condition
+            if debris_count >= 4:
+
+                issues.append(
+                    "Critical blockage risk detected"
+                )
+
+                actions.append(
+                    "Prepare emergency cleaning operation"
+                )
+
+            # Normal Condition
+            if debris_count == 0:
+
+                issues.append(
+                    "System operating normally"
+                )
+
+                actions.append(
+                    "Maintain standard operation"
+                )
+
+            # =========================
+            # DISPLAY ISSUES
+            # =========================
+            for issue in issues:
+                st.warning(issue)
+
+            # =========================
+            # DISPLAY ACTIONS
+            # =========================
+            st.subheader("🛠 Recommended Actions")
+
+            for action in actions:
+                st.success(action)
+
+            # =========================
+            # AI STATUS
+            # =========================
+            st.subheader("🤖 AI Status")
+
+            st.success(
+                "AI Intake Monitoring Running Successfully"
+            )
 
         except Exception as e:
 
-            st.error(f"Inference Error: {e}")
+            st.error(f"AI Analysis Failed: {e}")
 # ==========================================
 # 🖥️ WATER QUALITY AI - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
