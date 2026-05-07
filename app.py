@@ -1672,7 +1672,7 @@ st.subheader("🤖 AI Monitoring Status")
 st.success(
     "Industrial AI Intake Monitoring Active"
 )
-            )
+            
 
         except Exception as e:
 
