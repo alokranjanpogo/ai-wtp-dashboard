@@ -1842,7 +1842,7 @@ with right_col:
 
         st.markdown("---")
     
-            st.markdown("""
+        st.markdown("""
             <div style="
             background: linear-gradient(135deg,#0f172a,#1e293b);
             padding:18px;
