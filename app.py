@@ -408,12 +408,12 @@ st.set_page_config(page_title="Water Treatment Performance", layout="wide")
 
 st.header("💧 Water Treatment Performance Dashboard")
 
-st.subheader("### 🏭 Unit Selection")
+st.subheader("🏭 Unit Selection")
 
 unit_type = st.selectbox("Select Unit", ["Clarifier", "Filter Bed"])
 
 # Inputs
-st.subheader("### 📥 Input Parameters")
+st.subheader("📥 Input Parameters")
 
 col1, col2 = st.columns(2)
 
@@ -439,7 +439,7 @@ color = get_color(status, pi)
 # DISPLAY METRICS
 # ===============================
 
-st.subheader("### 📊 Performance Results")
+st.subheader("📊 Performance Results")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -452,7 +452,7 @@ col4.metric("Grade", grade)
 # VISUAL INDICATOR
 # ===============================
 
-st.subheader("### 🚦 Performance Indicator")
+st.subheader("Performance Indicator")
 
 if color == "green":
     st.success("Excellent Performance ✅")
@@ -530,11 +530,10 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-# ============================================================
-# TITLE
-# ============================================================
-
 st.subheader(" Intelligent Alum Dosing Decision System")
+
+import numpy as np
+import plotly.graph_objects as go
 
 # ============================================================
 # INPUTS
@@ -543,14 +542,39 @@ st.subheader(" Intelligent Alum Dosing Decision System")
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
-turbidity = float(intake_turb) # from your existing slider
+turbidity = float(intake_turb) # from existing slider/input
 
 ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
 
+# ============================================================
+# INDUSTRIAL DISCHARGE INPUT
+# ============================================================
+
 industrial = st.toggle("⚠️ Industrial Discharge Present")
 
+industrial_type = "None"
+discharge_level = 1
+
+if industrial:
+
+    industrial_type = st.selectbox(
+        "Industrial Discharge Type",
+        [
+            "Textile/Dye",
+            "Steel/Metal",
+            "Organic/Food",
+            "Chemical",
+            "Mixed Effluent"
+        ]
+    )
+
+    discharge_level = st.slider(
+        "Industrial Impact Severity",
+        1, 5, 2
+    )
+
 # ============================================================
-# 🧪 JAR TEST INPUT (MANUAL)
+# 🧪 JAR TEST INPUT
 # ============================================================
 
 st.markdown("### 🧪 Jar Test Input")
@@ -558,77 +582,168 @@ st.markdown("### 🧪 Jar Test Input")
 jar_available = st.toggle("Use Jar Test")
 
 if jar_available:
-    jar_dose = st.number_input("Enter Jar Test Dose (mg/L)", value=25.0)
+
+    jar_dose = st.number_input(
+        "Enter Jar Test Dose (mg/L)",
+        min_value=1.0,
+        max_value=200.0,
+        value=25.0,
+        step=1.0
+    )
+
 else:
     jar_dose = None
 
 # ============================================================
-# STANDARD MODELS (REALISTIC ENGINEERING)
+# STANDARD MODELS
 # ============================================================
 
 def cpheeo_model(t):
-    return 0.35*t + 5
+    return 0.35 * t + 5
 
 def awwa_model(t):
-    return 0.40*t + 8
+    return 0.40 * t + 8
 
 def bis_model(t):
-    return 0.30*t + 6
+    return 0.30 * t + 6
 
 cpheeo = cpheeo_model(turbidity)
 awwa = awwa_model(turbidity)
 bis = bis_model(turbidity)
 
 # ============================================================
-# CORRECTIONS
+# pH EFFECT ON COAGULATION
 # ============================================================
 
-# pH correction
 if ph < 5.5:
-    ph_factor = 1.2
-elif ph > 7.5:
-    ph_factor = 1.1
-else:
+    ph_factor = 1.25
+
+elif 5.5 <= ph < 6.0:
+    ph_factor = 1.10
+
+elif 6.0 <= ph <= 7.2:
     ph_factor = 1.0
 
-# industrial load
-industrial_factor = 1.25 if industrial else 1.0
+elif 7.2 < ph <= 8.0:
+    ph_factor = 1.08
 
-# turbidity boost
+else:
+    ph_factor = 1.18
+
+# ============================================================
+# INDUSTRIAL IMPACT ENGINEERING LOGIC
+# ============================================================
+
+industrial_factor = 1.0
+
+if industrial:
+
+    if industrial_type == "Textile/Dye":
+        industrial_factor = 1.10 + (0.05 * discharge_level)
+
+    elif industrial_type == "Steel/Metal":
+        industrial_factor = 1.08 + (0.04 * discharge_level)
+
+    elif industrial_type == "Organic/Food":
+        industrial_factor = 1.05 + (0.03 * discharge_level)
+
+    elif industrial_type == "Chemical":
+        industrial_factor = 1.12 + (0.06 * discharge_level)
+
+    elif industrial_type == "Mixed Effluent":
+        industrial_factor = 1.15 + (0.05 * discharge_level)
+
+# ============================================================
+# TURBIDITY BOOST FACTOR
+# ============================================================
+
 if turbidity > 300:
     turb_factor = 1.35
+
 elif turbidity > 150:
-    turb_factor = 1.2
+    turb_factor = 1.20
+
 else:
     turb_factor = 1.0
 
 # ============================================================
-# AI DOSING LOGIC (SAFE + COMPLETE)
+# AI DOSING LOGIC
 # ============================================================
 
 if jar_available:
+
+    deviation = abs(jar_dose - cpheeo)
+
+    if deviation > 25:
+        st.warning(
+            "⚠️ Jar Test significantly differs from theoretical estimate"
+        )
+
     ai_dose = (
-        0.6 * jar_dose +
-        0.2 * cpheeo +
-        0.1 * awwa +
-        0.1 * bis
+        0.75 * jar_dose +
+        0.15 * cpheeo +
+        0.05 * awwa +
+        0.05 * bis
     )
+
 else:
+
     ai_dose = (
-        0.4 * cpheeo +
+        0.40 * cpheeo +
         0.35 * awwa +
         0.25 * bis
     )
 
+# ============================================================
+# FINAL CORRECTIONS
+# ============================================================
+
 ai_dose = ai_dose * ph_factor * industrial_factor * turb_factor
-ai_dose = float(np.clip(ai_dose, 5, 150)) # ALWAYS defined
+
+# Safety limit
+ai_dose = float(np.clip(ai_dose, 5, 150))
 
 # ============================================================
 # CHEMICAL REQUIREMENT
 # ============================================================
 
 alum_kg_day = (ai_dose * flow_m3_day) / 1000
-pac_dose = 0.6 * ai_dose
+
+# PAC generally requires lower dose than alum
+pac_dose = ai_dose * 0.45
+
+# ============================================================
+# RAW WATER RISK CLASSIFICATION
+# ============================================================
+
+if turbidity < 50:
+    raw_risk = "Low"
+
+elif turbidity < 150:
+    raw_risk = "Moderate"
+
+elif turbidity < 300:
+    raw_risk = "High"
+
+else:
+    raw_risk = "Critical"
+
+# ============================================================
+# CONFIDENCE SCORE
+# ============================================================
+
+confidence = 92
+
+if not jar_available:
+    confidence -= 15
+
+if industrial:
+    confidence -= 8
+
+if turbidity > 300:
+    confidence -= 10
+
+confidence = max(confidence, 60)
 
 # ============================================================
 # STATUS BAND
@@ -636,8 +751,10 @@ pac_dose = 0.6 * ai_dose
 
 if ai_dose > 80:
     st.error("🔴 High Chemical Demand")
+
 elif ai_dose > 40:
     st.warning("🟡 Moderate Condition")
+
 else:
     st.success("🟢 Normal Operation")
 
@@ -645,64 +762,106 @@ else:
 # LAYOUT
 # ============================================================
 
-left, right = st.columns([1.1,1.4])
+left, right = st.columns([1.1, 1.4])
 
 # ============================================================
-# 📊 LEFT → CLEAN GRAPH
+# 📊 LEFT → GRAPH + METRICS
 # ============================================================
 
 with left:
 
     st.markdown("### 📊 Dosing Decision Curve")
 
-    x = np.linspace(0, 300, 100)
-    y_ai = 0.3*x + 8 + 0.0005*(x**2)
+    x = np.linspace(0, 400, 150)
+
+    # More realistic nonlinear curve
+    y_ai = (
+        8 +
+        0.22 * x +
+        12 * np.log1p(x / 40)
+    )
 
     fig = go.Figure()
 
-    # Optimal zone
+    # ========================================================
+    # OPTIMAL ZONE
+    # ========================================================
+
     fig.add_hrect(
-        y0=20, y1=30,
-        fillcolor="green", opacity=0.15,
+        y0=20,
+        y1=30,
+        fillcolor="green",
+        opacity=0.15,
         line_width=0
     )
 
-    # Warning zone
+    # ========================================================
+    # WARNING ZONE
+    # ========================================================
+
     fig.add_hrect(
-        y0=30, y1=60,
-        fillcolor="yellow", opacity=0.1,
+        y0=30,
+        y1=60,
+        fillcolor="yellow",
+        opacity=0.10,
         line_width=0
     )
 
-    # Critical zone
+    # ========================================================
+    # CRITICAL ZONE
+    # ========================================================
+
     fig.add_hrect(
-        y0=60, y1=120,
-        fillcolor="red", opacity=0.08,
+        y0=60,
+        y1=120,
+        fillcolor="red",
+        opacity=0.08,
         line_width=0
     )
 
-    # AI curve
+    # ========================================================
+    # AI CURVE
+    # ========================================================
+
     fig.add_trace(go.Scatter(
         x=x,
         y=y_ai,
-        line=dict(color="cyan", width=4),
+        line=dict(
+            color="cyan",
+            width=4
+        ),
         name="AI Curve"
     ))
 
-    # Operating point (SAFE)
+    # ========================================================
+    # OPERATING POINT
+    # ========================================================
+
     fig.add_trace(go.Scatter(
         x=[turbidity],
         y=[ai_dose],
         mode="markers+text",
-        marker=dict(size=14, color="yellow"),
+        marker=dict(
+            size=14,
+            color="yellow"
+        ),
         text=["Operating"],
         textposition="top center"
     ))
 
+    # ========================================================
+    # GRAPH LAYOUT
+    # ========================================================
+
     fig.update_layout(
         template="plotly_dark",
         height=350,
-        margin=dict(l=10,r=10,t=40,b=10),
+        margin=dict(
+            l=10,
+            r=10,
+            t=40,
+            b=10
+        ),
         xaxis_title="Turbidity (NTU)",
         yaxis_title="Alum Dose (mg/L)",
         showlegend=False
@@ -710,8 +869,23 @@ with left:
 
     st.plotly_chart(fig, use_container_width=True)
 
-    st.metric("Dose", f"{ai_dose:.1f} mg/L")
-    st.metric("Alum Required", f"{alum_kg_day:,.0f} kg/day")
+    # ========================================================
+    # METRICS
+    # ========================================================
+
+    st.metric("Recommended Alum Dose", f"{ai_dose:.1f} mg/L")
+
+    st.metric(
+        "Alum Required",
+        f"{alum_kg_day:,.0f} kg/day"
+    )
+
+    st.metric("Raw Water Risk", raw_risk)
+
+    st.metric(
+        "Prediction Confidence",
+        f"{confidence}%"
+    )
 
 # ============================================================
 # 📘 RIGHT → DECISION PANEL
@@ -722,59 +896,112 @@ with right:
     st.markdown("### 📘 Recommendation Logic")
 
     st.markdown(f"""
-**Input Conditions**
-- Turbidity: **{turbidity} NTU**
-- pH: **{ph}**
-- Industrial Load: **{"Yes" if industrial else "No"}**
+### Input Conditions
+
+- Turbidity: **{turbidity:.1f} NTU**
+- pH: **{ph:.1f}**
+- Industrial Discharge: **{"Yes" if industrial else "No"}**
+- Risk Category: **{raw_risk}**
+""")
+
+    if industrial:
+
+        st.markdown(f"""
+### Industrial Impact
+
+- Discharge Type: **{industrial_type}**
+- Severity Level: **{discharge_level}/5**
+- Industrial Correction Factor: **{industrial_factor:.2f}**
 """)
 
     st.markdown("---")
 
     st.markdown(f"""
-**Standard Estimates**
-- CPHEEO: {cpheeo:.1f} mg/L  
-- AWWA: {awwa:.1f} mg/L  
-- BIS: {bis:.1f} mg/L  
+### Standard Engineering Estimates
+
+- CPHEEO Model: **{cpheeo:.1f} mg/L**
+- AWWA Model: **{awwa:.1f} mg/L**
+- BIS Estimate: **{bis:.1f} mg/L**
 """)
+
+    st.markdown("---")
 
     if jar_available:
-        st.success(f"Jar Test Used: {jar_dose:.1f} mg/L")
+
+        st.success(
+            f"🧪 Jar Test Integrated: {jar_dose:.1f} mg/L"
+        )
+
     else:
-        st.warning("Jar Test not used")
+
+        st.warning(
+            "⚠️ Jar Test not used — relying on theoretical models"
+        )
 
     st.markdown("---")
 
     st.markdown(f"""
-###  Final Decision
+# ✅ Final AI Recommendation
 
-👉 **{ai_dose:.1f} mg/L Alum**
+👉 **{ai_dose:.1f} mg/L Alum Dose Recommended**
 
-✔ Adjusted for:
-- pH factor: {ph_factor}
-- Industrial load: {industrial_factor}
-- Turbidity factor: {turb_factor}
+### Applied Engineering Corrections
 
-✔ Ensures:
-- Effective coagulation  
-- Controlled sludge  
-- Stable filtration  
+✔ pH Factor: **{ph_factor:.2f}**  
+✔ Industrial Factor: **{industrial_factor:.2f}**  
+✔ Turbidity Factor: **{turb_factor:.2f}**
 
-📦 Alum Required: **{alum_kg_day:,.0f} kg/day**  
-⚡ PAC Dose: **{pac_dose:.1f} mg/L**
+### Expected Outcomes
+
+✔ Effective coagulation  
+✔ Stable sludge blanket  
+✔ Reduced filter loading  
+✔ Improved settling efficiency  
+✔ Better filtration stability
+
+### Chemical Requirement
+
+ Alum Requirement: **{alum_kg_day:,.0f} kg/day**  
+ PAC Equivalent Dose: **{pac_dose:.1f} mg/L**
+
+### AI Confidence
+
+🎯 Confidence Level: **{confidence}%**
 """)
 
 # ============================================================
 # ALERT SYSTEM
 # ============================================================
 
+st.markdown("---")
+st.markdown("### 🚨 Intelligent Alert System")
+
 if ai_dose > 80:
-    st.error("🔴 Consider PAC or Pre-treatment")
+
+    st.error(
+        "🔴 Extremely high chemical demand detected. "
+        "Consider PAC optimization or pre-treatment."
+    )
+
+elif turbidity > 300:
+
+    st.warning(
+        "🟠 Severe raw water turbidity detected. "
+        "Closely monitor sludge blanket and filter loading."
+    )
 
 elif jar_available and abs(ai_dose - jar_dose) > 5:
-    st.warning("🟡 Deviation from Jar Test")
+
+    st.warning(
+        "🟡 AI recommendation deviates from Jar Test. "
+        "Verify coagulation conditions."
+    )
 
 else:
-    st.success("🟢 Optimal dosing")
+
+    st.success(
+        "🟢 System operating within optimal dosing conditions."
+    )
 # ============================================================
 # CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
 # ============================================================
@@ -1808,7 +2035,7 @@ if complaint:
                 st.write("- Backwash filter")
 
         # -------------------------------
-        # 🪱 WORMS
+        #  WORMS
         # -------------------------------
         elif "worm" in text:
 
