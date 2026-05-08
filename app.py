@@ -1834,8 +1834,26 @@ with right_col:
         )
 
         st.write(weather_desc)
+        
+        # ====================================================
+        # RECOMMENDED ACTIONS
+        # ====================================================
+        
+        st.markdown("""
+        ### Suggested Actions
+        
+        ✔ Monitor intake turbidity  
+        ✔ Keep additional alum ready  
+        ✔ Observe filter loading  
+        ✔ Monitor sludge blanket  
+        ✔ Verify residual chlorine
+        """)
 
-     # ====================================================
+    except Exception as e:
+
+        st.error(f"Weather error: {e}")
+
+# ====================================================
     # 🌦 FUTURE DOSING PREDICTION
     # ====================================================
 
@@ -1972,24 +1990,6 @@ with right_col:
         # ====================================================
         
         st.info(f"🤖 {future_note}")
-        
-        # ====================================================
-        # RECOMMENDED ACTIONS
-        # ====================================================
-        
-        st.markdown("""
-        ### Suggested Actions
-        
-        ✔ Monitor intake turbidity  
-        ✔ Keep additional alum ready  
-        ✔ Observe filter loading  
-        ✔ Monitor sludge blanket  
-        ✔ Verify residual chlorine
-        """)
-
-    except Exception as e:
-
-        st.error(f"Weather error: {e}")
 
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
