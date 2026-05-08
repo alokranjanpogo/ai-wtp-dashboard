@@ -167,7 +167,7 @@ col3.metric("Warning Alarms", warning_count)
 # ===============================
 if st.session_state.show_alarm:
 
-    st.markdown("### 🚨 Active Alarm Details")
+    st.markdown("🚨 Active Alarm Details")
 
     if len(alarm_list) > 0:
 
@@ -1860,136 +1860,136 @@ with right_col:
 st.markdown("---")
     
 st.markdown("""
-            <div style="
-            background: linear-gradient(135deg,#0f172a,#1e293b);
-            padding:18px;
-            border-radius:18px;
-            border:1px solid #334155;
-            ">
-            
-            <h3 style="color:#38bdf8;">
-            🌦 AI Future Dose Prediction
-            </h3>
-            
-            </div>
-            """, unsafe_allow_html=True)
+<div style="
+background: linear-gradient(135deg,#0f172a,#1e293b);
+padding:18px;
+border-radius:18px;
+border:1px solid #334155;
+">
 
-    # ====================================================
-    # WEATHER DATA
-    # ====================================================
-    
-        temperature = data['main']['temp']
-        
-        humidity = data['main']['humidity']
-        
-        weather_desc = data['weather'][0]['description']
-    
-    # ====================================================
-    # INITIAL VALUES
-    # ====================================================
-    
-        future_factor = 1.0
-        
-        future_status = "Stable"
-        
-        future_note = ""
-        
-        desc = weather_desc.lower()
+<h3 style="color:#38bdf8;">
+🌦 AI Future Dose Prediction
+</h3>
+
+</div>
+""", unsafe_allow_html=True)
+
+# ====================================================
+# WEATHER DATA
+# ====================================================
+
+temperature = data['main']['temp']
+
+humidity = data['main']['humidity']
+
+weather_desc = data['weather'][0]['description']
+
+# ====================================================
+# INITIAL VALUES
+# ====================================================
+
+future_factor = 1.0
+
+future_status = "Stable"
+
+future_note = ""
+
+desc = weather_desc.lower()
 
 # ====================================================
 # WEATHER ANALYSIS
 # ====================================================
 
-        if "rain" in desc:
-        
-            future_factor = 1.25
-        
-            future_status = "High Turbidity Risk"
-        
-            future_note = (
-                "Rainfall may increase suspended solids "
-                "and alum demand."
-            )
-        
-        elif "cloud" in desc:
-        
-            future_factor = 1.10
-        
-            future_status = "Moderate Variation"
-        
-            future_note = (
-                "Possible slight fluctuation "
-                "in coagulation demand."
-            )
-        
-        elif temperature > 35:
-        
-            future_factor = 1.08
-        
-            future_status = "Elevated Chlorine Demand"
-        
-            future_note = (
-                "High temperature may increase "
-                "biological activity."
-            )
-        
-        else:
-        
-            future_factor = 1.0
-        
-            future_status = "Stable Condition"
-        
-            future_note = (
-                "No major raw water disturbance predicted."
-            )
-        
-        # ====================================================
-        # FUTURE DOSE
-        # ====================================================
-        
-            future_dose = dose * future_factor
-        
-        # ====================================================
-        # METRICS
-        # ====================================================
-        
-        c1, c2 = st.columns(2)
-        
-        with c1:
-        
-            st.metric(
-                "Predicted Dose",
-                f"{future_dose:.1f} mg/L"
-            )
-        
-        with c2:
-        
-            st.metric(
-                "Adjustment Factor",
-                f"{future_factor:.2f}"
-            )
-        
-        # ====================================================
-        # STATUS
-        # ====================================================
-        
-        if future_factor >= 1.2:
-        
-            st.error(f"🔴 {future_status}")
-        
-        elif future_factor > 1.0:
-        
-            st.warning(f"🟠 {future_status}")
-        
-        else:
-        
-            st.success(f"🟢 {future_status}")
-        
-        # ====================================================
-        # AI INSIGHT
-        # ====================================================
-        
-        st.info(f"🤖 {future_note}")
+if "rain" in desc:
+
+    future_factor = 1.25
+
+    future_status = "High Turbidity Risk"
+
+    future_note = (
+        "Rainfall may increase suspended solids "
+        "and alum demand."
+    )
+
+elif "cloud" in desc:
+
+    future_factor = 1.10
+
+    future_status = "Moderate Variation"
+
+    future_note = (
+        "Possible slight fluctuation "
+        "in coagulation demand."
+    )
+
+elif temperature > 35:
+
+    future_factor = 1.08
+
+    future_status = "Elevated Chlorine Demand"
+
+    future_note = (
+        "High temperature may increase "
+        "biological activity."
+    )
+
+else:
+
+    future_factor = 1.0
+
+    future_status = "Stable Condition"
+
+    future_note = (
+        "No major raw water disturbance predicted."
+    )
+
+# ====================================================
+# FUTURE DOSE
+# ====================================================
+
+    future_dose = dose * future_factor
+
+# ====================================================
+# METRICS
+# ====================================================
+
+c1, c2 = st.columns(2)
+
+with c1:
+
+    st.metric(
+        "Predicted Dose",
+        f"{future_dose:.1f} mg/L"
+    )
+
+with c2:
+
+    st.metric(
+        "Adjustment Factor",
+        f"{future_factor:.2f}"
+    )
+
+# ====================================================
+# STATUS
+# ====================================================
+
+if future_factor >= 1.2:
+
+    st.error(f"🔴 {future_status}")
+
+elif future_factor > 1.0:
+
+    st.warning(f"🟠 {future_status}")
+
+else:
+
+    st.success(f"🟢 {future_status}")
+
+# ====================================================
+# AI INSIGHT
+# ====================================================
+
+st.info(f"🤖 {future_note}")
 
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
