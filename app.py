@@ -1837,8 +1837,8 @@ with right_col:
         st.write(weather_desc)
 
      # ====================================================
-# 🌦 FUTURE DOSING PREDICTION
-# ====================================================
+    # 🌦 FUTURE DOSING PREDICTION
+    # ====================================================
 
     st.markdown("---")
     
@@ -1857,27 +1857,27 @@ with right_col:
     </div>
     """, unsafe_allow_html=True)
 
-# ====================================================
-# WEATHER DATA
-# ====================================================
-
-temperature = data['main']['temp']
-
-humidity = data['main']['humidity']
-
-weather_desc = data['weather'][0]['description']
-
-# ====================================================
-# INITIAL VALUES
-# ====================================================
-
-future_factor = 1.0
-
-future_status = "Stable"
-
-future_note = ""
-
-desc = weather_desc.lower()
+    # ====================================================
+    # WEATHER DATA
+    # ====================================================
+    
+    temperature = data['main']['temp']
+    
+    humidity = data['main']['humidity']
+    
+    weather_desc = data['weather'][0]['description']
+    
+    # ====================================================
+    # INITIAL VALUES
+    # ====================================================
+    
+    future_factor = 1.0
+    
+    future_status = "Stable"
+    
+    future_note = ""
+    
+    desc = weather_desc.lower()
 
 # ====================================================
 # WEATHER ANALYSIS
@@ -1930,7 +1930,7 @@ else:
 # FUTURE DOSE
 # ====================================================
 
-future_dose = dose * future_factor
+    future_dose = dose * future_factor
 
 # ====================================================
 # METRICS
