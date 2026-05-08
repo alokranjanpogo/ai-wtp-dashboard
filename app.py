@@ -1277,20 +1277,25 @@ import pandas as pd
 import os
 import numpy as np
 import requests
+import base64
 from datetime import datetime
 from sklearn.linear_model import LinearRegression
+
 
 # ===============================
 # PAGE
 # ===============================
+
 st.set_page_config(layout="wide")
+
 st.markdown("## AI Water Treatment Feedback System")
 
 left_col, right_col = st.columns([2,1])
 
 # ===============================
-# EMAIL FUNCTION (FINAL FIXED)
+# EMAIL FUNCTION
 # ===============================
+
 def send_email_alert(message):
 
     sender = "alokranjan18april@gmail.com"
@@ -1298,79 +1303,186 @@ def send_email_alert(message):
     receiver = "alok.ranjan6@tatasteel.com"
 
     try:
+
         server = smtplib.SMTP("smtp.gmail.com", 587)
+
         server.starttls()
+
         server.login(sender, password)
-        server.sendmail(sender, receiver, message.encode("utf-8"))
+
+        server.sendmail(
+            sender,
+            receiver,
+            message.encode("utf-8")
+        )
+
         server.quit()
 
         st.success("📧 Email Sent")
 
     except Exception as e:
+
         st.error(f"Email error: {e}")
 
 # ===============================
 # ALARM STATE
 # ===============================
+
 if "alarm" not in st.session_state:
     st.session_state.alarm = False
 
 # ===============================
-# DATA
+# DATA STORAGE
 # ===============================
+
 FILE = "feedback_data.csv"
 
+required_columns = [
+    "timestamp",
+    "raw_turbidity",
+    "dose",
+    "final_turbidity",
+    "frc"
+]
+
+# ============================================================
+# LOAD EXISTING DATA
+# ============================================================
+
 if os.path.exists(FILE):
-    df = pd.read_csv(FILE)
+
+    try:
+
+        df = pd.read_csv(FILE)
+
+        # Ensure required columns
+        for col in required_columns:
+
+            if col not in df.columns:
+                df[col] = None
+
+        # Convert timestamp
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+
+        # ====================================================
+        # KEEP ONLY LAST 3 YEARS DATA
+        # ====================================================
+
+        cutoff_date = datetime.now() - timedelta(days=365*3)
+
+        df = df[df["timestamp"] >= cutoff_date]
+
+        # Save cleaned data
+        df.to_csv(FILE, index=False)
+
+    except Exception as e:
+
+        st.error(f"Data loading error: {e}")
+
+        df = pd.DataFrame(columns=required_columns)
+
 else:
-    df = pd.DataFrame(columns=[
-        "timestamp","raw_turbidity","dose","final_turbidity","frc"
-    ])
+
+    df = pd.DataFrame(columns=required_columns)
+
+    df.to_csv(FILE, index=False)
+
+# ============================================================
+# ENSURE TIMESTAMP FORMAT
+# ============================================================
+
+if len(df) > 0:
+
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
 
 # ===============================
 # INPUT
 # ===============================
+
 with left_col:
 
     c1, c2 = st.columns(2)
 
     with c1:
-        dose = st.slider("Dose (mg/L)", 0.0, 100.0, 10.0)
-        final_turbidity = st.number_input("Final Turbidity", 0.0, 50.0, 1.0)
-        frc = st.number_input("FRC", 0.0, 5.0, 0.5)
+
+        dose = st.slider(
+            "Dose (mg/L)",
+            0.0,
+            100.0,
+            10.0
+        )
+
+        final_turbidity = st.number_input(
+            "Final Turbidity",
+            0.0,
+            50.0,
+            1.0
+        )
+
+        frc = st.number_input(
+            "FRC",
+            0.0,
+            5.0,
+            0.5
+        )
 
     with c2:
-        raw_turbidity = st.number_input("Raw Turbidity", 0.0, 500.0, 50.0)
 
-    submit = st.button("Submit Feedback", key="submit_btn")
+        raw_turbidity = st.number_input(
+            "Raw Turbidity",
+            0.0,
+            500.0,
+            50.0
+        )
+
+    submit = st.button(
+        "Submit Feedback",
+        key="submit_btn"
+    )
 
 # ===============================
 # MAIN
 # ===============================
+
 if submit:
 
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now()
 
     new = pd.DataFrame([{
+
         "timestamp": now,
         "raw_turbidity": raw_turbidity,
         "dose": dose,
         "final_turbidity": final_turbidity,
         "frc": frc
+
     }])
 
+    # ========================================================
+    # APPEND DATA
+    # ========================================================
+
     df = pd.concat([df, new], ignore_index=True)
+
+    # ========================================================
+    # SAVE PERMANENTLY
+    # ========================================================
+
     df.to_csv(FILE, index=False)
 
-    st.success(f"Saved at {now}")
+    st.success(
+        f"Saved at {now.strftime('%Y-%m-%d %H:%M:%S')}"
+    )
+
     st.info(f"Total Samples: {len(df)}")
 
     # ===============================
     # AI LOGIC
     # ===============================
+
     if len(df) >= 30:
 
-        st.markdown("### AI Smart Recommendation")
+        st.markdown("### 🤖 AI Smart Recommendation")
 
         good = df[
             (df["final_turbidity"] <= 1) &
@@ -1381,22 +1493,62 @@ if submit:
         if len(good) > 10:
 
             good = good.copy()
-            good["diff"] = abs(good["raw_turbidity"] - raw_turbidity)
 
-            similar = good.sort_values(by="diff").head(10)
+            good["diff"] = abs(
+                good["raw_turbidity"] - raw_turbidity
+            )
+
+            similar = good.sort_values(
+                by="diff"
+            ).head(10)
+
             best = similar["dose"].mean()
 
-            st.success(f"Recommended Dose: {best:.2f} mg/L")
+            st.success(
+                f"Recommended Dose: {best:.2f} mg/L"
+            )
+
+            # =================================================
+            # TREND MESSAGE
+            # =================================================
+
+            if best > dose:
+
+                st.warning(
+                    "⚠️ Historical data suggests "
+                    "slightly higher dosing may improve quality."
+                )
+
+            elif best < dose:
+
+                st.info(
+                    "ℹ️ Historical data suggests "
+                    "dose optimization potential."
+                )
+
+            else:
+
+                st.success(
+                    "✅ Current dosing aligns with historical performance."
+                )
 
         else:
-            st.warning("Collect more good data")
+
+            st.warning(
+                "Collect more good quality operational data."
+            )
 
     else:
-        st.info(f"AI activates after 30 samples (Current: {len(df)})")
+
+        st.info(
+            f"AI activates after 30 samples "
+            f"(Current: {len(df)})"
+        )
 
     # ===============================
-    # 🚨 ALERT + EMAIL
+    # ALERT + EMAIL
     # ===============================
+
     if final_turbidity > 1 or frc < 0.2:
 
         st.session_state.alarm = True
@@ -1404,7 +1556,9 @@ if submit:
         msg = f"""Subject: 🚨 WATER QUALITY ALERT
 
 Time: {now}
+
 Final Turbidity: {final_turbidity}
+
 FRC: {frc}
 
 Immediate action required.
@@ -1413,29 +1567,39 @@ Immediate action required.
         send_email_alert(msg)
 
     else:
-        st.success("Quality Achieved")
+
+        st.success("✅ Quality Achieved")
 
 # ===============================
-# 🔊 FINAL WORKING ALARM (EMBEDDED SOUND)
+# 🔊 ALARM SYSTEM
 # ===============================
 
-import base64
-
-# One-time enable
 if "sound_enabled" not in st.session_state:
     st.session_state.sound_enabled = False
 
 if not st.session_state.sound_enabled:
-    if st.button("🔊 Enable Alarm Sound", key="enable_sound"):
+
+    if st.button(
+        "🔊 Enable Alarm Sound",
+        key="enable_sound"
+    ):
+
         st.session_state.sound_enabled = True
+
         st.success("Sound Enabled ✅")
 
-# Alarm
+# ============================================================
+# ACTIVE ALARM
+# ============================================================
+
 if st.session_state.alarm:
 
     st.error("🚨 CONTINUOUS ALARM ACTIVE")
 
-    # 🔴 Flashing UI
+    # ========================================================
+    # FLASHING ALERT
+    # ========================================================
+
     st.markdown("""
     <style>
     @keyframes blink {
@@ -1443,6 +1607,7 @@ if st.session_state.alarm:
         50% { background-color: transparent; }
         100% { background-color: red; }
     }
+
     .alarm-box {
         animation: blink 1s infinite;
         padding: 20px;
@@ -1452,73 +1617,255 @@ if st.session_state.alarm:
         font-weight: bold;
     }
     </style>
-    <div class="alarm-box">🚨 CRITICAL WATER QUALITY ALERT 🚨</div>
+
+    <div class="alarm-box">
+    🚨 CRITICAL WATER QUALITY ALERT 🚨
+    </div>
     """, unsafe_allow_html=True)
 
-    # 🔊 SOUND (EMBEDDED + LOOP)
+    # ========================================================
+    # SOUND
+    # ========================================================
+
     if st.session_state.sound_enabled:
+
         try:
-            with open("mixkit-sport-start-bleeps-918.wav", "rb") as f:
+
+            with open(
+                "mixkit-sport-start-bleeps-918.wav",
+                "rb"
+            ) as f:
+
                 data = f.read()
+
                 b64 = base64.b64encode(data).decode()
 
             st.markdown(f"""
             <audio autoplay loop>
-                <source src="data:audio/wav;base64,{b64}" type="audio/wav">
+                <source
+                src="data:audio/wav;base64,{b64}"
+                type="audio/wav">
             </audio>
             """, unsafe_allow_html=True)
 
         except Exception as e:
+
             st.warning(f"⚠️ Sound issue: {e}")
 
     else:
+
         st.warning("🔊 Enable sound once")
 
-    # Stop
-    if st.button("🔴 Stop Alarm", key="stop_alarm_btn"):
+    # ========================================================
+    # STOP BUTTON
+    # ========================================================
+
+    if st.button(
+        "🔴 Stop Alarm",
+        key="stop_alarm_btn"
+    ):
+
         st.session_state.alarm = False
+
         st.success("Alarm Stopped")
+
 # ===============================
-# 📂 DATA TABLE + DELETE
+# DATA TABLE + DELETE
 # ===============================
+
 st.markdown("### 📂 Stored Data")
 
 if st.checkbox("Show Data Table"):
 
     if len(df) > 0:
 
-        st.dataframe(df.sort_values(by="timestamp", ascending=False))
+        display_df = df.sort_values(
+            by="timestamp",
+            ascending=False
+        )
 
-        selected_index = st.selectbox("Select row to delete", df.index)
+        st.dataframe(display_df)
 
-        if st.button("🗑 Delete Selected Row", key="delete_btn"):
+        selected_index = st.selectbox(
+            "Select row to delete",
+            df.index
+        )
 
-            df = df.drop(selected_index).reset_index(drop=True)
+        if st.button(
+            "🗑 Delete Selected Row",
+            key="delete_btn"
+        ):
+
+            df = df.drop(
+                selected_index
+            ).reset_index(drop=True)
+
             df.to_csv(FILE, index=False)
 
             st.success("Row deleted!")
+
             st.rerun()
 
 # ===============================
 # WEATHER
 # ===============================
+
 with right_col:
 
     st.markdown("### 🌤 Weather")
 
     API_KEY = "f899db331049be78181d1afddbc92935"
+
     CITY = "Jamshedpur"
 
     try:
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}&units=metric"
+
+        url = (
+            f"http://api.openweathermap.org/data/2.5/weather?"
+            f"q={CITY}&appid={API_KEY}&units=metric"
+        )
+
         data = requests.get(url).json()
 
-        st.metric("Temp", f"{data['main']['temp']} °C")
-        st.metric("Humidity", f"{data['main']['humidity']} %")
-        st.write(data['weather'][0]['description'])
+        temperature = data['main']['temp']
 
-    except:
-        st.error("Weather error")
+        humidity = data['main']['humidity']
+
+        weather_desc = data['weather'][0]['description']
+
+        st.metric(
+            "Temp",
+            f"{temperature} °C"
+        )
+
+        st.metric(
+            "Humidity",
+            f"{humidity} %"
+        )
+
+        st.write(weather_desc)
+
+        # ====================================================
+        # 🌦 FUTURE DOSING PREDICTION
+        # ====================================================
+
+        st.markdown("---")
+
+        st.markdown(
+            "## 🌦 AI Future Dose Prediction"
+        )
+
+        future_factor = 1.0
+
+        future_status = "Stable"
+
+        future_note = ""
+
+        # ====================================================
+        # WEATHER ANALYSIS
+        # ====================================================
+
+        desc = weather_desc.lower()
+
+        if "rain" in desc:
+
+            future_factor = 1.25
+
+            future_status = "High Turbidity Risk"
+
+            future_note = (
+                "Rainfall may increase raw water "
+                "turbidity and suspended solids."
+            )
+
+        elif "cloud" in desc:
+
+            future_factor = 1.10
+
+            future_status = (
+                "Moderate Raw Water Variation"
+            )
+
+            future_note = (
+                "Cloudy conditions may slightly "
+                "affect coagulation demand."
+            )
+
+        elif temperature > 35:
+
+            future_factor = 1.08
+
+            future_status = (
+                "Elevated Chlorine Demand"
+            )
+
+            future_note = (
+                "High temperature may increase "
+                "biological activity."
+            )
+
+        else:
+
+            future_factor = 1.0
+
+            future_status = "Stable Condition"
+
+            future_note = (
+                "No major water quality "
+                "disturbance predicted."
+            )
+
+        # ====================================================
+        # PREDICTED FUTURE DOSE
+        # ====================================================
+
+        future_dose = dose * future_factor
+
+        st.metric(
+            "Predicted Future Dose",
+            f"{future_dose:.1f} mg/L"
+        )
+
+        # ====================================================
+        # STATUS DISPLAY
+        # ====================================================
+
+        if future_factor >= 1.2:
+
+            st.error(f"🔴 {future_status}")
+
+        elif future_factor > 1.0:
+
+            st.warning(f"🟠 {future_status}")
+
+        else:
+
+            st.success(f"🟢 {future_status}")
+
+        # ====================================================
+        # AI RECOMMENDATION
+        # ====================================================
+
+        st.markdown(f"""
+### 🤖 AI Recommendation
+
+{future_note}
+
+### Suggested Actions
+
+✔ Monitor intake turbidity  
+✔ Keep additional alum ready  
+✔ Observe filter loading  
+✔ Monitor sludge blanket  
+✔ Verify residual chlorine
+
+🎯 Weather Adjustment Factor:
+**{future_factor:.2f}**
+""")
+
+    except Exception as e:
+
+        st.error(f"Weather error: {e}")
 
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
