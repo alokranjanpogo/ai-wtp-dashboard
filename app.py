@@ -1861,7 +1861,7 @@ with right_col:
     # WEATHER DATA
     # ====================================================
     
-        temperature = data['main']['temp']
+    temperature = data['main']['temp']
     
     humidity = data['main']['humidity']
     
