@@ -1278,7 +1278,7 @@ import os
 import numpy as np
 import requests
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
 
 
@@ -1482,7 +1482,7 @@ if submit:
 
     if len(df) >= 30:
 
-        st.markdown("### 🤖 AI Smart Recommendation")
+        st.markdown(" 🤖 AI Smart Recommendation")
 
         good = df[
             (df["final_turbidity"] <= 1) &
@@ -1706,6 +1706,97 @@ if st.checkbox("Show Data Table"):
 
             st.rerun()
 
+# ============================================================
+# 📊 AI ANALYTICS DASHBOARD
+# ============================================================
+
+st.markdown("---")
+st.markdown("## 📊 AI Performance Analytics")
+
+if len(df) > 0:
+
+    a1, a2, a3, a4 = st.columns(4)
+
+    with a1:
+
+        st.metric(
+            "Total Samples",
+            len(df)
+        )
+
+    with a2:
+
+        st.metric(
+            "Average Dose",
+            f"{df['dose'].mean():.1f} mg/L"
+        )
+
+    with a3:
+
+        st.metric(
+            "Avg Final Turbidity",
+            f"{df['final_turbidity'].mean():.2f}"
+        )
+
+    with a4:
+
+        good_quality = len(
+            df[
+                (df["final_turbidity"] <= 1)
+            ]
+        )
+
+        efficiency = (
+            good_quality / len(df)
+        ) * 100
+
+        st.metric(
+            "Treatment Efficiency",
+            f"{efficiency:.1f}%"
+        )
+
+    # ========================================================
+    # TREND CHART
+    # ========================================================
+
+    st.markdown("### 📈 Treatment Trend")
+
+    chart_df = df.copy()
+
+    chart_df["timestamp"] = pd.to_datetime(
+        chart_df["timestamp"]
+    )
+
+    chart_df = chart_df.sort_values(
+        by="timestamp"
+    )
+
+    st.line_chart(
+        chart_df.set_index("timestamp")[
+            ["raw_turbidity", "dose"]
+        ]
+    )
+
+    # ========================================================
+    # AI INSIGHT
+    # ========================================================
+
+    latest = chart_df.iloc[-1]
+
+    if latest["final_turbidity"] <= 1:
+
+        st.success(
+            "✅ Latest treatment cycle achieved "
+            "desired water quality."
+        )
+
+    else:
+
+        st.warning(
+            "⚠️ Latest cycle indicates possible "
+            "coagulation or filtration issue."
+        )
+
 # ===============================
 # WEATHER
 # ===============================
@@ -1745,21 +1836,125 @@ with right_col:
 
         st.write(weather_desc)
 
-        # ====================================================
-        # 🌦 FUTURE DOSING PREDICTION
-        # ====================================================
+       # ====================================================
+# 🌦 FUTURE DOSING PREDICTION
+# ====================================================
 
-        st.markdown("---")
+st.markdown("---")
 
-        st.markdown(
-            "## 🌦 AI Future Dose Prediction"
-        )
+st.markdown("""
+<div style="
+background: linear-gradient(135deg,#0f172a,#1e293b);
+padding:18px;
+border-radius:18px;
+border:1px solid #334155;
+">
 
-        future_factor = 1.0
+<h3 style="color:#38bdf8;">
+🌦 AI Future Dose Prediction
+</h3>
 
-        future_status = "Stable"
+</div>
+""", unsafe_allow_html=True)
 
-        future_note = ""
+temperature = data['main']['temp']
+humidity = data['main']['humidity']
+weather_desc = data['weather'][0]['description']
+
+future_factor = 1.0
+future_status = "Stable"
+future_note = ""
+
+desc = weather_desc.lower()
+
+# ====================================================
+# WEATHER ANALYSIS
+# ====================================================
+
+if "rain" in desc:
+
+    future_factor = 1.25
+
+    future_status = "High Turbidity Risk"
+
+    future_note = (
+        "Rainfall may increase suspended solids "
+        "and alum demand."
+    )
+
+elif "cloud" in desc:
+
+    future_factor = 1.10
+
+    future_status = "Moderate Variation"
+
+    future_note = (
+        "Possible slight fluctuation in coagulation demand."
+    )
+
+elif temperature > 35:
+
+    future_factor = 1.08
+
+    future_status = "Elevated Chlorine Demand"
+
+    future_note = (
+        "High temperature may increase biological activity."
+    )
+
+else:
+
+    future_factor = 1.0
+
+    future_status = "Stable Condition"
+
+    future_note = (
+        "No major raw water disturbance predicted."
+    )
+
+# ====================================================
+# FUTURE DOSE
+# ====================================================
+
+future_dose = dose * future_factor
+
+c1, c2 = st.columns(2)
+
+with c1:
+
+    st.metric(
+        "Predicted Dose",
+        f"{future_dose:.1f} mg/L"
+    )
+
+with c2:
+
+    st.metric(
+        "Adjustment Factor",
+        f"{future_factor:.2f}"
+    )
+
+# ====================================================
+# STATUS
+# ====================================================
+
+if future_factor >= 1.2:
+
+    st.error(f"🔴 {future_status}")
+
+elif future_factor > 1.0:
+
+    st.warning(f"🟠 {future_status}")
+
+else:
+
+    st.success(f"🟢 {future_status}")
+
+# ====================================================
+# AI INSIGHT
+# ====================================================
+
+st.info(f"🤖 {future_note}")
 
         # ====================================================
         # WEATHER ANALYSIS
