@@ -1871,13 +1871,13 @@ with right_col:
     # INITIAL VALUES
     # ====================================================
     
-    future_factor = 1.0
-    
-    future_status = "Stable"
-    
-    future_note = ""
-    
-    desc = weather_desc.lower()
+        future_factor = 1.0
+        
+        future_status = "Stable"
+        
+        future_note = ""
+        
+        desc = weather_desc.lower()
 
 # ====================================================
 # WEATHER ANALYSIS
