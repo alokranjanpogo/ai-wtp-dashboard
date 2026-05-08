@@ -1006,9 +1006,9 @@ with right:
 - Risk Category: **{raw_risk}**
 """)
 
-   if industrial:
+    if industrial:
 
-    st.markdown(f"""
+        st.markdown(f"""
 ### Industrial Impact
 
 - Discharge Type: **{industrial_type}**
