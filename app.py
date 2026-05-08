@@ -554,6 +554,9 @@ industrial = st.toggle("⚠️ Industrial Discharge Present")
 
 industrial_type = "None"
 discharge_level = 1
+conductivity = 350
+odor_detected = False
+water_color = "Normal"
 
 if industrial:
 
@@ -568,10 +571,109 @@ if industrial:
         ]
     )
 
-    discharge_level = st.slider(
-        "Industrial Impact Severity",
-        1, 5, 2
+    # ========================================================
+    # INDUSTRIAL WATER QUALITY INDICATORS
+    # ========================================================
+
+    st.markdown("### 🧪 Industrial Impact Indicators")
+
+    conductivity = st.slider(
+        "Conductivity (µS/cm)",
+        100,
+        3000,
+        700
     )
+
+    odor_detected = st.toggle(
+        "Chemical / Oily Odor Detected"
+    )
+
+    water_color = st.selectbox(
+        "Raw Water Appearance",
+        [
+            "Normal",
+            "Slightly Colored",
+            "Highly Colored"
+        ]
+    )
+
+    # ========================================================
+    # AUTOMATIC SEVERITY ESTIMATION
+    # ========================================================
+
+    severity_score = 0
+
+    # Conductivity effect
+    if conductivity > 1200:
+        severity_score += 2
+
+    elif conductivity > 800:
+        severity_score += 1
+
+    # pH abnormality
+    if ph < 6 or ph > 8.5:
+        severity_score += 1
+
+    # Turbidity effect
+    if turbidity > 250:
+        severity_score += 2
+
+    elif turbidity > 120:
+        severity_score += 1
+
+    # Odor effect
+    if odor_detected:
+        severity_score += 1
+
+    # Color effect
+    if water_color == "Highly Colored":
+        severity_score += 2
+
+    elif water_color == "Slightly Colored":
+        severity_score += 1
+
+    # ========================================================
+    # FINAL SEVERITY CLASSIFICATION
+    # ========================================================
+
+    if severity_score <= 1:
+        discharge_level = 1
+        severity_label = "Very Mild"
+
+    elif severity_score == 2:
+        discharge_level = 2
+        severity_label = "Mild"
+
+    elif severity_score == 3:
+        discharge_level = 3
+        severity_label = "Moderate"
+
+    elif severity_score == 4:
+        discharge_level = 4
+        severity_label = "High"
+
+    else:
+        discharge_level = 5
+        severity_label = "Severe"
+
+    # ========================================================
+    # DISPLAY INDUSTRIAL SEVERITY
+    # ========================================================
+
+    if discharge_level >= 5:
+        st.error(
+            f"🔴 Industrial Severity: {severity_label}"
+        )
+
+    elif discharge_level >= 3:
+        st.warning(
+            f"🟠 Industrial Severity: {severity_label}"
+        )
+
+    else:
+        st.success(
+            f"🟢 Industrial Severity: {severity_label}"
+        )
 
 # ============================================================
 # 🧪 JAR TEST INPUT
@@ -904,13 +1006,17 @@ with right:
 - Risk Category: **{raw_risk}**
 """)
 
-    if industrial:
+   if industrial:
 
-        st.markdown(f"""
+    st.markdown(f"""
 ### Industrial Impact
 
 - Discharge Type: **{industrial_type}**
+- Conductivity: **{conductivity} µS/cm**
+- Water Appearance: **{water_color}**
+- Odor Detected: **{"Yes" if odor_detected else "No"}**
 - Severity Level: **{discharge_level}/5**
+- Severity Category: **{severity_label}**
 - Industrial Correction Factor: **{industrial_factor:.2f}**
 """)
 
