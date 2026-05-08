@@ -1840,22 +1840,22 @@ with right_col:
 # 🌦 FUTURE DOSING PREDICTION
 # ====================================================
 
-st.markdown("---")
-
-st.markdown("""
-<div style="
-background: linear-gradient(135deg,#0f172a,#1e293b);
-padding:18px;
-border-radius:18px;
-border:1px solid #334155;
-">
-
-<h3 style="color:#38bdf8;">
-🌦 AI Future Dose Prediction
-</h3>
-
-</div>
-""", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    st.markdown("""
+    <div style="
+    background: linear-gradient(135deg,#0f172a,#1e293b);
+    padding:18px;
+    border-radius:18px;
+    border:1px solid #334155;
+    ">
+    
+    <h3 style="color:#38bdf8;">
+    🌦 AI Future Dose Prediction
+    </h3>
+    
+    </div>
+    """, unsafe_allow_html=True)
 
 # ====================================================
 # WEATHER DATA
