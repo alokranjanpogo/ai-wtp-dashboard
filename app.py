@@ -1840,7 +1840,7 @@ with right_col:
     # 🌦 FUTURE DOSING PREDICTION
     # ====================================================
 
-    st.markdown("---")
+        st.markdown("---")
     
     st.markdown("""
     <div style="
@@ -1861,7 +1861,7 @@ with right_col:
     # WEATHER DATA
     # ====================================================
     
-    temperature = data['main']['temp']
+        temperature = data['main']['temp']
     
     humidity = data['main']['humidity']
     
