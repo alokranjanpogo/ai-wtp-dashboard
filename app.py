@@ -1861,11 +1861,11 @@ with right_col:
     # WEATHER DATA
     # ====================================================
     
-    temperature = data['main']['temp']
-    
-    humidity = data['main']['humidity']
-    
-    weather_desc = data['weather'][0]['description']
+        temperature = data['main']['temp']
+        
+        humidity = data['main']['humidity']
+        
+        weather_desc = data['weather'][0]['description']
     
     # ====================================================
     # INITIAL VALUES
