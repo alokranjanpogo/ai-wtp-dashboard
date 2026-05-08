@@ -1711,34 +1711,77 @@ if st.checkbox("Show Data Table"):
 # ============================================================
 
 st.markdown("---")
-st.markdown("## 📊 AI Performance Analytics")
+
+st.markdown("""
+<h2 style='color:#38bdf8;'>
+📊 AI Performance Analytics
+</h2>
+""", unsafe_allow_html=True)
 
 if len(df) > 0:
 
-    a1, a2, a3, a4 = st.columns(4)
+    # ========================================================
+    # KPI CARDS
+    # ========================================================
 
-    with a1:
+    k1, k2, k3, k4 = st.columns(4)
 
-        st.metric(
-            "Total Samples",
-            len(df)
-        )
+    with k1:
 
-    with a2:
+        st.markdown("""
+        <div style="
+        background:#0f172a;
+        padding:18px;
+        border-radius:18px;
+        border:1px solid #1e293b;
+        text-align:center;
+        ">
+        <h3 style='color:#38bdf8;'>Total Samples</h3>
+        <h1 style='color:white;'>
+        """ + str(len(df)) + """
+        </h1>
+        </div>
+        """, unsafe_allow_html=True)
 
-        st.metric(
-            "Average Dose",
-            f"{df['dose'].mean():.1f} mg/L"
-        )
+    with k2:
 
-    with a3:
+        avg_dose = df['dose'].mean()
 
-        st.metric(
-            "Avg Final Turbidity",
-            f"{df['final_turbidity'].mean():.2f}"
-        )
+        st.markdown(f"""
+        <div style="
+        background:#0f172a;
+        padding:18px;
+        border-radius:18px;
+        border:1px solid #1e293b;
+        text-align:center;
+        ">
+        <h3 style='color:#38bdf8;'>Average Dose</h3>
+        <h1 style='color:white;'>
+        {avg_dose:.1f} mg/L
+        </h1>
+        </div>
+        """, unsafe_allow_html=True)
 
-    with a4:
+    with k3:
+
+        avg_turb = df['final_turbidity'].mean()
+
+        st.markdown(f"""
+        <div style="
+        background:#0f172a;
+        padding:18px;
+        border-radius:18px;
+        border:1px solid #1e293b;
+        text-align:center;
+        ">
+        <h3 style='color:#38bdf8;'>Avg Final Turbidity</h3>
+        <h1 style='color:white;'>
+        {avg_turb:.2f}
+        </h1>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with k4:
 
         good_quality = len(
             df[
@@ -1750,52 +1793,165 @@ if len(df) > 0:
             good_quality / len(df)
         ) * 100
 
-        st.metric(
-            "Treatment Efficiency",
-            f"{efficiency:.1f}%"
+        st.markdown(f"""
+        <div style="
+        background:#0f172a;
+        padding:18px;
+        border-radius:18px;
+        border:1px solid #1e293b;
+        text-align:center;
+        ">
+        <h3 style='color:#38bdf8;'>Efficiency</h3>
+        <h1 style='color:white;'>
+        {efficiency:.1f}%
+        </h1>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("")
+
+    # ========================================================
+    # BEAUTIFUL GRAPH SECTION
+    # ========================================================
+
+    left_graph, right_graph = st.columns([2,1])
+
+    # ========================================================
+    # MAIN TREND GRAPH
+    # ========================================================
+
+    with left_graph:
+
+        st.markdown("""
+        <h3 style='color:#38bdf8;'>
+        📈 Treatment Performance Trend
+        </h3>
+        """, unsafe_allow_html=True)
+
+        chart_df = df.copy()
+
+        chart_df["timestamp"] = pd.to_datetime(
+            chart_df["timestamp"]
+        )
+
+        chart_df = chart_df.sort_values(
+            by="timestamp"
+        )
+
+        fig = go.Figure()
+
+        # Raw Turbidity
+        fig.add_trace(go.Scatter(
+            x=chart_df["timestamp"],
+            y=chart_df["raw_turbidity"],
+            mode='lines+markers',
+            name='Raw Turbidity',
+            line=dict(width=3)
+        ))
+
+        # Dose
+        fig.add_trace(go.Scatter(
+            x=chart_df["timestamp"],
+            y=chart_df["dose"],
+            mode='lines+markers',
+            name='Alum Dose',
+            line=dict(width=3)
+        ))
+
+        # Final Turbidity
+        fig.add_trace(go.Scatter(
+            x=chart_df["timestamp"],
+            y=chart_df["final_turbidity"],
+            mode='lines+markers',
+            name='Final Turbidity',
+            line=dict(width=3)
+        ))
+
+        fig.update_layout(
+            template="plotly_dark",
+            height=500,
+            paper_bgcolor="#0f172a",
+            plot_bgcolor="#0f172a",
+            bordercolor="#1e293b",
+            title="AI Water Treatment Monitoring",
+            xaxis_title="Time",
+            yaxis_title="Values",
+            hovermode="x unified",
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
         )
 
     # ========================================================
-    # TREND CHART
+    # AI INSIGHT PANEL
     # ========================================================
 
-    st.markdown("### 📈 Treatment Trend")
+    with right_graph:
 
-    chart_df = df.copy()
+        st.markdown("""
+        <h3 style='color:#38bdf8;'>
+        🤖 AI Insights
+        </h3>
+        """, unsafe_allow_html=True)
 
-    chart_df["timestamp"] = pd.to_datetime(
-        chart_df["timestamp"]
-    )
+        latest = chart_df.iloc[-1]
 
-    chart_df = chart_df.sort_values(
-        by="timestamp"
-    )
+        if latest["final_turbidity"] <= 1:
 
-    st.line_chart(
-        chart_df.set_index("timestamp")[
-            ["raw_turbidity", "dose"]
-        ]
-    )
+            st.success("""
+✅ Excellent treatment quality achieved.
 
-    # ========================================================
-    # AI INSIGHT
-    # ========================================================
+✔ Filtration stable  
+✔ Coagulation effective  
+✔ Water quality within limits
+""")
 
-    latest = chart_df.iloc[-1]
+        else:
 
-    if latest["final_turbidity"] <= 1:
+            st.warning("""
+⚠ Possible treatment disturbance.
 
-        st.success(
-            "✅ Latest treatment cycle achieved "
-            "desired water quality."
-        )
+✔ Check coagulation  
+✔ Verify alum dosing  
+✔ Inspect filter loading
+""")
 
-    else:
+        if efficiency > 90:
 
-        st.warning(
-            "⚠️ Latest cycle indicates possible "
-            "coagulation or filtration issue."
-        )
+            st.success("🟢 Plant performing efficiently")
+
+        elif efficiency > 70:
+
+            st.warning("🟡 Moderate operational efficiency")
+
+        else:
+
+            st.error("🔴 Performance improvement needed")
+
+        st.markdown("---")
+
+        st.markdown("""
+### 📌 Suggested Actions
+
+✔ Monitor intake turbidity  
+✔ Verify chemical dosing  
+✔ Observe sludge blanket  
+✔ Maintain filter washing schedule  
+✔ Check residual chlorine
+""")
+
+else:
+
+    st.info("No data available yet.")
 
 # ===============================
 # WEATHER
