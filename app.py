@@ -1854,11 +1854,11 @@ with right_col:
         st.error(f"Weather error: {e}")
 
 # ====================================================
-    # 🌦 FUTURE DOSING PREDICTION
-    # ====================================================
+# 🌦 FUTURE DOSING PREDICTION
+# ====================================================
 
 st.markdown("---")
-    
+
 st.markdown("""
 <div style="
 background: linear-gradient(135deg,#0f172a,#1e293b);
@@ -1879,9 +1879,7 @@ border:1px solid #334155;
 # ====================================================
 
 temperature = data['main']['temp']
-
 humidity = data['main']['humidity']
-
 weather_desc = data['weather'][0]['description']
 
 # ====================================================
@@ -1889,9 +1887,7 @@ weather_desc = data['weather'][0]['description']
 # ====================================================
 
 future_factor = 1.0
-
 future_status = "Stable"
-
 future_note = ""
 
 desc = weather_desc.lower()
@@ -1947,13 +1943,11 @@ else:
 # FUTURE DOSE
 # ====================================================
 
-    future_dose = dose * future_factor
+future_dose = dose * future_factor
 
 # ====================================================
 # METRICS
 # ====================================================
-
-c1, c2 = st.columns(2)
 
 c1, c2 = st.columns(2)
 
@@ -1968,6 +1962,7 @@ with c2:
         "Adjustment Factor",
         f"{future_factor:.2f}x"
     )
+
 # ====================================================
 # STATUS
 # ====================================================
@@ -1984,6 +1979,11 @@ else:
 
     st.success(f"🟢 {future_status}")
 
+# ====================================================
+# AI NOTE
+# ====================================================
+
+st.info(f"💡 {future_note}")
 # ====================================================
 # AI INSIGHT
 # ====================================================
