@@ -1955,20 +1955,23 @@ else:
 
 c1, c2 = st.columns(2)
 
-with c1:
+# Calculate future prediction
+future_dose = predicted_dose * 1.08
+future_factor = future_dose / current_dose
 
+c1, c2 = st.columns(2)
+
+with c1:
     st.metric(
         "Predicted Dose",
         f"{future_dose:.1f} mg/L"
     )
 
 with c2:
-
     st.metric(
         "Adjustment Factor",
-        f"{future_factor:.2f}"
+        f"{future_factor:.2f}x"
     )
-
 # ====================================================
 # STATUS
 # ====================================================
