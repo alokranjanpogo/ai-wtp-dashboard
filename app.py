@@ -1955,10 +1955,6 @@ else:
 
 c1, c2 = st.columns(2)
 
-# Calculate future prediction
-future_dose = predicted_dose * 1.08
-future_factor = future_dose / current_dose
-
 c1, c2 = st.columns(2)
 
 with c1:
