@@ -6,7 +6,59 @@ import plotly.express as px
 import datetime
 import pytz
 from streamlit_autorefresh import st_autorefresh
+# ============================================================
+# AQUAMIND AI — AUTO WELCOME VOICE
+# ============================================================
 
+import asyncio
+import edge_tts
+import base64
+import streamlit.components.v1 as components
+
+# ============================================================
+# AUTO WELCOME SPEECH
+# ============================================================
+
+if "welcome_spoken" not in st.session_state:
+
+    st.session_state.welcome_spoken = True
+
+    async def welcome_voice():
+
+        communicate = edge_tts.Communicate(
+            text="""
+            Welcome to Live H M I Panel.
+
+            Moharda Water Treatment Plant monitoring system initialized.
+
+            AquaMind AI operational.
+
+            All critical monitoring systems active.
+            """,
+            voice="en-US-ChristopherNeural"
+        )
+
+        await communicate.save("welcome.mp3")
+
+    asyncio.run(welcome_voice())
+
+    with open("welcome.mp3", "rb") as f:
+
+        audio_bytes = f.read()
+
+    # ========================================================
+    # AUTO PLAY
+    # ========================================================
+
+    b64 = base64.b64encode(audio_bytes).decode()
+
+    md = f"""
+    <audio autoplay>
+    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+    </audio>
+    """
+
+    components.html(md, height=0)
 # ===============================
 # AUTO REFRESH
 # ===============================
