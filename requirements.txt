@@ -10,3 +10,4 @@ openpyxl
 requests
 pytz
 streamlit-autorefresh
+edge-tts
