@@ -595,6 +595,30 @@ with col1:
 with col2:
     t_out = st.number_input("Outlet Turbidity (NTU)", min_value=0.0, value=10.0)
 
+# ============================================================
+# LIMIT FUNCTION
+# ============================================================
+
+def get_limit(unit_type):
+
+    limits = {
+
+        "Clarifier": 5,
+
+        "Filter Bed 1": 1,
+
+        "Filter Bed 2": 1,
+
+        "Filter Bed 3": 1,
+
+        "Filter Bed 4": 1,
+
+        "Filter Bed 5": 1,
+
+        "Filter Bed 6": 1
+    }
+
+    return limits.get(unit_type, 1)
 # ===============================
 # CALCULATIONS
 # ===============================
