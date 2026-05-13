@@ -2186,6 +2186,7 @@ st.info(f"🤖 {future_note}")
 # CUSTOMER END GIS MAP (FIXED)
 # ===============================
 st.subheader("📍 Customer End GIS Map")
+
 try:
     gis = pd.read_excel(uploaded_file, sheet_name="GIS")
 except:
@@ -2193,52 +2194,68 @@ except:
 
 if gis.empty:
     st.warning("No GIS data found.")
-else:
-        lat_col = next((c for c in gis.columns if "lat" in c.lower()), None)
-        lon_col = next((c for c in gis.columns if "lon" in c.lower()), None)
-        name_col = next((c for c in gis.columns if "name" in c.lower() or "cust" in c.lower()), None)
-        turb_col = next((c for c in gis.columns if "turb" in c.lower()), None)
-        frc_col = next((c for c in gis.columns if "frc" in c.lower()), None)
-        date_col = next((c for c in gis.columns if "date" in c.lower()), None)
-        
-        total_col = next((c for c in gis.columns if "total" in c.lower()), None)
-        ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
-        
-# Convert numeric safely
-if turb_col:
-    gis[turb_col] = pd.to_numeric(gis[turb_col], errors='coerce')
-if frc_col:
-    gis[frc_col] = pd.to_numeric(gis[frc_col], errors='coerce')
 
-def classify(row):
-# Bacteria priority (RED)
-    if total_col and str(row[total_col]).lower() in ["present","yes","1"]:
-        return "Bacteria Present"
-    if ecoli_col and str(row[ecoli_col]).lower() in ["present","yes","1"]:
-        return "Bacteria Present"
-    
-    # Chemical/physical deviation (YELLOW)
-    if turb_col and row[turb_col] > 1.5:
-        return "High Turbidity"
-    if frc_col and (row[frc_col] < 0.2 or row[frc_col] > 1.0):
-        return "Chlorine Deviation"
-    
-    # Safe (GREEN)
-    return "Safe"
-    
+else:
+    # Detect columns safely
+    lat_col = next((c for c in gis.columns if "lat" in c.lower()), None)
+    lon_col = next((c for c in gis.columns if "lon" in c.lower()), None)
+
+    name_col = next(
+        (c for c in gis.columns if "name" in c.lower() or "cust" in c.lower()),
+        None
+    )
+
+    turb_col = next((c for c in gis.columns if "turb" in c.lower()), None)
+    frc_col = next((c for c in gis.columns if "frc" in c.lower()), None)
+    date_col = next((c for c in gis.columns if "date" in c.lower()), None)
+
+    total_col = next((c for c in gis.columns if "total" in c.lower()), None)
+    ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
+
+    # Convert numeric safely
+    if turb_col is not None:
+        gis[turb_col] = pd.to_numeric(gis[turb_col], errors='coerce')
+
+    if frc_col is not None:
+        gis[frc_col] = pd.to_numeric(gis[frc_col], errors='coerce')
+
+    # Classification function
+    def classify(row):
+
+        # Bacteria priority (RED)
+        if total_col and str(row[total_col]).lower() in ["present", "yes", "1"]:
+            return "Bacteria Present"
+
+        if ecoli_col and str(row[ecoli_col]).lower() in ["present", "yes", "1"]:
+            return "Bacteria Present"
+
+        # Chemical / physical deviation (YELLOW)
+        if turb_col and pd.notna(row[turb_col]) and row[turb_col] > 1.5:
+            return "High Turbidity"
+
+        if frc_col and pd.notna(row[frc_col]):
+            if row[frc_col] < 0.2 or row[frc_col] > 1.0:
+                return "Chlorine Deviation"
+
+        # Safe (GREEN)
+        return "Safe"
+
+    # Apply classification
     gis["Status"] = gis.apply(classify, axis=1)
-    
+
+    # Create GIS map
     if lat_col and lon_col:
+
         fig_map = px.scatter_mapbox(
             gis,
             lat=lat_col,
             lon=lon_col,
             hover_name=name_col,
             hover_data={
-                turb_col: True,
-                frc_col: True,
-                total_col: True,
-                ecoli_col: True
+                turb_col: True if turb_col else False,
+                frc_col: True if frc_col else False,
+                total_col: True if total_col else False,
+                ecoli_col: True if ecoli_col else False
             },
             color="Status",
             color_discrete_map={
@@ -2250,9 +2267,16 @@ def classify(row):
             zoom=12,
             height=600
         )
-        
-        fig_map.update_layout(mapbox_style="open-street-map")
+
+        fig_map.update_layout(
+            mapbox_style="open-street-map",
+            margin=dict(l=0, r=0, t=0, b=0)
+        )
+
         st.plotly_chart(fig_map, use_container_width=True)
+
+    else:
+        st.error("Latitude or Longitude column not found in GIS sheet.")
 
 import pandas as pd
 import plotly.express as px
