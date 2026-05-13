@@ -2204,55 +2204,55 @@ else:
         total_col = next((c for c in gis.columns if "total" in c.lower()), None)
         ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
         
-        # Convert numeric safely
-        if turb_col:
-        gis[turb_col] = pd.to_numeric(gis[turb_col], errors='coerce')
-        if frc_col:
-        gis[frc_col] = pd.to_numeric(gis[frc_col], errors='coerce')
-        
-        def classify(row):
-        # Bacteria priority (RED)
-        if total_col and str(row[total_col]).lower() in ["present","yes","1"]:
-            return "Bacteria Present"
-        if ecoli_col and str(row[ecoli_col]).lower() in ["present","yes","1"]:
-            return "Bacteria Present"
-        
-        # Chemical/physical deviation (YELLOW)
-        if turb_col and row[turb_col] > 1.5:
-            return "High Turbidity"
-        if frc_col and (row[frc_col] < 0.2 or row[frc_col] > 1.0):
-            return "Chlorine Deviation"
-        
-        # Safe (GREEN)
-        return "Safe"
-        
-        gis["Status"] = gis.apply(classify, axis=1)
-        
-        if lat_col and lon_col:
-        fig_map = px.scatter_mapbox(
-            gis,
-            lat=lat_col,
-            lon=lon_col,
-            hover_name=name_col,
-            hover_data={
-                turb_col: True,
-                frc_col: True,
-                total_col: True,
-                ecoli_col: True
-            },
-            color="Status",
-            color_discrete_map={
-                "Safe": "green",
-                "High Turbidity": "yellow",
-                "Chlorine Deviation": "yellow",
-                "Bacteria Present": "red"
-            },
-            zoom=12,
-            height=600
-        )
-        
-        fig_map.update_layout(mapbox_style="open-street-map")
-        st.plotly_chart(fig_map, use_container_width=True)
+# Convert numeric safely
+if turb_col:
+gis[turb_col] = pd.to_numeric(gis[turb_col], errors='coerce')
+if frc_col:
+gis[frc_col] = pd.to_numeric(gis[frc_col], errors='coerce')
+
+def classify(row):
+# Bacteria priority (RED)
+if total_col and str(row[total_col]).lower() in ["present","yes","1"]:
+    return "Bacteria Present"
+if ecoli_col and str(row[ecoli_col]).lower() in ["present","yes","1"]:
+    return "Bacteria Present"
+
+# Chemical/physical deviation (YELLOW)
+if turb_col and row[turb_col] > 1.5:
+    return "High Turbidity"
+if frc_col and (row[frc_col] < 0.2 or row[frc_col] > 1.0):
+    return "Chlorine Deviation"
+
+# Safe (GREEN)
+return "Safe"
+
+gis["Status"] = gis.apply(classify, axis=1)
+
+if lat_col and lon_col:
+fig_map = px.scatter_mapbox(
+    gis,
+    lat=lat_col,
+    lon=lon_col,
+    hover_name=name_col,
+    hover_data={
+        turb_col: True,
+        frc_col: True,
+        total_col: True,
+        ecoli_col: True
+    },
+    color="Status",
+    color_discrete_map={
+        "Safe": "green",
+        "High Turbidity": "yellow",
+        "Chlorine Deviation": "yellow",
+        "Bacteria Present": "red"
+    },
+    zoom=12,
+    height=600
+)
+
+fig_map.update_layout(mapbox_style="open-street-map")
+st.plotly_chart(fig_map, use_container_width=True)
 
 import pandas as pd
 import plotly.express as px
