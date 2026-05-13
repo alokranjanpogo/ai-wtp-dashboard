@@ -2187,11 +2187,6 @@ st.subheader("📍 Customer End GIS Map")
 
 try:
     gis = pd.read_excel(uploaded_file, sheet_name="Gis Data.xlsx")
-except:
-    gis = pd.DataFrame()
-
-if gis.empty:
-    st.warning("No GIS data found.")
 
 else:
     # Detect columns safely
