@@ -2187,7 +2187,7 @@ st.info(f"🤖 {future_note}")
 st.subheader("📍 Customer End GIS Map")
 
 # Read GIS Sheet
-gis = pd.read_excel(uploaded_file, sheet_name="Gis Data")
+gis = pd.read_excel("Gis Data.xlsx", sheet_name="Gis Data")
 
 if gis.empty:
     st.warning("No GIS data found.")
