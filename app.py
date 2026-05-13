@@ -13,30 +13,6 @@ st_autorefresh(interval=19000, key="scada_refresh")
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
 # ===============================
-# STYLING (UPGRADED UI)
-# ===============================
-st.markdown("""
-<style>
-body {background-color:#050A18;}
-h1,h2,h3 {color:#00F5FF;}
-
-.blink {animation: blinker 1s linear infinite;}
-@keyframes blinker {50% {opacity:0;}}
-
-button[kind="secondary"] {
-    background-color:#001F3F;
-    color:#00F5FF;
-    border-radius:10px;
-    height:45px;
-    font-weight:bold;
-}
-button[kind="secondary"]:hover {
-    background-color:#003366;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ===============================
 # TITLE
 # ===============================
 st.title("🏭 WTP MOHARDA – LIVE HMI PANEL")
@@ -139,6 +115,7 @@ def gauge(title,value,max_val,mode="normal"):
 # ===============================
 # LIVE GAUGES
 # ===============================
+clar_eff=85
 st.subheader("📊 LIVE PERFORMANCE")
 cols=st.columns(4)
 cols[0].plotly_chart(gauge("Intake Turbidity",intake_turb,20),use_container_width=True)
