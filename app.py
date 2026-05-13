@@ -2206,9 +2206,9 @@ else:
         
 # Convert numeric safely
 if turb_col:
-gis[turb_col] = pd.to_numeric(gis[turb_col], errors='coerce')
+    gis[turb_col] = pd.to_numeric(gis[turb_col], errors='coerce')
 if frc_col:
-gis[frc_col] = pd.to_numeric(gis[frc_col], errors='coerce')
+    gis[frc_col] = pd.to_numeric(gis[frc_col], errors='coerce')
 
 def classify(row):
 # Bacteria priority (RED)
