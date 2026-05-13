@@ -2186,7 +2186,7 @@ st.info(f"🤖 {future_note}")
 st.subheader("📍 Customer End GIS Map")
 
 try:
-    gis = pd.read_excel(uploaded_file, sheet_name="Gis Data")
+    gis = pd.read_excel(uploaded_file, sheet_name="Sheet1")
 except:
     gis = pd.DataFrame()
 
