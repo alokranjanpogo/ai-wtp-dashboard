@@ -2229,30 +2229,30 @@ def classify(row):
     gis["Status"] = gis.apply(classify, axis=1)
     
     if lat_col and lon_col:
-    fig_map = px.scatter_mapbox(
-        gis,
-        lat=lat_col,
-        lon=lon_col,
-        hover_name=name_col,
-        hover_data={
-            turb_col: True,
-            frc_col: True,
-            total_col: True,
-            ecoli_col: True
-        },
-        color="Status",
-        color_discrete_map={
-            "Safe": "green",
-            "High Turbidity": "yellow",
-            "Chlorine Deviation": "yellow",
-            "Bacteria Present": "red"
-        },
-        zoom=12,
-        height=600
-    )
-    
-    fig_map.update_layout(mapbox_style="open-street-map")
-    st.plotly_chart(fig_map, use_container_width=True)
+        fig_map = px.scatter_mapbox(
+            gis,
+            lat=lat_col,
+            lon=lon_col,
+            hover_name=name_col,
+            hover_data={
+                turb_col: True,
+                frc_col: True,
+                total_col: True,
+                ecoli_col: True
+            },
+            color="Status",
+            color_discrete_map={
+                "Safe": "green",
+                "High Turbidity": "yellow",
+                "Chlorine Deviation": "yellow",
+                "Bacteria Present": "red"
+            },
+            zoom=12,
+            height=600
+        )
+        
+        fig_map.update_layout(mapbox_style="open-street-map")
+        st.plotly_chart(fig_map, use_container_width=True)
 
 import pandas as pd
 import plotly.express as px
