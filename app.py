@@ -622,6 +622,60 @@ def get_limit(unit_type):
 # ===============================
 # CALCULATIONS
 # ===============================
+# ============================================================
+# PERFORMANCE FUNCTIONS
+# ============================================================
+
+def calculate_efficiency(t_in, t_out):
+
+    if t_in == 0:
+        return 0
+
+    return ((t_in - t_out) / t_in) * 100
+
+
+def performance_index(t_out, limit):
+
+    if limit == 0:
+        return 0
+
+    return t_out / limit
+
+
+def performance_status(t_out, limit):
+
+    if t_out <= limit:
+        return "Safe"
+
+    elif t_out <= limit * 1.5:
+        return "Warning"
+
+    else:
+        return "Critical"
+
+
+def performance_grade(pi):
+
+    if pi <= 1:
+        return "A"
+
+    elif pi <= 1.5:
+        return "B"
+
+    else:
+        return "C"
+
+
+def get_color(status, pi):
+
+    if status == "Safe":
+        return "green"
+
+    elif status == "Warning":
+        return "orange"
+
+    else:
+        return "red"
 
 limit = get_limit(unit_type)
 
