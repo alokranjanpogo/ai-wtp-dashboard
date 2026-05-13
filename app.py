@@ -115,7 +115,6 @@ def gauge(title,value,max_val,mode="normal"):
 # ===============================
 # LIVE GAUGES
 # ===============================
-clar_eff=85
 st.subheader("📊 LIVE PERFORMANCE")
 cols=st.columns(4)
 cols[0].plotly_chart(gauge("Intake Turbidity",intake_turb,20),use_container_width=True)
@@ -2532,16 +2531,13 @@ if complaint:
             st.success("Chlorine OK")
         else:
             st.error("Chlorine Out of Range")
-
 # ============================================================
 # AQUAMIND AI — VOICE COMMAND CENTER
-# PLACE BELOW MAIN DASHBOARD HEADING
 # ============================================================
 
 import asyncio
 import edge_tts
-import base64
-import streamlit.components.v1 as components
+import os
 
 # ============================================================
 # VOICE ENGINE
@@ -2549,56 +2545,24 @@ import streamlit.components.v1 as components
 
 VOICE = "en-US-ChristopherNeural"
 
-# ============================================================
-# AUTO SPEAK FUNCTION
-# ============================================================
+async def generate_voice(text):
+
+    communicate = edge_tts.Communicate(
+        text=text,
+        voice=VOICE
+    )
+
+    await communicate.save("voice.mp3")
+
 
 def speak(text):
 
-    async def generate():
+    asyncio.run(generate_voice(text))
 
-        communicate = edge_tts.Communicate(
-            text=text,
-            voice=VOICE
-        )
+    audio_file = open("voice.mp3", "rb")
+    audio_bytes = audio_file.read()
 
-        await communicate.save("voice.mp3")
-
-    asyncio.run(generate())
-
-    with open("voice.mp3", "rb") as f:
-
-        audio_bytes = f.read()
-
-    b64 = base64.b64encode(audio_bytes).decode()
-
-    audio_html = f"""
-    <audio autoplay>
-        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-    </audio>
-    """
-
-    components.html(audio_html, height=0)
-
-# ============================================================
-# AUTO WELCOME MESSAGE
-# ============================================================
-
-if "welcome_spoken" not in st.session_state:
-
-    st.session_state.welcome_spoken = True
-
-    welcome_text = """
-    Welcome to Live H M I Panel.
-
-    Moharda Water Treatment Plant monitoring system initialized.
-
-    AquaMind AI operational.
-
-    All critical monitoring systems active.
-    """
-
-    speak(welcome_text)
+    st.audio(audio_bytes, format="audio/mp3")
 
 # ============================================================
 # SECTION HEADER
@@ -2610,12 +2574,11 @@ st.subheader("🎙 AquaMind AI Voice Command Center")
 
 st.markdown("""
 Industrial AI operational assistant for:
-
-- Dosing Optimization
-- Chlorination Monitoring
-- Alert Analysis
-- Raw Water Diagnostics
-- Process Intelligence
+- dosing optimization
+- chlorination monitoring
+- alert analysis
+- raw water diagnostics
+- process intelligence
 """)
 
 # ============================================================
@@ -2642,23 +2605,15 @@ Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
 
 v1, v2, v3 = st.columns(3)
 
-# ============================================================
-# SPEAK PLANT SUMMARY
-# ============================================================
-
 with v1:
 
     if st.button("🔊 Speak Plant Summary"):
 
         speak(summary_text)
 
-# ============================================================
-# SPEAK CHLORINATION
-# ============================================================
-
 with v2:
 
-    if st.button("🧪 Speak Chlorination"):
+    if st.button("Speak Chlorination"):
 
         chlorine_voice = f"""
         Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
@@ -2670,13 +2625,13 @@ with v2:
 
         speak(chlorine_voice)
 
-# ============================================================
-# SPEAK ALERT STATUS
-# ============================================================
-
 with v3:
 
     if st.button("⚠ Speak Alert Status"):
+
+        # ====================================================
+        # AUTOMATIC ALERT LINKING
+        # ====================================================
 
         if ai_dose > 80:
 
@@ -2715,12 +2670,12 @@ with v3:
         speak(alert_text)
 
 # ============================================================
-# AI OPERATIONAL ASSISTANT
+# AI OPERATOR CONSOLE
 # ============================================================
 
 st.markdown("---")
 
-st.markdown("### 🤖 AquaMind AI Operational Assistant")
+st.markdown("AI Operational Assistant")
 
 operator_query = st.text_input(
     "Enter Operational Issue",
@@ -2820,20 +2775,24 @@ if st.button("Analyze with AquaMind AI"):
         """
 
     # ========================================================
-    # DISPLAY + SPEAK RESPONSE
+    # DISPLAY RESPONSE
     # ========================================================
 
     st.success(response)
 
+    # ========================================================
+    # SPEAK RESPONSE
+    # ========================================================
+
     speak(response)
 
 # ============================================================
-# LIVE AI COMMENTARY
+# AUTO AI MONITORING COMMENTARY
 # ============================================================
 
 st.markdown("---")
 
-st.markdown("### 🧠 Live AI Monitoring Commentary")
+st.markdown("Live AI Monitoring Commentary")
 
 if turbidity > 250:
 
@@ -2853,160 +2812,6 @@ else:
         "AI Observation: Plant operating under stable conditions."
     )
 
-# ===============================
-# LOAD FILES
-# ===============================
-plant = pd.read_excel("Book 7.xlsx", engine="openpyxl")
-plant.columns = plant.columns.str.strip()
+           
 
-gis = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
-gis.columns = gis.columns.str.strip()
 
-# ===============================
-# CALCULATIONS
-# ===============================
-turb = plant[plant["Parameter"].str.lower() == "turbidity"]
-frc = plant[plant["Parameter"].str.lower() == "frc"]
-
-intake_turb = turb["Intake"].mean()
-clarifier_turb = turb["Clarifier"].mean()
-clearwater_turb = turb["Clear Water"].mean()
-
-clar_eff = (intake_turb - clarifier_turb) / intake_turb if intake_turb != 0 else 0
-
-filter_eff_list = []
-filter_turb_list = []
-
-for i in range(1,7):
-    f_avg = turb[f"Filter {i}"].mean()
-    filter_turb_list.append(f_avg)
-
-    eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
-    filter_eff_list.append(eff)
-
-avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
-consumer_frc = frc["Clear Water"].mean()
-
-# ===============================
-# ALARM LOGIC
-# ===============================
-alarm_list = []
-critical_count = 0
-warning_count = 0
-
-# Clarifier
-if clar_eff < 0.5:
-    alarm_list.append(("CRITICAL", f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)"))
-    critical_count += 1
-elif clar_eff < 0.7:
-    alarm_list.append(("WARNING", f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)"))
-    warning_count += 1
-
-# Filters
-for i in range(1, 7):
-
-    f_avg = turb[f"Filter {i}"].mean()
-    eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
-
-    if f_avg > 5:
-        alarm_list.append(("CRITICAL", f"Filter {i} Turbidity Above 5 NTU ({f_avg:.2f})"))
-        critical_count += 1
-    elif f_avg > 1:
-        alarm_list.append(("WARNING", f"Filter {i} Turbidity Above 1 NTU ({f_avg:.2f})"))
-        warning_count += 1
-
-    if eff < 0.6:
-        alarm_list.append(("CRITICAL", f"Filter {i} Efficiency LOW ({eff*100:.1f}%)"))
-        critical_count += 1
-    elif eff < 0.8:
-        alarm_list.append(("WARNING", f"Filter {i} Efficiency Moderate ({eff*100:.1f}%)"))
-        warning_count += 1
-
-# FRC
-if consumer_frc < 0.2:
-    alarm_list.append(("CRITICAL", f"FRC LOW ({consumer_frc:.2f} ppm)"))
-    critical_count += 1
-elif consumer_frc > 1.0:
-    alarm_list.append(("WARNING", f"FRC HIGH ({consumer_frc:.2f} ppm)"))
-    warning_count += 1
-
-# Bacteria
-total_col = next((c for c in gis.columns if "total" in c.lower()), None)
-ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
-
-if total_col:
-    if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_list.append(("CRITICAL", "Total Coliform Detected"))
-        critical_count += 1
-
-if ecoli_col:
-    if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_list.append(("CRITICAL", "E. Coli Detected"))
-        critical_count += 1
-
-# ===============================
-# TOGGLE BUTTON
-# ===============================
-if "show_alarm" not in st.session_state:
-    st.session_state.show_alarm = False
-
-def toggle_alarm():
-    st.session_state.show_alarm = not st.session_state.show_alarm
-
-st.button("🚨 Plant Alarm Status", on_click=toggle_alarm)
-
-# ===============================
-# SUMMARY PANEL
-# ===============================
-col1, col2, col3 = st.columns(3)
-
-if critical_count > 0:
-    col1.error("🔴 CRITICAL STATUS")
-elif warning_count > 0:
-    col1.warning("🟡 WARNING STATUS")
-else:
-    col1.success("🟢 NORMAL STATUS")
-
-col2.metric("Critical Alarms", critical_count)
-col3.metric("Warning Alarms", warning_count)
-
-# ===============================
-# ALARM DISPLAY (TOGGLE)
-# ===============================
-if st.session_state.show_alarm:
-
-    st.markdown("🚨 Active Alarm Details")
-
-    if len(alarm_list) > 0:
-
-        for level, message in alarm_list:
-
-            if level == "CRITICAL":
-                st.markdown(f"""
-                <div style='
-                    background-color:#2b0000;
-                    padding:12px;
-                    border-left:6px solid red;
-                    border-radius:10px;
-                    margin-bottom:10px;
-                    color:white;
-                    font-size:16px;
-                '>🔴 {message}</div>
-                """, unsafe_allow_html=True)
-
-            else:
-                st.markdown(f"""
-                <div style='
-                    background-color:#2b2b00;
-                    padding:12px;
-                    border-left:6px solid yellow;
-                    border-radius:10px;
-                    margin-bottom:10px;
-                    color:white;
-                    font-size:16px;
-                '>🟡 {message}</div>
-                """, unsafe_allow_html=True)
-
-    else:
-        st.success("✅ No Active Alarms")
-   
