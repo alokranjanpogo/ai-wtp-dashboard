@@ -44,482 +44,7 @@ ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.datetime.now(ist)
 st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
 
-# ============================================================
-# AQUAMIND AI — VOICE COMMAND CENTER
-# PLACE BELOW MAIN DASHBOARD HEADING
-# ============================================================
 
-import asyncio
-import edge_tts
-import base64
-import streamlit.components.v1 as components
-
-# ============================================================
-# VOICE ENGINE
-# ============================================================
-
-VOICE = "en-US-ChristopherNeural"
-
-# ============================================================
-# AUTO SPEAK FUNCTION
-# ============================================================
-
-def speak(text):
-
-    async def generate():
-
-        communicate = edge_tts.Communicate(
-            text=text,
-            voice=VOICE
-        )
-
-        await communicate.save("voice.mp3")
-
-    asyncio.run(generate())
-
-    with open("voice.mp3", "rb") as f:
-
-        audio_bytes = f.read()
-
-    b64 = base64.b64encode(audio_bytes).decode()
-
-    audio_html = f"""
-    <audio autoplay>
-        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-    </audio>
-    """
-
-    components.html(audio_html, height=0)
-
-# ============================================================
-# AUTO WELCOME MESSAGE
-# ============================================================
-
-if "welcome_spoken" not in st.session_state:
-
-    st.session_state.welcome_spoken = True
-
-    welcome_text = """
-    Welcome to Live H M I Panel.
-
-    Moharda Water Treatment Plant monitoring system initialized.
-
-    AquaMind AI operational.
-
-    All critical monitoring systems active.
-    """
-
-    speak(welcome_text)
-
-# ============================================================
-# SECTION HEADER
-# ============================================================
-
-st.markdown("---")
-
-st.subheader("🎙 AquaMind AI Voice Command Center")
-
-st.markdown("""
-Industrial AI operational assistant for:
-
-- Dosing Optimization
-- Chlorination Monitoring
-- Alert Analysis
-- Raw Water Diagnostics
-- Process Intelligence
-""")
-
-# ============================================================
-# QUICK AI STATUS SUMMARY
-# ============================================================
-
-summary_text = f"""
-Attention operator.
-
-Current recommended alum dose is {ai_dose:.1f} milligram per liter.
-
-Raw water risk category is {raw_risk}.
-
-Prediction confidence level is {confidence} percent.
-
-Estimated alum requirement is {alum_kg_day:,.0f} kilogram per day.
-
-Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
-"""
-
-# ============================================================
-# MAIN VOICE BUTTONS
-# ============================================================
-
-v1, v2, v3 = st.columns(3)
-
-# ============================================================
-# SPEAK PLANT SUMMARY
-# ============================================================
-
-with v1:
-
-    if st.button("🔊 Speak Plant Summary"):
-
-        speak(summary_text)
-
-# ============================================================
-# SPEAK CHLORINATION
-# ============================================================
-
-with v2:
-
-    if st.button("🧪 Speak Chlorination"):
-
-        chlorine_voice = f"""
-        Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
-
-        Required hypochlorite dose is {dose_selected:,.0f} kilogram per day.
-
-        Monitor residual chlorine continuously.
-        """
-
-        speak(chlorine_voice)
-
-# ============================================================
-# SPEAK ALERT STATUS
-# ============================================================
-
-with v3:
-
-    if st.button("⚠ Speak Alert Status"):
-
-        if ai_dose > 80:
-
-            alert_text = """
-            Critical alert.
-
-            Extremely high chemical demand detected.
-
-            Consider PAC optimization and pretreatment immediately.
-            """
-
-        elif turbidity > 300:
-
-            alert_text = """
-            Severe turbidity condition detected.
-
-            Monitor sludge blanket and filter loading carefully.
-            """
-
-        elif confidence < 75:
-
-            alert_text = """
-            Prediction confidence reduced.
-
-            Additional monitoring recommended.
-            """
-
-        else:
-
-            alert_text = """
-            Plant operating within optimal condition.
-
-            No critical operational alarm detected.
-            """
-
-        speak(alert_text)
-
-# ============================================================
-# AI OPERATIONAL ASSISTANT
-# ============================================================
-
-st.markdown("---")
-
-st.markdown("### 🤖 AquaMind AI Operational Assistant")
-
-operator_query = st.text_input(
-    "Enter Operational Issue",
-    placeholder="Example: Turbidity increasing after rainfall"
-)
-
-if st.button("Analyze with AquaMind AI"):
-
-    q = operator_query.lower()
-
-    # ========================================================
-    # TURBIDITY ANALYSIS
-    # ========================================================
-
-    if "turbidity" in q:
-
-        response = f"""
-        Raw water turbidity trend increasing.
-
-        Recommended actions:
-
-        Increase alum dosing gradually.
-
-        Current recommended dose is {ai_dose:.1f} milligram per liter.
-
-        Monitor settled water turbidity.
-
-        Check clariflocculator sludge blanket.
-        """
-
-    # ========================================================
-    # CHLORINE ANALYSIS
-    # ========================================================
-
-    elif "chlorine" in q:
-
-        response = f"""
-        Chlorination system analysis initiated.
-
-        Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
-
-        Verify sodium hypochlorite dosing system.
-
-        Monitor residual chlorine at outlet continuously.
-        """
-
-    # ========================================================
-    # FILTER ANALYSIS
-    # ========================================================
-
-    elif "filter" in q:
-
-        response = """
-        Possible filter loading increase detected.
-
-        Recommended actions:
-
-        Monitor head loss.
-
-        Prepare backwash cycle.
-
-        Inspect filter media condition.
-        """
-
-    # ========================================================
-    # SLUDGE ANALYSIS
-    # ========================================================
-
-    elif "sludge" in q:
-
-        response = """
-        Sludge accumulation monitoring initiated.
-
-        Verify sludge blanket stability.
-
-        Increase sludge withdrawal frequency if required.
-
-        Monitor clarifier settling performance.
-        """
-
-    # ========================================================
-    # DEFAULT RESPONSE
-    # ========================================================
-
-    else:
-
-        response = """
-        Process instability detected.
-
-        Recommended operational checks:
-
-        Raw water quality.
-        Coagulant dosing.
-        Clarifier performance.
-        Filtration efficiency.
-        Chlorination stability.
-        """
-
-    # ========================================================
-    # DISPLAY + SPEAK RESPONSE
-    # ========================================================
-
-    st.success(response)
-
-    speak(response)
-
-# ============================================================
-# LIVE AI COMMENTARY
-# ============================================================
-
-st.markdown("---")
-
-st.markdown("### 🧠 Live AI Monitoring Commentary")
-
-if turbidity > 250:
-
-    st.warning(
-        "AI Observation: High turbidity likely increasing coagulant demand."
-    )
-
-elif chlorine_demand > 4:
-
-    st.warning(
-        "AI Observation: Elevated chlorine demand detected."
-    )
-
-else:
-
-    st.success(
-        "AI Observation: Plant operating under stable conditions."
-    )
-
-# ===============================
-# LOAD FILES
-# ===============================
-plant = pd.read_excel("Book 7.xlsx", engine="openpyxl")
-plant.columns = plant.columns.str.strip()
-
-gis = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
-gis.columns = gis.columns.str.strip()
-
-# ===============================
-# CALCULATIONS
-# ===============================
-turb = plant[plant["Parameter"].str.lower() == "turbidity"]
-frc = plant[plant["Parameter"].str.lower() == "frc"]
-
-intake_turb = turb["Intake"].mean()
-clarifier_turb = turb["Clarifier"].mean()
-clearwater_turb = turb["Clear Water"].mean()
-
-clar_eff = (intake_turb - clarifier_turb) / intake_turb if intake_turb != 0 else 0
-
-filter_eff_list = []
-filter_turb_list = []
-
-for i in range(1,7):
-    f_avg = turb[f"Filter {i}"].mean()
-    filter_turb_list.append(f_avg)
-
-    eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
-    filter_eff_list.append(eff)
-
-avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
-consumer_frc = frc["Clear Water"].mean()
-
-# ===============================
-# ALARM LOGIC
-# ===============================
-alarm_list = []
-critical_count = 0
-warning_count = 0
-
-# Clarifier
-if clar_eff < 0.5:
-    alarm_list.append(("CRITICAL", f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)"))
-    critical_count += 1
-elif clar_eff < 0.7:
-    alarm_list.append(("WARNING", f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)"))
-    warning_count += 1
-
-# Filters
-for i in range(1, 7):
-
-    f_avg = turb[f"Filter {i}"].mean()
-    eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
-
-    if f_avg > 5:
-        alarm_list.append(("CRITICAL", f"Filter {i} Turbidity Above 5 NTU ({f_avg:.2f})"))
-        critical_count += 1
-    elif f_avg > 1:
-        alarm_list.append(("WARNING", f"Filter {i} Turbidity Above 1 NTU ({f_avg:.2f})"))
-        warning_count += 1
-
-    if eff < 0.6:
-        alarm_list.append(("CRITICAL", f"Filter {i} Efficiency LOW ({eff*100:.1f}%)"))
-        critical_count += 1
-    elif eff < 0.8:
-        alarm_list.append(("WARNING", f"Filter {i} Efficiency Moderate ({eff*100:.1f}%)"))
-        warning_count += 1
-
-# FRC
-if consumer_frc < 0.2:
-    alarm_list.append(("CRITICAL", f"FRC LOW ({consumer_frc:.2f} ppm)"))
-    critical_count += 1
-elif consumer_frc > 1.0:
-    alarm_list.append(("WARNING", f"FRC HIGH ({consumer_frc:.2f} ppm)"))
-    warning_count += 1
-
-# Bacteria
-total_col = next((c for c in gis.columns if "total" in c.lower()), None)
-ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
-
-if total_col:
-    if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_list.append(("CRITICAL", "Total Coliform Detected"))
-        critical_count += 1
-
-if ecoli_col:
-    if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
-        alarm_list.append(("CRITICAL", "E. Coli Detected"))
-        critical_count += 1
-
-# ===============================
-# TOGGLE BUTTON
-# ===============================
-if "show_alarm" not in st.session_state:
-    st.session_state.show_alarm = False
-
-def toggle_alarm():
-    st.session_state.show_alarm = not st.session_state.show_alarm
-
-st.button("🚨 Plant Alarm Status", on_click=toggle_alarm)
-
-# ===============================
-# SUMMARY PANEL
-# ===============================
-col1, col2, col3 = st.columns(3)
-
-if critical_count > 0:
-    col1.error("🔴 CRITICAL STATUS")
-elif warning_count > 0:
-    col1.warning("🟡 WARNING STATUS")
-else:
-    col1.success("🟢 NORMAL STATUS")
-
-col2.metric("Critical Alarms", critical_count)
-col3.metric("Warning Alarms", warning_count)
-
-# ===============================
-# ALARM DISPLAY (TOGGLE)
-# ===============================
-if st.session_state.show_alarm:
-
-    st.markdown("🚨 Active Alarm Details")
-
-    if len(alarm_list) > 0:
-
-        for level, message in alarm_list:
-
-            if level == "CRITICAL":
-                st.markdown(f"""
-                <div style='
-                    background-color:#2b0000;
-                    padding:12px;
-                    border-left:6px solid red;
-                    border-radius:10px;
-                    margin-bottom:10px;
-                    color:white;
-                    font-size:16px;
-                '>🔴 {message}</div>
-                """, unsafe_allow_html=True)
-
-            else:
-                st.markdown(f"""
-                <div style='
-                    background-color:#2b2b00;
-                    padding:12px;
-                    border-left:6px solid yellow;
-                    border-radius:10px;
-                    margin-bottom:10px;
-                    color:white;
-                    font-size:16px;
-                '>🟡 {message}</div>
-                """, unsafe_allow_html=True)
-
-    else:
-        st.success("✅ No Active Alarms")
 # ===============================
 # PRODUCTION
 # ===============================
@@ -3031,4 +2556,480 @@ if complaint:
         else:
             st.error("Chlorine Out of Range")
 
+# ============================================================
+# AQUAMIND AI — VOICE COMMAND CENTER
+# PLACE BELOW MAIN DASHBOARD HEADING
+# ============================================================
+
+import asyncio
+import edge_tts
+import base64
+import streamlit.components.v1 as components
+
+# ============================================================
+# VOICE ENGINE
+# ============================================================
+
+VOICE = "en-US-ChristopherNeural"
+
+# ============================================================
+# AUTO SPEAK FUNCTION
+# ============================================================
+
+def speak(text):
+
+    async def generate():
+
+        communicate = edge_tts.Communicate(
+            text=text,
+            voice=VOICE
+        )
+
+        await communicate.save("voice.mp3")
+
+    asyncio.run(generate())
+
+    with open("voice.mp3", "rb") as f:
+
+        audio_bytes = f.read()
+
+    b64 = base64.b64encode(audio_bytes).decode()
+
+    audio_html = f"""
+    <audio autoplay>
+        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+    </audio>
+    """
+
+    components.html(audio_html, height=0)
+
+# ============================================================
+# AUTO WELCOME MESSAGE
+# ============================================================
+
+if "welcome_spoken" not in st.session_state:
+
+    st.session_state.welcome_spoken = True
+
+    welcome_text = """
+    Welcome to Live H M I Panel.
+
+    Moharda Water Treatment Plant monitoring system initialized.
+
+    AquaMind AI operational.
+
+    All critical monitoring systems active.
+    """
+
+    speak(welcome_text)
+
+# ============================================================
+# SECTION HEADER
+# ============================================================
+
+st.markdown("---")
+
+st.subheader("🎙 AquaMind AI Voice Command Center")
+
+st.markdown("""
+Industrial AI operational assistant for:
+
+- Dosing Optimization
+- Chlorination Monitoring
+- Alert Analysis
+- Raw Water Diagnostics
+- Process Intelligence
+""")
+
+# ============================================================
+# QUICK AI STATUS SUMMARY
+# ============================================================
+
+summary_text = f"""
+Attention operator.
+
+Current recommended alum dose is {ai_dose:.1f} milligram per liter.
+
+Raw water risk category is {raw_risk}.
+
+Prediction confidence level is {confidence} percent.
+
+Estimated alum requirement is {alum_kg_day:,.0f} kilogram per day.
+
+Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
+"""
+
+# ============================================================
+# MAIN VOICE BUTTONS
+# ============================================================
+
+v1, v2, v3 = st.columns(3)
+
+# ============================================================
+# SPEAK PLANT SUMMARY
+# ============================================================
+
+with v1:
+
+    if st.button("🔊 Speak Plant Summary"):
+
+        speak(summary_text)
+
+# ============================================================
+# SPEAK CHLORINATION
+# ============================================================
+
+with v2:
+
+    if st.button("🧪 Speak Chlorination"):
+
+        chlorine_voice = f"""
+        Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
+
+        Required hypochlorite dose is {dose_selected:,.0f} kilogram per day.
+
+        Monitor residual chlorine continuously.
+        """
+
+        speak(chlorine_voice)
+
+# ============================================================
+# SPEAK ALERT STATUS
+# ============================================================
+
+with v3:
+
+    if st.button("⚠ Speak Alert Status"):
+
+        if ai_dose > 80:
+
+            alert_text = """
+            Critical alert.
+
+            Extremely high chemical demand detected.
+
+            Consider PAC optimization and pretreatment immediately.
+            """
+
+        elif turbidity > 300:
+
+            alert_text = """
+            Severe turbidity condition detected.
+
+            Monitor sludge blanket and filter loading carefully.
+            """
+
+        elif confidence < 75:
+
+            alert_text = """
+            Prediction confidence reduced.
+
+            Additional monitoring recommended.
+            """
+
+        else:
+
+            alert_text = """
+            Plant operating within optimal condition.
+
+            No critical operational alarm detected.
+            """
+
+        speak(alert_text)
+
+# ============================================================
+# AI OPERATIONAL ASSISTANT
+# ============================================================
+
+st.markdown("---")
+
+st.markdown("### 🤖 AquaMind AI Operational Assistant")
+
+operator_query = st.text_input(
+    "Enter Operational Issue",
+    placeholder="Example: Turbidity increasing after rainfall"
+)
+
+if st.button("Analyze with AquaMind AI"):
+
+    q = operator_query.lower()
+
+    # ========================================================
+    # TURBIDITY ANALYSIS
+    # ========================================================
+
+    if "turbidity" in q:
+
+        response = f"""
+        Raw water turbidity trend increasing.
+
+        Recommended actions:
+
+        Increase alum dosing gradually.
+
+        Current recommended dose is {ai_dose:.1f} milligram per liter.
+
+        Monitor settled water turbidity.
+
+        Check clariflocculator sludge blanket.
+        """
+
+    # ========================================================
+    # CHLORINE ANALYSIS
+    # ========================================================
+
+    elif "chlorine" in q:
+
+        response = f"""
+        Chlorination system analysis initiated.
+
+        Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
+
+        Verify sodium hypochlorite dosing system.
+
+        Monitor residual chlorine at outlet continuously.
+        """
+
+    # ========================================================
+    # FILTER ANALYSIS
+    # ========================================================
+
+    elif "filter" in q:
+
+        response = """
+        Possible filter loading increase detected.
+
+        Recommended actions:
+
+        Monitor head loss.
+
+        Prepare backwash cycle.
+
+        Inspect filter media condition.
+        """
+
+    # ========================================================
+    # SLUDGE ANALYSIS
+    # ========================================================
+
+    elif "sludge" in q:
+
+        response = """
+        Sludge accumulation monitoring initiated.
+
+        Verify sludge blanket stability.
+
+        Increase sludge withdrawal frequency if required.
+
+        Monitor clarifier settling performance.
+        """
+
+    # ========================================================
+    # DEFAULT RESPONSE
+    # ========================================================
+
+    else:
+
+        response = """
+        Process instability detected.
+
+        Recommended operational checks:
+
+        Raw water quality.
+        Coagulant dosing.
+        Clarifier performance.
+        Filtration efficiency.
+        Chlorination stability.
+        """
+
+    # ========================================================
+    # DISPLAY + SPEAK RESPONSE
+    # ========================================================
+
+    st.success(response)
+
+    speak(response)
+
+# ============================================================
+# LIVE AI COMMENTARY
+# ============================================================
+
+st.markdown("---")
+
+st.markdown("### 🧠 Live AI Monitoring Commentary")
+
+if turbidity > 250:
+
+    st.warning(
+        "AI Observation: High turbidity likely increasing coagulant demand."
+    )
+
+elif chlorine_demand > 4:
+
+    st.warning(
+        "AI Observation: Elevated chlorine demand detected."
+    )
+
+else:
+
+    st.success(
+        "AI Observation: Plant operating under stable conditions."
+    )
+
+# ===============================
+# LOAD FILES
+# ===============================
+plant = pd.read_excel("Book 7.xlsx", engine="openpyxl")
+plant.columns = plant.columns.str.strip()
+
+gis = pd.read_excel("Gis Data.xlsx", engine="openpyxl")
+gis.columns = gis.columns.str.strip()
+
+# ===============================
+# CALCULATIONS
+# ===============================
+turb = plant[plant["Parameter"].str.lower() == "turbidity"]
+frc = plant[plant["Parameter"].str.lower() == "frc"]
+
+intake_turb = turb["Intake"].mean()
+clarifier_turb = turb["Clarifier"].mean()
+clearwater_turb = turb["Clear Water"].mean()
+
+clar_eff = (intake_turb - clarifier_turb) / intake_turb if intake_turb != 0 else 0
+
+filter_eff_list = []
+filter_turb_list = []
+
+for i in range(1,7):
+    f_avg = turb[f"Filter {i}"].mean()
+    filter_turb_list.append(f_avg)
+
+    eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
+    filter_eff_list.append(eff)
+
+avg_filter_eff = sum(filter_eff_list)/len(filter_eff_list)
+consumer_frc = frc["Clear Water"].mean()
+
+# ===============================
+# ALARM LOGIC
+# ===============================
+alarm_list = []
+critical_count = 0
+warning_count = 0
+
+# Clarifier
+if clar_eff < 0.5:
+    alarm_list.append(("CRITICAL", f"Clarifier Efficiency LOW ({clar_eff*100:.1f}%)"))
+    critical_count += 1
+elif clar_eff < 0.7:
+    alarm_list.append(("WARNING", f"Clarifier Efficiency Moderate ({clar_eff*100:.1f}%)"))
+    warning_count += 1
+
+# Filters
+for i in range(1, 7):
+
+    f_avg = turb[f"Filter {i}"].mean()
+    eff = (clarifier_turb - f_avg) / clarifier_turb if clarifier_turb != 0 else 0
+
+    if f_avg > 5:
+        alarm_list.append(("CRITICAL", f"Filter {i} Turbidity Above 5 NTU ({f_avg:.2f})"))
+        critical_count += 1
+    elif f_avg > 1:
+        alarm_list.append(("WARNING", f"Filter {i} Turbidity Above 1 NTU ({f_avg:.2f})"))
+        warning_count += 1
+
+    if eff < 0.6:
+        alarm_list.append(("CRITICAL", f"Filter {i} Efficiency LOW ({eff*100:.1f}%)"))
+        critical_count += 1
+    elif eff < 0.8:
+        alarm_list.append(("WARNING", f"Filter {i} Efficiency Moderate ({eff*100:.1f}%)"))
+        warning_count += 1
+
+# FRC
+if consumer_frc < 0.2:
+    alarm_list.append(("CRITICAL", f"FRC LOW ({consumer_frc:.2f} ppm)"))
+    critical_count += 1
+elif consumer_frc > 1.0:
+    alarm_list.append(("WARNING", f"FRC HIGH ({consumer_frc:.2f} ppm)"))
+    warning_count += 1
+
+# Bacteria
+total_col = next((c for c in gis.columns if "total" in c.lower()), None)
+ecoli_col = next((c for c in gis.columns if "coli" in c.lower()), None)
+
+if total_col:
+    if len(gis[gis[total_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
+        alarm_list.append(("CRITICAL", "Total Coliform Detected"))
+        critical_count += 1
+
+if ecoli_col:
+    if len(gis[gis[ecoli_col].astype(str).str.lower().isin(["present","yes","1"])]) > 0:
+        alarm_list.append(("CRITICAL", "E. Coli Detected"))
+        critical_count += 1
+
+# ===============================
+# TOGGLE BUTTON
+# ===============================
+if "show_alarm" not in st.session_state:
+    st.session_state.show_alarm = False
+
+def toggle_alarm():
+    st.session_state.show_alarm = not st.session_state.show_alarm
+
+st.button("🚨 Plant Alarm Status", on_click=toggle_alarm)
+
+# ===============================
+# SUMMARY PANEL
+# ===============================
+col1, col2, col3 = st.columns(3)
+
+if critical_count > 0:
+    col1.error("🔴 CRITICAL STATUS")
+elif warning_count > 0:
+    col1.warning("🟡 WARNING STATUS")
+else:
+    col1.success("🟢 NORMAL STATUS")
+
+col2.metric("Critical Alarms", critical_count)
+col3.metric("Warning Alarms", warning_count)
+
+# ===============================
+# ALARM DISPLAY (TOGGLE)
+# ===============================
+if st.session_state.show_alarm:
+
+    st.markdown("🚨 Active Alarm Details")
+
+    if len(alarm_list) > 0:
+
+        for level, message in alarm_list:
+
+            if level == "CRITICAL":
+                st.markdown(f"""
+                <div style='
+                    background-color:#2b0000;
+                    padding:12px;
+                    border-left:6px solid red;
+                    border-radius:10px;
+                    margin-bottom:10px;
+                    color:white;
+                    font-size:16px;
+                '>🔴 {message}</div>
+                """, unsafe_allow_html=True)
+
+            else:
+                st.markdown(f"""
+                <div style='
+                    background-color:#2b2b00;
+                    padding:12px;
+                    border-left:6px solid yellow;
+                    border-radius:10px;
+                    margin-bottom:10px;
+                    color:white;
+                    font-size:16px;
+                '>🟡 {message}</div>
+                """, unsafe_allow_html=True)
+
+    else:
+        st.success("✅ No Active Alarms")
    
