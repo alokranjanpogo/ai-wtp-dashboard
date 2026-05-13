@@ -114,15 +114,36 @@ def gauge(title,value,max_val,mode="normal"):
 
 # ============================================================
 # SMART CLARIFIER + FILTER BED MONITORING SYSTEM
-# ============================================================
-# PLACE THIS SECTION AFTER YOUR MAIN HMI / LIVE SECTION
+# CLEAN LIGHT THEME VERSION
 # ============================================================
 
 import pandas as pd
 import plotly.graph_objects as go
 
 # ============================================================
-# LOAD EXCEL DATA
+# LIGHT CLEAN UI
+# ============================================================
+
+st.markdown("""
+<style>
+
+.stApp {
+    background-color: #f5f7fa;
+}
+
+[data-testid="stMetric"] {
+    background-color: white;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #dbe4ee;
+    box-shadow: 0px 1px 4px rgba(0,0,0,0.08);
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# LOAD EXCEL
 # ============================================================
 
 trend_df = pd.read_excel("Moharda_WTP_2026fc.xlsx")
@@ -137,7 +158,7 @@ st.markdown("---")
 st.subheader("📊 Smart Clarifier & Filter Bed Monitoring")
 
 # ============================================================
-# DATE SLICER
+# DATE FILTER
 # ============================================================
 
 selected_date = st.date_input(
@@ -148,7 +169,7 @@ selected_date = st.date_input(
 selected_date = pd.to_datetime(selected_date)
 
 # ============================================================
-# FILTER DATA FOR SELECTED DATE
+# FILTER DATA
 # ============================================================
 
 day_df = trend_df[
@@ -156,393 +177,401 @@ day_df = trend_df[
 ]
 
 # ============================================================
-# SINGLE CLARIFIER
+# SAFETY CHECK
 # ============================================================
 
-clarifier_selected = "Clarifier"
+if day_df.empty:
 
-# ============================================================
-# GET CLARIFIER DATA
-# ============================================================
-
-clarifier_data = day_df[
-    day_df["Unit"] == clarifier_selected
-]
-
-clar_eff = clarifier_data["Efficiency (%)"].iloc[0]
-
-clar_inlet = clarifier_data["Inlet Turbidity"].iloc[0]
-
-clar_outlet = clarifier_data["Outlet Turbidity"].iloc[0]
-
-clar_cond = clarifier_data["Conductivity (µS/cm)"].iloc[0]
-
-# ============================================================
-# BIG CLARIFIER GAUGE
-# ============================================================
-
-st.markdown("### 🌀 Clarifier Performance")
-
-fig_clar = go.Figure(go.Indicator(
-
-    mode="gauge+number",
-
-    value=clar_eff,
-
-    title={
-        'text': f"{clarifier_selected} Efficiency"
-    },
-
-    gauge={
-
-        'axis': {
-            'range': [0,100]
-        },
-
-        'bar': {
-            'color': "cyan"
-        },
-
-        'steps': [
-
-            {
-                'range':[0,60],
-                'color':"red"
-            },
-
-            {
-                'range':[60,80],
-                'color':"yellow"
-            },
-
-            {
-                'range':[80,100],
-                'color':"green"
-            }
-
-        ]
-    }
-))
-
-fig_clar.update_layout(
-    template="plotly_dark",
-    height=420
-)
-
-st.plotly_chart(
-    fig_clar,
-    use_container_width=True
-)
-
-# ============================================================
-# CLARIFIER METRICS
-# ============================================================
-
-c1,c2,c3,c4 = st.columns(4)
-
-c1.metric(
-    "Inlet Turbidity",
-    f"{clar_inlet:.1f} NTU"
-)
-
-c2.metric(
-    "Outlet Turbidity",
-    f"{clar_outlet:.1f} NTU"
-)
-
-c3.metric(
-    "Efficiency",
-    f"{clar_eff:.1f}%"
-)
-
-c4.metric(
-    "Conductivity",
-    f"{clar_cond:.0f} µS/cm"
-)
-
-# ============================================================
-# CLARIFIER AI ANALYSIS
-# ============================================================
-
-st.markdown("### 🤖 Clarifier AI Analysis")
-
-if clar_eff >= 90:
-
-    st.success(
-        "Clarifier operating at excellent efficiency."
-    )
-
-elif clar_eff >= 75:
-
-    st.warning(
-        "Clarifier efficiency acceptable but optimization recommended."
-    )
+    st.error("No monitoring data available for selected date.")
 
 else:
 
-    st.error(
-        "Clarifier efficiency poor. Sludge blanket inspection recommended."
-    )
+    # ========================================================
+    # CLARIFIER DATA
+    # ========================================================
 
-# ============================================================
-# FILTER BED MINI GAUGES
-# ============================================================
-
-st.markdown("---")
-st.markdown("### 🧪 Filter Bed Efficiency Monitoring")
-
-filter_cols = st.columns(3)
-
-for i in range(1,7):
-
-    filter_name = f"Filter Bed {i}"
-
-    filter_data = day_df[
-        day_df["Unit"] == filter_name
+    clarifier_data = day_df[
+        day_df["Unit"] == "Clarifier"
     ]
 
-    filter_eff = filter_data["Efficiency (%)"].iloc[0]
+    if clarifier_data.empty:
 
-    fig_filter = go.Figure(go.Indicator(
-
-        mode="gauge+number",
-
-        value=filter_eff,
-
-        title={
-            'text': f"FB-{i}"
-        },
-
-        gauge={
-
-            'axis': {
-                'range':[0,100]
-            },
-
-            'bar': {
-                'color':"cyan"
-            },
-
-            'steps':[
-
-                {
-                    'range':[0,60],
-                    'color':"red"
-                },
-
-                {
-                    'range':[60,80],
-                    'color':"yellow"
-                },
-
-                {
-                    'range':[80,100],
-                    'color':"green"
-                }
-
-            ]
-        }
-    ))
-
-    fig_filter.update_layout(
-        template="plotly_dark",
-        height=250,
-        margin=dict(l=10,r=10,t=40,b=10)
-    )
-
-    filter_cols[(i-1)%3].plotly_chart(
-        fig_filter,
-        use_container_width=True
-    )
-
-# ============================================================
-# FILTER BED STATUS TABLE
-# ============================================================
-
-filter_summary = []
-
-for i in range(1,7):
-
-    filter_name = f"Filter Bed {i}"
-
-    filter_data = day_df[
-        day_df["Unit"] == filter_name
-    ]
-
-    filter_eff = filter_data["Efficiency (%)"].iloc[0]
-
-    if filter_eff >= 90:
-
-        status = "Excellent"
-
-    elif filter_eff >= 75:
-
-        status = "Good"
+        st.error("Clarifier data not found.")
 
     else:
 
-        status = "Poor"
+        clar_eff = clarifier_data["Efficiency (%)"].iloc[0]
 
-    filter_summary.append({
-        "Filter Bed": filter_name,
-        "Efficiency (%)": round(filter_eff,1),
-        "Status": status
-    })
+        clar_inlet = clarifier_data["Inlet Turbidity"].iloc[0]
 
-filter_summary_df = pd.DataFrame(filter_summary)
+        clar_outlet = clarifier_data["Outlet Turbidity"].iloc[0]
 
-st.dataframe(
-    filter_summary_df,
-    use_container_width=True
-)
+        clar_cond = clarifier_data["Conductivity (µS/cm)"].iloc[0]
 
-# ============================================================
-# TREND SECTION
-# ============================================================
+        # ====================================================
+        # BIG CLARIFIER GAUGE
+        # ====================================================
 
-st.markdown("---")
-st.subheader("📈 Efficiency Trend Monitoring")
+        st.markdown("## 🌀 Clarifier Live Monitoring")
 
-selected_unit = st.selectbox(
-    "Select Unit for Trend Analysis",
-    trend_df["Unit"].unique()
-)
+        fig_clar = go.Figure(go.Indicator(
 
-# ============================================================
-# TREND FILTERING
-# ============================================================
+            mode="gauge+number",
 
-unit_df = trend_df[
-    trend_df["Unit"] == selected_unit
-]
+            value=clar_eff,
 
-previous_df = unit_df[
-    unit_df["Date"] <= selected_date
-].sort_values("Date")
+            number={
+                'suffix': "%",
+                'font': {
+                    'size': 44,
+                    'color': "#0077b6"
+                }
+            },
 
-# ============================================================
-# CURRENT DAY EFFICIENCY
-# ============================================================
+            title={
+                'text': "Clarifier Efficiency",
+                'font': {
+                    'size': 24
+                }
+            },
 
-current_eff = previous_df[
-    previous_df["Date"] == selected_date
-]["Efficiency (%)"].iloc[0]
+            gauge={
 
-# ============================================================
-# TREND GRAPH
-# ============================================================
+                'axis': {
+                    'range': [0,100]
+                },
 
-fig_trend = go.Figure()
+                'bar': {
+                    'color': "#0077b6",
+                    'thickness': 0.35
+                },
 
-fig_trend.add_trace(go.Scatter(
+                'bgcolor': "#edf2f7",
 
-    x=previous_df["Date"],
+                'borderwidth': 2,
 
-    y=previous_df["Efficiency (%)"],
+                'bordercolor': "#0077b6",
 
-    mode="lines+markers",
+                'steps': [
 
-    line=dict(
-        color="cyan",
-        width=4
-    ),
+                    {
+                        'range':[0,60],
+                        'color': "#f8d7da"
+                    },
 
-    marker=dict(
-        size=6
-    ),
+                    {
+                        'range':[60,80],
+                        'color': "#fff3cd"
+                    },
 
-    name="Efficiency Trend"
-))
+                    {
+                        'range':[80,100],
+                        'color': "#d4edda"
+                    }
+                ]
+            }
+        ))
 
-# ============================================================
-# CURRENT SELECTED POINT
-# ============================================================
+        fig_clar.update_layout(
 
-fig_trend.add_trace(go.Scatter(
+            paper_bgcolor="#f5f7fa",
 
-    x=[selected_date],
+            height=420
+        )
 
-    y=[current_eff],
+        st.plotly_chart(
+            fig_clar,
+            use_container_width=True
+        )
 
-    mode="markers",
+        # ====================================================
+        # METRICS
+        # ====================================================
 
-    marker=dict(
-        size=16,
-        color="yellow"
-    ),
+        m1,m2,m3,m4 = st.columns(4)
 
-    name="Selected Date"
-))
+        m1.metric(
+            "Inlet Turbidity",
+            f"{clar_inlet:.1f} NTU"
+        )
 
-# ============================================================
-# TREND LAYOUT
-# ============================================================
+        m2.metric(
+            "Outlet Turbidity",
+            f"{clar_outlet:.1f} NTU"
+        )
 
-fig_trend.update_layout(
+        m3.metric(
+            "Efficiency",
+            f"{clar_eff:.1f}%"
+        )
 
-    template="plotly_dark",
+        m4.metric(
+            "Conductivity",
+            f"{clar_cond:.0f} µS/cm"
+        )
 
-    title=f"{selected_unit} Historical Efficiency Trend",
+        # ====================================================
+        # AI ANALYSIS
+        # ====================================================
 
-    xaxis_title="Date",
+        st.markdown("### 🤖 AI Analysis")
 
-    yaxis_title="Efficiency (%)",
+        if clar_eff >= 90:
 
-    height=520
-)
+            st.success(
+                "Clarifier operating at excellent efficiency."
+            )
 
-st.plotly_chart(
-    fig_trend,
-    use_container_width=True
-)
+        elif clar_eff >= 75:
 
-# ============================================================
-# AI TREND ANALYSIS
-# ============================================================
+            st.warning(
+                "Clarifier efficiency acceptable."
+            )
 
-st.markdown("### 🤖 Historical AI Analysis")
+        else:
 
-if current_eff >= 90:
+            st.error(
+                "Clarifier efficiency poor. Inspection recommended."
+            )
 
-    st.success(
-        f"{selected_unit} operating at excellent efficiency."
+    # ========================================================
+    # FILTER BED SECTION
+    # ========================================================
+
+    st.markdown("---")
+    st.markdown("## 🧪 Filter Bed Live Status")
+
+    cols = st.columns(6)
+
+    filter_summary = []
+
+    for i in range(1,7):
+
+        filter_name = f"Filter Bed {i}"
+
+        filter_data = day_df[
+            day_df["Unit"] == filter_name
+        ]
+
+        if filter_data.empty:
+            continue
+
+        filter_eff = filter_data["Efficiency (%)"].iloc[0]
+
+        # ====================================================
+        # STATUS
+        # ====================================================
+
+        if filter_eff >= 90:
+            status = "Excellent"
+
+        elif filter_eff >= 75:
+            status = "Good"
+
+        else:
+            status = "Poor"
+
+        filter_summary.append({
+
+            "Filter Bed": filter_name,
+
+            "Efficiency (%)": round(filter_eff,1),
+
+            "Status": status
+        })
+
+        # ====================================================
+        # SMALL GAUGES
+        # ====================================================
+
+        fig_small = go.Figure(go.Indicator(
+
+            mode="gauge+number",
+
+            value=filter_eff,
+
+            number={
+                'suffix': "%",
+                'font': {
+                    'size': 15,
+                    'color': "#0077b6"
+                }
+            },
+
+            title={
+                'text': f"FB-{i}",
+                'font': {
+                    'size': 13
+                }
+            },
+
+            gauge={
+
+                'axis': {
+                    'range':[0,100]
+                },
+
+                'bar': {
+                    'color': "#0077b6",
+                    'thickness': 0.22
+                },
+
+                'bgcolor': "#edf2f7",
+
+                'borderwidth': 1,
+
+                'bordercolor': "#0077b6",
+
+                'steps':[
+
+                    {
+                        'range':[0,60],
+                        'color': "#f8d7da"
+                    },
+
+                    {
+                        'range':[60,80],
+                        'color': "#fff3cd"
+                    },
+
+                    {
+                        'range':[80,100],
+                        'color': "#d4edda"
+                    }
+                ]
+            }
+        ))
+
+        fig_small.update_layout(
+
+            paper_bgcolor="#f5f7fa",
+
+            height=135,
+
+            margin=dict(
+                l=5,
+                r=5,
+                t=28,
+                b=5
+            )
+        )
+
+        cols[i-1].plotly_chart(
+            fig_small,
+            use_container_width=True
+        )
+
+    # ========================================================
+    # FILTER SUMMARY
+    # ========================================================
+
+    st.markdown("---")
+    st.markdown("## 📋 Filter Bed Summary")
+
+    filter_summary_df = pd.DataFrame(filter_summary)
+
+    st.dataframe(
+        filter_summary_df,
+        use_container_width=True
     )
 
-elif current_eff >= 75:
+    # ========================================================
+    # TREND SECTION
+    # ========================================================
 
-    st.warning(
-        f"{selected_unit} operating at moderate efficiency."
+    st.markdown("---")
+    st.subheader("📈 Historical Efficiency Trend")
+
+    selected_unit = st.selectbox(
+        "Select Unit",
+        trend_df["Unit"].unique()
     )
 
-else:
+    unit_df = trend_df[
+        trend_df["Unit"] == selected_unit
+    ]
 
-    st.error(
-        f"{selected_unit} efficiency poor. Maintenance recommended."
-    )
+    previous_df = unit_df[
+        unit_df["Date"] <= selected_date
+    ].sort_values("Date")
 
-# ============================================================
-# VOICE ANALYSIS
-# ============================================================
+    if previous_df.empty:
 
-if st.button("🎙 Speak Performance Analysis"):
+        st.warning("No trend data available.")
 
-    voice_text = f"""
+    else:
 
-    Attention operator.
+        current_eff = previous_df[
+            previous_df["Date"] == selected_date
+        ]["Efficiency (%)"].iloc[0]
 
-    Clarifier efficiency is {clar_eff:.1f} percent.
+        # ====================================================
+        # TREND GRAPH
+        # ====================================================
 
-    Current selected trend unit is {selected_unit}.
+        fig_trend = go.Figure()
 
-    Current efficiency is {current_eff:.1f} percent.
+        fig_trend.add_trace(go.Scatter(
 
-    Historical efficiency trend monitoring active.
+            x=previous_df["Date"],
 
-    All filter bed monitoring systems operational.
+            y=previous_df["Efficiency (%)"],
 
-    """
+            mode="lines+markers",
 
-    speak(voice_text)
+            line=dict(
+                color="#0077b6",
+                width=3
+            ),
+
+            marker=dict(
+                size=6
+            ),
+
+            name="Efficiency"
+        ))
+
+        fig_trend.update_layout(
+
+            template="simple_white",
+
+            title=f"{selected_unit} Efficiency Trend",
+
+            xaxis_title="Date",
+
+            yaxis_title="Efficiency (%)",
+
+            height=450
+        )
+
+        st.plotly_chart(
+            fig_trend,
+            use_container_width=True
+        )
+
+        # ====================================================
+        # TREND AI ANALYSIS
+        # ====================================================
+
+        st.markdown("### 🤖 Historical AI Analysis")
+
+        if current_eff >= 90:
+
+            st.success(
+                f"{selected_unit} operating at excellent efficiency."
+            )
+
+        elif current_eff >= 75:
+
+            st.warning(
+                f"{selected_unit} operating at moderate efficiency."
+            )
+
+        else:
+
+            st.error(
+                f"{selected_unit} efficiency poor. Maintenance recommended."
+            )
 # ===============================
 # STREAMLIT UI
 # ===============================
