@@ -6,59 +6,6 @@ import plotly.express as px
 import datetime
 import pytz
 from streamlit_autorefresh import st_autorefresh
-# ============================================================
-# AQUAMIND AI — AUTO WELCOME VOICE
-# ============================================================
-
-import asyncio
-import edge_tts
-import base64
-import streamlit.components.v1 as components
-
-# ============================================================
-# AUTO WELCOME SPEECH
-# ============================================================
-
-if "welcome_spoken" not in st.session_state:
-
-    st.session_state.welcome_spoken = True
-
-    async def welcome_voice():
-
-        communicate = edge_tts.Communicate(
-            text="""
-            Welcome to Live H M I Panel.
-
-            Moharda Water Treatment Plant monitoring system initialized.
-
-            AquaMind AI operational.
-
-            All critical monitoring systems active.
-            """,
-            voice="en-US-ChristopherNeural"
-        )
-
-        await communicate.save("welcome.mp3")
-
-    asyncio.run(welcome_voice())
-
-    with open("welcome.mp3", "rb") as f:
-
-        audio_bytes = f.read()
-
-    # ========================================================
-    # AUTO PLAY
-    # ========================================================
-
-    b64 = base64.b64encode(audio_bytes).decode()
-
-    md = f"""
-    <audio autoplay>
-    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-    </audio>
-    """
-
-    components.html(md, height=0)
 # ===============================
 # AUTO REFRESH
 # ===============================
@@ -96,6 +43,326 @@ st.title("🏭 WTP MOHARDA – LIVE HMI PANEL")
 ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.datetime.now(ist)
 st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
+
+# ============================================================
+# AQUAMIND AI — VOICE COMMAND CENTER
+# PLACE BELOW MAIN DASHBOARD HEADING
+# ============================================================
+
+import asyncio
+import edge_tts
+import base64
+import streamlit.components.v1 as components
+
+# ============================================================
+# VOICE ENGINE
+# ============================================================
+
+VOICE = "en-US-ChristopherNeural"
+
+# ============================================================
+# AUTO SPEAK FUNCTION
+# ============================================================
+
+def speak(text):
+
+    async def generate():
+
+        communicate = edge_tts.Communicate(
+            text=text,
+            voice=VOICE
+        )
+
+        await communicate.save("voice.mp3")
+
+    asyncio.run(generate())
+
+    with open("voice.mp3", "rb") as f:
+
+        audio_bytes = f.read()
+
+    b64 = base64.b64encode(audio_bytes).decode()
+
+    audio_html = f"""
+    <audio autoplay>
+        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+    </audio>
+    """
+
+    components.html(audio_html, height=0)
+
+# ============================================================
+# AUTO WELCOME MESSAGE
+# ============================================================
+
+if "welcome_spoken" not in st.session_state:
+
+    st.session_state.welcome_spoken = True
+
+    welcome_text = """
+    Welcome to Live H M I Panel.
+
+    Moharda Water Treatment Plant monitoring system initialized.
+
+    AquaMind AI operational.
+
+    All critical monitoring systems active.
+    """
+
+    speak(welcome_text)
+
+# ============================================================
+# SECTION HEADER
+# ============================================================
+
+st.markdown("---")
+
+st.subheader("🎙 AquaMind AI Voice Command Center")
+
+st.markdown("""
+Industrial AI operational assistant for:
+
+- Dosing Optimization
+- Chlorination Monitoring
+- Alert Analysis
+- Raw Water Diagnostics
+- Process Intelligence
+""")
+
+# ============================================================
+# QUICK AI STATUS SUMMARY
+# ============================================================
+
+summary_text = f"""
+Attention operator.
+
+Current recommended alum dose is {ai_dose:.1f} milligram per liter.
+
+Raw water risk category is {raw_risk}.
+
+Prediction confidence level is {confidence} percent.
+
+Estimated alum requirement is {alum_kg_day:,.0f} kilogram per day.
+
+Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
+"""
+
+# ============================================================
+# MAIN VOICE BUTTONS
+# ============================================================
+
+v1, v2, v3 = st.columns(3)
+
+# ============================================================
+# SPEAK PLANT SUMMARY
+# ============================================================
+
+with v1:
+
+    if st.button("🔊 Speak Plant Summary"):
+
+        speak(summary_text)
+
+# ============================================================
+# SPEAK CHLORINATION
+# ============================================================
+
+with v2:
+
+    if st.button("🧪 Speak Chlorination"):
+
+        chlorine_voice = f"""
+        Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
+
+        Required hypochlorite dose is {dose_selected:,.0f} kilogram per day.
+
+        Monitor residual chlorine continuously.
+        """
+
+        speak(chlorine_voice)
+
+# ============================================================
+# SPEAK ALERT STATUS
+# ============================================================
+
+with v3:
+
+    if st.button("⚠ Speak Alert Status"):
+
+        if ai_dose > 80:
+
+            alert_text = """
+            Critical alert.
+
+            Extremely high chemical demand detected.
+
+            Consider PAC optimization and pretreatment immediately.
+            """
+
+        elif turbidity > 300:
+
+            alert_text = """
+            Severe turbidity condition detected.
+
+            Monitor sludge blanket and filter loading carefully.
+            """
+
+        elif confidence < 75:
+
+            alert_text = """
+            Prediction confidence reduced.
+
+            Additional monitoring recommended.
+            """
+
+        else:
+
+            alert_text = """
+            Plant operating within optimal condition.
+
+            No critical operational alarm detected.
+            """
+
+        speak(alert_text)
+
+# ============================================================
+# AI OPERATIONAL ASSISTANT
+# ============================================================
+
+st.markdown("---")
+
+st.markdown("### 🤖 AquaMind AI Operational Assistant")
+
+operator_query = st.text_input(
+    "Enter Operational Issue",
+    placeholder="Example: Turbidity increasing after rainfall"
+)
+
+if st.button("Analyze with AquaMind AI"):
+
+    q = operator_query.lower()
+
+    # ========================================================
+    # TURBIDITY ANALYSIS
+    # ========================================================
+
+    if "turbidity" in q:
+
+        response = f"""
+        Raw water turbidity trend increasing.
+
+        Recommended actions:
+
+        Increase alum dosing gradually.
+
+        Current recommended dose is {ai_dose:.1f} milligram per liter.
+
+        Monitor settled water turbidity.
+
+        Check clariflocculator sludge blanket.
+        """
+
+    # ========================================================
+    # CHLORINE ANALYSIS
+    # ========================================================
+
+    elif "chlorine" in q:
+
+        response = f"""
+        Chlorination system analysis initiated.
+
+        Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
+
+        Verify sodium hypochlorite dosing system.
+
+        Monitor residual chlorine at outlet continuously.
+        """
+
+    # ========================================================
+    # FILTER ANALYSIS
+    # ========================================================
+
+    elif "filter" in q:
+
+        response = """
+        Possible filter loading increase detected.
+
+        Recommended actions:
+
+        Monitor head loss.
+
+        Prepare backwash cycle.
+
+        Inspect filter media condition.
+        """
+
+    # ========================================================
+    # SLUDGE ANALYSIS
+    # ========================================================
+
+    elif "sludge" in q:
+
+        response = """
+        Sludge accumulation monitoring initiated.
+
+        Verify sludge blanket stability.
+
+        Increase sludge withdrawal frequency if required.
+
+        Monitor clarifier settling performance.
+        """
+
+    # ========================================================
+    # DEFAULT RESPONSE
+    # ========================================================
+
+    else:
+
+        response = """
+        Process instability detected.
+
+        Recommended operational checks:
+
+        Raw water quality.
+        Coagulant dosing.
+        Clarifier performance.
+        Filtration efficiency.
+        Chlorination stability.
+        """
+
+    # ========================================================
+    # DISPLAY + SPEAK RESPONSE
+    # ========================================================
+
+    st.success(response)
+
+    speak(response)
+
+# ============================================================
+# LIVE AI COMMENTARY
+# ============================================================
+
+st.markdown("---")
+
+st.markdown("### 🧠 Live AI Monitoring Commentary")
+
+if turbidity > 250:
+
+    st.warning(
+        "AI Observation: High turbidity likely increasing coagulant demand."
+    )
+
+elif chlorine_demand > 4:
+
+    st.warning(
+        "AI Observation: Elevated chlorine demand detected."
+    )
+
+else:
+
+    st.success(
+        "AI Observation: Plant operating under stable conditions."
+    )
 
 # ===============================
 # LOAD FILES
@@ -2764,283 +3031,4 @@ if complaint:
         else:
             st.error("Chlorine Out of Range")
 
-    # ============================================================
-# AQUAMIND AI — VOICE COMMAND CENTER
-# ============================================================
-
-import asyncio
-import edge_tts
-import os
-
-# ============================================================
-# VOICE ENGINE
-# ============================================================
-
-VOICE = "en-US-ChristopherNeural"
-
-async def generate_voice(text):
-
-    communicate = edge_tts.Communicate(
-        text=text,
-        voice=VOICE
-    )
-
-    await communicate.save("voice.mp3")
-
-
-def speak(text):
-
-    asyncio.run(generate_voice(text))
-
-    audio_file = open("voice.mp3", "rb")
-    audio_bytes = audio_file.read()
-
-    st.audio(audio_bytes, format="audio/mp3")
-
-# ============================================================
-# SECTION HEADER
-# ============================================================
-
-st.markdown("---")
-
-st.subheader("🎙 AquaMind AI Voice Command Center")
-
-st.markdown("""
-Industrial AI operational assistant for:
-- dosing optimization
-- chlorination monitoring
-- alert analysis
-- raw water diagnostics
-- process intelligence
-""")
-
-# ============================================================
-# QUICK AI STATUS SUMMARY
-# ============================================================
-
-summary_text = f"""
-Attention operator.
-
-Current recommended alum dose is {ai_dose:.1f} milligram per liter.
-
-Raw water risk category is {raw_risk}.
-
-Prediction confidence level is {confidence} percent.
-
-Estimated alum requirement is {alum_kg_day:,.0f} kilogram per day.
-
-Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
-"""
-
-# ============================================================
-# MAIN VOICE BUTTONS
-# ============================================================
-
-v1, v2, v3 = st.columns(3)
-
-with v1:
-
-    if st.button("🔊 Speak Plant Summary"):
-
-        speak(summary_text)
-
-with v2:
-
-    if st.button("🧪 Speak Chlorination"):
-
-        chlorine_voice = f"""
-        Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
-
-        Required hypochlorite dose is {dose_selected:,.0f} kilogram per day.
-
-        Monitor residual chlorine continuously.
-        """
-
-        speak(chlorine_voice)
-
-with v3:
-
-    if st.button("⚠ Speak Alert Status"):
-
-        # ====================================================
-        # AUTOMATIC ALERT LINKING
-        # ====================================================
-
-        if ai_dose > 80:
-
-            alert_text = """
-            Critical alert.
-
-            Extremely high chemical demand detected.
-
-            Consider PAC optimization and pretreatment immediately.
-            """
-
-        elif turbidity > 300:
-
-            alert_text = """
-            Severe turbidity condition detected.
-
-            Monitor sludge blanket and filter loading carefully.
-            """
-
-        elif confidence < 75:
-
-            alert_text = """
-            Prediction confidence reduced.
-
-            Additional monitoring recommended.
-            """
-
-        else:
-
-            alert_text = """
-            Plant operating within optimal condition.
-
-            No critical operational alarm detected.
-            """
-
-        speak(alert_text)
-
-# ============================================================
-# AI OPERATOR CONSOLE
-# ============================================================
-
-st.markdown("---")
-
-st.markdown("### 🤖 AI Operational Assistant")
-
-operator_query = st.text_input(
-    "Enter Operational Issue",
-    placeholder="Example: Turbidity increasing after rainfall"
-)
-
-if st.button("Analyze with AquaMind AI"):
-
-    q = operator_query.lower()
-
-    # ========================================================
-    # TURBIDITY ANALYSIS
-    # ========================================================
-
-    if "turbidity" in q:
-
-        response = f"""
-        Raw water turbidity trend increasing.
-
-        Recommended actions:
-
-        Increase alum dosing gradually.
-
-        Current recommended dose is {ai_dose:.1f} milligram per liter.
-
-        Monitor settled water turbidity.
-
-        Check clariflocculator sludge blanket.
-        """
-
-    # ========================================================
-    # CHLORINE ANALYSIS
-    # ========================================================
-
-    elif "chlorine" in q:
-
-        response = f"""
-        Chlorination system analysis initiated.
-
-        Current chlorine demand is {chlorine_demand:.2f} milligram per liter.
-
-        Verify sodium hypochlorite dosing system.
-
-        Monitor residual chlorine at outlet continuously.
-        """
-
-    # ========================================================
-    # FILTER ANALYSIS
-    # ========================================================
-
-    elif "filter" in q:
-
-        response = """
-        Possible filter loading increase detected.
-
-        Recommended actions:
-
-        Monitor head loss.
-
-        Prepare backwash cycle.
-
-        Inspect filter media condition.
-        """
-
-    # ========================================================
-    # SLUDGE ANALYSIS
-    # ========================================================
-
-    elif "sludge" in q:
-
-        response = """
-        Sludge accumulation monitoring initiated.
-
-        Verify sludge blanket stability.
-
-        Increase sludge withdrawal frequency if required.
-
-        Monitor clarifier settling performance.
-        """
-
-    # ========================================================
-    # DEFAULT RESPONSE
-    # ========================================================
-
-    else:
-
-        response = """
-        Process instability detected.
-
-        Recommended operational checks:
-
-        Raw water quality.
-        Coagulant dosing.
-        Clarifier performance.
-        Filtration efficiency.
-        Chlorination stability.
-        """
-
-    # ========================================================
-    # DISPLAY RESPONSE
-    # ========================================================
-
-    st.success(response)
-
-    # ========================================================
-    # SPEAK RESPONSE
-    # ========================================================
-
-    speak(response)
-
-# ============================================================
-# AUTO AI MONITORING COMMENTARY
-# ============================================================
-
-st.markdown("---")
-
-st.markdown("### 🧠 Live AI Monitoring Commentary")
-
-if turbidity > 250:
-
-    st.warning(
-        "AI Observation: High turbidity likely increasing coagulant demand."
-    )
-
-elif chlorine_demand > 4:
-
-    st.warning(
-        "AI Observation: Elevated chlorine demand detected."
-    )
-
-else:
-
-    st.success(
-        "AI Observation: Plant operating under stable conditions."
-    )
+   
