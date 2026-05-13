@@ -114,9 +114,7 @@ def gauge(title,value,max_val,mode="normal"):
 
 # ============================================================
 # SMART CLARIFIER + FILTER BED MONITORING SYSTEM
-# ============================================================
-# PLACE THIS SECTION AFTER YOUR MAIN HMI / LIVE SECTION
-# ============================================================
+
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -181,7 +179,7 @@ clar_cond = clarifier_data["Conductivity (µS/cm)"].iloc[0]
 # BIG CLARIFIER GAUGE
 # ============================================================
 
-st.markdown("### 🌀 Clarifier Performance")
+st.markdown("Clarifier Performance")
 
 fig_clar = go.Figure(go.Indicator(
 
@@ -264,7 +262,7 @@ c4.metric(
 # CLARIFIER AI ANALYSIS
 # ============================================================
 
-st.markdown("### 🤖 Clarifier AI Analysis")
+st.markdown("Clarifier AI Analysis")
 
 if clar_eff >= 90:
 
@@ -289,7 +287,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.markdown("### 🧪 Filter Bed Efficiency Monitoring")
+st.markdown("Filter Bed Efficiency Monitoring")
 
 filter_cols = st.columns(3)
 
@@ -500,7 +498,7 @@ st.plotly_chart(
 # AI TREND ANALYSIS
 # ============================================================
 
-st.markdown("### 🤖 Historical AI Analysis")
+st.markdown("Historical AI Analysis")
 
 if current_eff >= 90:
 
@@ -2188,7 +2186,7 @@ st.info(f"🤖 {future_note}")
 st.subheader("📍 Customer End GIS Map")
 
 try:
-    gis = pd.read_excel(uploaded_file, sheet_name="Gis Data")
+    gis = pd.read_excel(uploaded_file, sheet_name="Gis Data.xlsx")
 except:
     gis = pd.DataFrame()
 
