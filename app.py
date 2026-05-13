@@ -112,15 +112,236 @@ def gauge(title,value,max_val,mode="normal"):
     fig.update_layout(height=250,paper_bgcolor="#050A18")
     return fig
 
-# ===============================
-# LIVE GAUGES
-# ===============================
-st.subheader("📊 LIVE PERFORMANCE")
-cols=st.columns(4)
-cols[0].plotly_chart(gauge("Intake Turbidity",intake_turb,20),use_container_width=True)
-cols[1].plotly_chart(gauge("Clarifier Efficiency",clar_eff,1,"clarifier"),use_container_width=True)
-cols[2].plotly_chart(gauge("Average Filter Efficiency",avg_filter_eff,1,"filter"),use_container_width=True)
-cols[3].plotly_chart(gauge("Clear Water FRC",consumer_frc,2),use_container_width=True)
+# ============================================================
+# SMART PERFORMANCE MONITORING SYSTEM
+# ============================================================
+
+st.subheader("📊 Smart Clarifier & Filter Performance Monitoring")
+
+# ============================================================
+# SELECTION
+# ============================================================
+
+left1, left2 = st.columns(2)
+
+with left1:
+
+    unit_type = st.selectbox(
+        "Select Unit",
+        [
+            "Clarifier",
+            "Filter Bed"
+        ]
+    )
+
+with left2:
+
+    if unit_type == "Clarifier":
+
+        selected_unit = st.selectbox(
+            "Select Clarifier",
+            [
+                "Clarifier 1",
+                "Clarifier 2",
+                "Clarifier 3"
+            ]
+        )
+
+    else:
+
+        selected_unit = st.selectbox(
+            "Select Filter Bed",
+            [
+                "Filter Bed 1",
+                "Filter Bed 2",
+                "Filter Bed 3",
+                "Filter Bed 4",
+                "Filter Bed 5",
+                "Filter Bed 6"
+            ]
+        )
+
+# ============================================================
+# TURBIDITY INPUTS
+# ============================================================
+
+c1, c2 = st.columns(2)
+
+with c1:
+
+    inlet_turbidity = st.slider(
+        "Inlet Turbidity (NTU)",
+        1.0,
+        500.0,
+        120.0,
+        1.0
+    )
+
+with c2:
+
+    outlet_turbidity = st.slider(
+        "Outlet Turbidity (NTU)",
+        0.1,
+        100.0,
+        5.0,
+        0.1
+    )
+
+# ============================================================
+# EFFICIENCY CALCULATION
+# ============================================================
+
+efficiency = (
+    (inlet_turbidity - outlet_turbidity)
+    / inlet_turbidity
+) * 100
+
+efficiency = max(0, min(efficiency, 100))
+
+# ============================================================
+# STATUS
+# ============================================================
+
+if efficiency >= 90:
+
+    status = "Excellent"
+
+elif efficiency >= 75:
+
+    status = "Good"
+
+elif efficiency >= 60:
+
+    status = "Moderate"
+
+else:
+
+    status = "Poor"
+
+# ============================================================
+# GAUGE
+# ============================================================
+
+fig_eff = go.Figure(go.Indicator(
+
+    mode="gauge+number",
+
+    value=efficiency,
+
+    title={
+        'text': f"{selected_unit} Efficiency"
+    },
+
+    gauge={
+
+        'axis': {
+            'range': [0, 100]
+        },
+
+        'bar': {
+            'color': "cyan"
+        },
+
+        'steps': [
+
+            {
+                'range': [0, 60],
+                'color': "red"
+            },
+
+            {
+                'range': [60, 80],
+                'color': "yellow"
+            },
+
+            {
+                'range': [80, 100],
+                'color': "green"
+            }
+
+        ]
+    }
+))
+
+fig_eff.update_layout(
+    template="plotly_dark",
+    height=350
+)
+
+# ============================================================
+# DISPLAY
+# ============================================================
+
+left_col, right_col = st.columns([1.3,1])
+
+with left_col:
+
+    st.plotly_chart(
+        fig_eff,
+        use_container_width=True
+    )
+
+with right_col:
+
+    st.metric(
+        "Calculated Efficiency",
+        f"{efficiency:.1f}%"
+    )
+
+    st.metric(
+        "Outlet Turbidity",
+        f"{outlet_turbidity:.1f} NTU"
+    )
+
+    st.metric(
+        "Performance Status",
+        status
+    )
+
+# ============================================================
+# AI COMMENTARY
+# ============================================================
+
+st.markdown("### 🤖 AI Operational Analysis")
+
+if efficiency >= 90:
+
+    st.success(
+        f"{selected_unit} operating at excellent efficiency."
+    )
+
+elif efficiency >= 75:
+
+    st.warning(
+        f"{selected_unit} efficiency acceptable but optimization recommended."
+    )
+
+else:
+
+    st.error(
+        f"{selected_unit} performance poor. Immediate inspection recommended."
+    )
+
+# ============================================================
+# VOICE BUTTON
+# ============================================================
+
+if st.button("🎙 Speak Unit Performance"):
+
+    voice_text = f"""
+
+    Attention operator.
+
+    {selected_unit} efficiency is {efficiency:.1f} percent.
+
+    Inlet turbidity is {inlet_turbidity:.1f} N T U.
+
+    Outlet turbidity is {outlet_turbidity:.1f} N T U.
+
+    Performance condition is {status}.
+    """
+
+    speak(voice_text)
 
 # ===============================
 # FILTER BED PERFORMANCE (BIS BASED)
