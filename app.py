@@ -2192,7 +2192,7 @@ if response.status_code == 200:
     # SMALL WEATHER FORECAST CARDS
     # ========================================================
 
-    st.markdown("##### ⏰ Hourly Weather Forecast")
+    st.markdown("⏰ Hourly Weather Forecast")
 
     cols = st.columns(6)
 
@@ -2221,7 +2221,7 @@ if response.status_code == 200:
     # ========================================================
 
     predicted_alum = []
-    predicted_hypo = []
+    predicted_chlorine = []
 
     ai_messages = []
 
@@ -2279,35 +2279,65 @@ if response.status_code == 200:
         # ====================================================
 
         future_alum = (
+
             ai_dose *
+
             temp_factor *
+
             rain_factor *
+
             humidity_factor *
+
             weather_industrial_factor
+
         )
 
         predicted_alum.append(future_alum)
 
         # ====================================================
-        # FUTURE HYPO PREDICTION
+        # FUTURE CHLORINE DEMAND PREDICTION
         # ====================================================
 
-        hypo_future = (
-            frc_selected *
-            (1 + ((row["Temp"] - 25) * 0.015)) *
-            (1 + (row["Rain"] * 0.025))
+        base_chlorine_dose = frc_selected * 4.5
+
+        temp_chlorine_factor = (
+            1 + ((row["Temp"] - 25) * 0.02)
         )
 
-        predicted_hypo.append(hypo_future)
+        rain_chlorine_factor = (
+            1 + (row["Rain"] * 0.035)
+        )
+
+        humidity_chlorine_factor = 1.0
+
+        if row["Humidity"] > 85:
+            humidity_chlorine_factor += 0.03
+
+        future_chlorine_dose = (
+
+            base_chlorine_dose *
+
+            temp_chlorine_factor *
+
+            rain_chlorine_factor *
+
+            humidity_chlorine_factor
+
+        )
+
+        predicted_chlorine.append(
+            future_chlorine_dose
+        )
 
     weather_df["Pred Alum"] = predicted_alum
-    weather_df["Pred Hypo"] = predicted_hypo
+
+    weather_df["Pred Chlorine"] = predicted_chlorine
 
     # ========================================================
     # AI RECOMMENDATION SYSTEM
     # ========================================================
 
-    st.markdown("##### 🧠 AI Operational Recommendations")
+    st.markdown("AI Operational Recommendations")
 
     avg_temp = weather_df["Temp"].mean()
 
@@ -2322,11 +2352,15 @@ if response.status_code == 200:
     if avg_temp > 35:
 
         ai_messages.append(
-            "🔥 High temperature detected → Increase hypo dosing gradually due to chlorine decay."
+            "🔥 High temperature detected → Increase chlorine dosing gradually due to faster chlorine decay."
         )
 
         ai_messages.append(
             "🧪 Conduct frequent jar testing to optimize alum consumption."
+        )
+
+        ai_messages.append(
+            "💨 Increase aeration rates to maintain dissolved oxygen stability."
         )
 
     # ========================================================
@@ -2347,6 +2381,10 @@ if response.status_code == 200:
             "🚨 Monitor sludge blanket and filter loading carefully."
         )
 
+        ai_messages.append(
+            "🧫 Increase chlorine monitoring frequency during rainfall period."
+        )
+
     # ========================================================
     # HIGH HUMIDITY
     # ========================================================
@@ -2355,6 +2393,10 @@ if response.status_code == 200:
 
         ai_messages.append(
             "💧 High humidity may affect powder chemical storage and handling."
+        )
+
+        ai_messages.append(
+            "🔌 Inspect electrical and SCADA panels for moisture condensation."
         )
 
     # ========================================================
@@ -2404,16 +2446,18 @@ if response.status_code == 200:
     left, right = st.columns([5,1])
 
     # ========================================================
-    # DOSING TREND
+    # FUTURE DOSING TREND
     # ========================================================
 
     with left:
 
-        st.markdown("##### 📈 Future AI Dosing Trend")
+        st.markdown("📈 Future AI Dosing Trend")
 
         fig = go.Figure()
 
-        # Alum
+        # ====================================================
+        # ALUM TREND
+        # ====================================================
 
         fig.add_trace(go.Scatter(
 
@@ -2423,29 +2467,33 @@ if response.status_code == 200:
 
             mode='lines+markers',
 
-            name='Predicted Alum',
+            name='Predicted Alum Dose',
 
             line=dict(width=3)
 
         ))
 
-        # Hypo
+        # ====================================================
+        # CHLORINE TREND
+        # ====================================================
 
         fig.add_trace(go.Scatter(
 
             x=weather_df["Time"],
 
-            y=weather_df["Pred Hypo"],
+            y=weather_df["Pred Chlorine"],
 
             mode='lines+markers',
 
-            name='Predicted Hypo',
+            name='Predicted Chlorine Dose',
 
             line=dict(width=3)
 
         ))
 
-        # Rain
+        # ====================================================
+        # RAINFALL OVERLAY
+        # ====================================================
 
         fig.add_trace(go.Bar(
 
@@ -2476,7 +2524,7 @@ if response.status_code == 200:
 
             xaxis_title="Time",
 
-            yaxis_title="Predicted Dose"
+            yaxis_title="Predicted Dose (mg/L)"
 
         )
 
@@ -2486,7 +2534,7 @@ if response.status_code == 200:
         )
 
     # ========================================================
-    # SMALL SIDE GAUGE
+    # SMALL WEATHER RISK GAUGE
     # ========================================================
 
     with right:
@@ -2528,25 +2576,25 @@ if response.status_code == 200:
         )
 
     # ========================================================
-    # FINAL AI DECISION
+    # FINAL AI DECISION SUMMARY
     # ========================================================
 
-    st.markdown("##### ✅ AI Smart Decision Summary")
+    st.markdown("✅ AI Smart Decision Summary")
 
     c1, c2, c3 = st.columns(3)
 
     with c1:
 
         st.metric(
-            "Peak Alum",
+            "Peak Alum Dose",
             f"{max(predicted_alum):.1f} mg/L"
         )
 
     with c2:
 
         st.metric(
-            "Peak Hypo",
-            f"{max(predicted_hypo):.2f} ppm"
+            "Peak Chlorine Dose",
+            f"{max(predicted_chlorine):.1f} mg/L"
         )
 
     with c3:
@@ -2566,12 +2614,6 @@ if response.status_code == 200:
 else:
 
     st.error("Weather API Connection Failed")
-# -----------------------------
-# OUTPUT METRICS
-# -----------------------------
-
-st.metric("Required Hypo Dose", f"{dose_selected:,.0f} kg/day")
-st.metric("Chlorine Demand", f"{chlorine_demand:.2f} mg/L")
 # WATER TOWERS
 # ===============================
 st.subheader("🗼 Distribution Water Towers")
