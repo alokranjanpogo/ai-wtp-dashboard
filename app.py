@@ -212,7 +212,7 @@ else:
         # BIG CLARIFIER GAUGE
         # ====================================================
 
-        st.markdown("## 🌀 Clarifier Live Monitoring")
+        st.markdown("🌀 Clarifier Live Monitoring")
 
         fig_clar = go.Figure(go.Indicator(
 
@@ -314,7 +314,7 @@ else:
         # AI ANALYSIS
         # ====================================================
 
-        st.markdown("### 🤖 AI Analysis")
+        st.markdown("🤖 AI Analysis")
 
         if clar_eff >= 90:
 
@@ -339,7 +339,7 @@ else:
     # ========================================================
 
     st.markdown("---")
-    st.markdown("## 🧪 Filter Bed Live Status")
+    st.markdown("🧪 Filter Bed Live Status")
 
     cols = st.columns(6)
 
@@ -466,7 +466,7 @@ else:
     # ========================================================
 
     st.markdown("---")
-    st.markdown("## 📋 Filter Bed Summary")
+    st.markdown("📋 Filter Bed Summary")
 
     filter_summary_df = pd.DataFrame(filter_summary)
 
@@ -553,7 +553,7 @@ else:
         # TREND AI ANALYSIS
         # ====================================================
 
-        st.markdown("### 🤖 Historical AI Analysis")
+        st.markdown("🤖 Historical AI Analysis")
 
         if current_eff >= 90:
 
@@ -825,7 +825,7 @@ if industrial:
     # INDUSTRIAL WATER QUALITY INDICATORS
     # ========================================================
 
-    st.markdown("### 🧪 Industrial Impact Indicators")
+    st.markdown("🧪 Industrial Impact Indicators")
 
     conductivity = st.slider(
         "Conductivity (µS/cm)",
@@ -929,7 +929,7 @@ if industrial:
 # 🧪 JAR TEST INPUT
 # ============================================================
 
-st.markdown("### 🧪 Jar Test Input")
+st.markdown("🧪 Jar Test Input")
 
 jar_available = st.toggle("Use Jar Test")
 
@@ -1245,7 +1245,7 @@ with left:
 
 with right:
 
-    st.markdown("### 📘 Recommendation Logic")
+    st.markdown("📘 Recommendation Logic")
 
     st.markdown(f"""
 ### Input Conditions
@@ -1923,7 +1923,7 @@ if st.session_state.alarm:
 # DATA TABLE + DELETE
 # ===============================
 
-st.markdown("### 📂 Stored Data")
+st.markdown("📂 Stored Data")
 
 if st.checkbox("Show Data Table"):
 
@@ -2146,7 +2146,7 @@ st.markdown("<h1 style='text-align:center;'>🌦️ AI WEATHER INTELLIGENCE CENT
 # WEATHER API
 # ============================================================
 
-API_KEY = "YOUR_API_KEY"
+API_KEY = "f899db331049be78181d1afddbc92935"
 CITY = "Jamshedpur"
 
 url = f"https://api.openweathermap.org/data/2.5/forecast?q={CITY}&appid={API_KEY}&units=metric"
@@ -2198,7 +2198,7 @@ if response.status_code == 200:
     # AI LOGIC ENGINE
     # ============================================================
 
-    st.subheader("🧠 AI Operational Recommendations")
+    st.subheader("AI Operational Recommendations")
 
     alerts = []
 
@@ -2321,7 +2321,7 @@ if response.status_code == 200:
     # FUTURE HYPO DEMAND PREDICTION
     # ============================================================
 
-    st.subheader("🧪 Future Hypo Demand Prediction")
+    st.subheader("Future Hypo Demand Prediction")
 
     weather_df['Predicted Hypo Dose'] = (
         5
