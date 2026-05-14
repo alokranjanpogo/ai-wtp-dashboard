@@ -2862,11 +2862,11 @@ st.plotly_chart(fig_sump, use_container_width=True)
 
 st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Production")
 # ==============================
-# 🌊 AI INTAKE DEBRIS MODULE
+# 🌊 INTAKE DEBRIS MODULE
 # ==============================
 
 # ==============================
-# 🌊 AI INTAKE DEBRIS MODULE
+# 🌊 INTAKE DEBRIS MODULE
 # ==============================
 
 import streamlit as st
@@ -2878,11 +2878,11 @@ from PIL import Image
 # PAGE CONFIG
 # =========================
 st.set_page_config(
-    page_title="AI Intake Monitoring",
+    page_title="Intake Monitoring",
     layout="wide"
 )
 
-st.header("🌊 AI Intake Monitoring System")
+st.header("🌊Intake Monitoring System")
 
 # =========================
 # CLASS NAMES
@@ -2936,7 +2936,7 @@ def preprocess(img):
     return img_np
 
 # =========================
-# RUN AI
+# RUN
 # =========================
 if uploaded_img:
 
@@ -2948,7 +2948,7 @@ if uploaded_img:
         use_container_width=True
     )
 
-    if st.button("🔍 Run AI Analysis"):
+    if st.button("🔍 Run Analysis"):
 
         try:
 
