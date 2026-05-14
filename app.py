@@ -1961,7 +1961,7 @@ if st.checkbox("Show Data Table"):
 # ============================================================
 
 st.markdown("---")
-st.markdown("## 📊 AI Performance Analytics")
+st.markdown("📊 AI Performance Analytics")
 
 if len(df) > 0:
 
@@ -2009,7 +2009,7 @@ if len(df) > 0:
     # TREND CHART
     # ========================================================
 
-    st.markdown("### 📈 Treatment Trend")
+    st.markdown("📈 Treatment Trend")
 
     chart_df = df.copy()
 
@@ -2052,7 +2052,7 @@ if len(df) > 0:
 
 with right_col:
 
-    st.markdown("### 🌤 Weather")
+    st.markdown("🌤 Weather")
 
     API_KEY = "f899db331049be78181d1afddbc92935"
 
@@ -2102,143 +2102,248 @@ with right_col:
     except Exception as e:
 
         st.error(f"Weather error: {e}")
+# ============================================================
+# 🌦️ AI WEATHER INTELLIGENCE CENTER
+# ============================================================
 
-# ====================================================
-# 🌦 FUTURE DOSING PREDICTION
-# ====================================================
-
-st.markdown("---")
+import requests
+import pandas as pd
+import numpy as np
+import streamlit as st
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
 
 st.markdown("""
-<div style="
-background: linear-gradient(135deg,#0f172a,#1e293b);
-padding:18px;
-border-radius:18px;
-border:1px solid #334155;
-">
-
-<h3 style="color:#38bdf8;">
-🌦 AI Future Dose Prediction
-</h3>
-
-</div>
+<style>
+.ai-box {
+    background: linear-gradient(135deg,#0f172a,#1e293b);
+    padding:20px;
+    border-radius:20px;
+    box-shadow:0px 0px 20px rgba(0,255,255,0.3);
+    color:white;
+}
+.alert-box {
+    background:#7f1d1d;
+    padding:15px;
+    border-radius:15px;
+    color:white;
+    font-weight:bold;
+}
+.metric-card {
+    background: linear-gradient(135deg,#1e3a8a,#0f766e);
+    padding:15px;
+    border-radius:15px;
+    text-align:center;
+    color:white;
+}
+</style>
 """, unsafe_allow_html=True)
 
-# ====================================================
-# WEATHER DATA
-# ====================================================
+st.markdown("<h1 style='text-align:center;'>🌦️ AI WEATHER INTELLIGENCE CENTER</h1>", unsafe_allow_html=True)
 
-temperature = data['main']['temp']
-humidity = data['main']['humidity']
-weather_desc = data['weather'][0]['description']
+# ============================================================
+# WEATHER API
+# ============================================================
 
-# ====================================================
-# INITIAL VALUES
-# ====================================================
+API_KEY = "YOUR_API_KEY"
+CITY = "Jamshedpur"
 
-future_factor = 1.0
-future_status = "Stable"
-future_note = ""
+url = f"https://api.openweathermap.org/data/2.5/forecast?q={CITY}&appid={API_KEY}&units=metric"
 
-desc = weather_desc.lower()
+response = requests.get(url)
 
-# ====================================================
-# WEATHER ANALYSIS
-# ====================================================
+if response.status_code == 200:
 
-if "rain" in desc:
+    data = response.json()
 
-    future_factor = 1.25
+    weather_list = []
 
-    future_status = "High Turbidity Risk"
+    for item in data['list'][:8]:
 
-    future_note = (
-        "Rainfall may increase suspended solids "
-        "and alum demand."
+        weather_list.append({
+            "Time": item['dt_txt'],
+            "Temperature": item['main']['temp'],
+            "Humidity": item['main']['humidity'],
+            "Rain": item.get('rain', {}).get('3h', 0),
+            "Wind": item['wind']['speed'],
+            "Pressure": item['main']['pressure'],
+            "Condition": item['weather'][0]['main']
+        })
+
+    weather_df = pd.DataFrame(weather_list)
+
+    # ============================================================
+    # WEATHER CARDS
+    # ============================================================
+
+    st.subheader("⏰ Hourly Weather Forecast")
+
+    cols = st.columns(4)
+
+    for i, row in weather_df.head(4).iterrows():
+
+        with cols[i]:
+
+            st.markdown(f"""
+            <div class='metric-card'>
+                <h3>{row['Time'][11:16]}</h3>
+                <h2>{row['Temperature']}°C</h2>
+                <p>{row['Condition']}</p>
+                <p>💧 {row['Humidity']}%</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ============================================================
+    # AI LOGIC ENGINE
+    # ============================================================
+
+    st.subheader("🧠 AI Operational Recommendations")
+
+    alerts = []
+
+    avg_temp = weather_df['Temperature'].mean()
+    avg_humidity = weather_df['Humidity'].mean()
+    total_rain = weather_df['Rain'].sum()
+
+    # ============================================================
+    # TEMPERATURE LOGIC
+    # ============================================================
+
+    if avg_temp > 35:
+
+        alerts.append("🔥 High temperature detected. Increase aeration rates to maintain DO levels.")
+        alerts.append("⚠ Increase hypo dosing due to faster chlorine decay.")
+        alerts.append("🧪 Conduct frequent jar testing to optimize coagulant dose.")
+        alerts.append("📉 Reduce sludge retention time (SRT).")
+
+    # ============================================================
+    # RAIN LOGIC
+    # ============================================================
+
+    if total_rain > 10:
+
+        alerts.append("🌧 Heavy rainfall expected. Prepare for turbidity spike.")
+        alerts.append("⚠ Increase PAC/Alum dosing gradually.")
+        alerts.append("🚨 Utilize equalization/storage basins.")
+        alerts.append("🔋 Verify DG backup systems.")
+
+    # ============================================================
+    # HUMIDITY LOGIC
+    # ============================================================
+
+    if avg_humidity > 85:
+
+        alerts.append("💧 High humidity may cause chemical clumping.")
+        alerts.append("⚠ Run dehumidifiers in chemical rooms.")
+        alerts.append("🔌 Inspect SCADA/electrical panels for condensation.")
+
+    # ============================================================
+    # ADVANCED AI INSIGHTS
+    # ============================================================
+
+    if avg_temp > 32 and total_rain > 5:
+
+        alerts.append("🚨 Combined weather stress detected. Expect raw water instability.")
+        alerts.append("⚡ Increase monitoring frequency for turbidity and chlorine residual.")
+
+    # ============================================================
+    # DISPLAY ALERTS
+    # ============================================================
+
+    for alert in alerts:
+
+        st.markdown(f"""
+        <div class='alert-box'>
+        {alert}
+        </div>
+        <br>
+        """, unsafe_allow_html=True)
+
+    # ============================================================
+    # AI PLANT STABILITY SCORE
+    # ============================================================
+
+    score = 100
+
+    if avg_temp > 35:
+        score -= 15
+
+    if total_rain > 10:
+        score -= 30
+
+    if avg_humidity > 85:
+        score -= 10
+
+    st.subheader("📊 AI Plant Stability Index")
+
+    fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = score,
+        title = {'text': "Plant Stability"},
+        gauge = {
+            'axis': {'range': [0,100]},
+            'bar': {'color': "cyan"},
+            'steps': [
+                {'range': [0,40], 'color': "red"},
+                {'range': [40,70], 'color': "orange"},
+                {'range': [70,100], 'color': "green"},
+            ],
+        }
+    ))
+
+    fig.update_layout(height=400)
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # ============================================================
+    # WEATHER TREND CHART
+    # ============================================================
+
+    st.subheader("📈 Weather Trend Analysis")
+
+    fig2 = px.line(
+        weather_df,
+        x="Time",
+        y=["Temperature","Humidity"],
+        markers=True
     )
 
-elif "cloud" in desc:
-
-    future_factor = 1.10
-
-    future_status = "Moderate Variation"
-
-    future_note = (
-        "Possible slight fluctuation "
-        "in coagulation demand."
+    fig2.update_layout(
+        height=500,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
 
-elif temperature > 35:
+    st.plotly_chart(fig2, use_container_width=True)
 
-    future_factor = 1.08
+    # ============================================================
+    # FUTURE HYPO DEMAND PREDICTION
+    # ============================================================
 
-    future_status = "Elevated Chlorine Demand"
+    st.subheader("🧪 Future Hypo Demand Prediction")
 
-    future_note = (
-        "High temperature may increase "
-        "biological activity."
+    weather_df['Predicted Hypo Dose'] = (
+        5
+        + weather_df['Temperature'] * 0.12
+        + weather_df['Rain'] * 0.25
+        + weather_df['Humidity'] * 0.03
     )
+
+    fig3 = px.bar(
+        weather_df,
+        x="Time",
+        y="Predicted Hypo Dose",
+        text_auto=True
+    )
+
+    fig3.update_layout(height=500)
+
+    st.plotly_chart(fig3, use_container_width=True)
 
 else:
 
-    future_factor = 1.0
-
-    future_status = "Stable Condition"
-
-    future_note = (
-        "No major raw water disturbance predicted."
-    )
-
-# ====================================================
-# FUTURE DOSE
-# ====================================================
-
-future_dose = dose * future_factor
-
-# ====================================================
-# METRICS
-# ====================================================
-
-c1, c2 = st.columns(2)
-
-with c1:
-    st.metric(
-        "Predicted Dose",
-        f"{future_dose:.1f} mg/L"
-    )
-
-with c2:
-    st.metric(
-        "Adjustment Factor",
-        f"{future_factor:.2f}x"
-    )
-
-# ====================================================
-# STATUS
-# ====================================================
-
-if future_factor >= 1.2:
-
-    st.error(f"🔴 {future_status}")
-
-elif future_factor > 1.0:
-
-    st.warning(f"🟠 {future_status}")
-
-else:
-
-    st.success(f"🟢 {future_status}")
-
-# ====================================================
-# AI NOTE
-# ====================================================
-
-st.info(f"💡 {future_note}")
-# ====================================================
-# AI INSIGHT
-# ====================================================
-
-st.info(f"🤖 {future_note}")
+    st.error("Weather API failed.")
 
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
