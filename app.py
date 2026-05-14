@@ -314,7 +314,7 @@ else:
         # AI ANALYSIS
         # ====================================================
 
-        st.markdown("🤖 AI Analysis")
+        st.markdown("Analysis")
 
         if clar_eff >= 90:
 
@@ -550,10 +550,10 @@ else:
         )
 
         # ====================================================
-        # TREND AI ANALYSIS
+        # TREND ANALYSIS
         # ====================================================
 
-        st.markdown("🤖 Historical AI Analysis")
+        st.markdown("Historical Analysis")
 
         if current_eff >= 90:
 
@@ -1122,7 +1122,7 @@ left, right = st.columns([1.1, 1.4])
 
 with left:
 
-    st.markdown("### 📊 Dosing Decision Curve")
+    st.markdown("📊 Dosing Decision Curve")
 
     x = np.linspace(0, 400, 150)
 
@@ -1182,7 +1182,7 @@ with left:
             color="cyan",
             width=4
         ),
-        name="AI Curve"
+        name="Curve"
     ))
 
     # ========================================================
@@ -1732,7 +1732,7 @@ if submit:
 
     if len(df) >= 30:
 
-        st.markdown(" 🤖 AI Smart Recommendation")
+        st.markdown("Smart Recommendation")
 
         good = df[
             (df["final_turbidity"] <= 1) &
@@ -1791,7 +1791,7 @@ if submit:
     else:
 
         st.info(
-            f"AI activates after 30 samples "
+            f"Suggestions will activates after 30 samples "
             f"(Current: {len(df)})"
         )
 
@@ -1961,7 +1961,7 @@ if st.checkbox("Show Data Table"):
 # ============================================================
 
 st.markdown("---")
-st.markdown("📊 AI Performance Analytics")
+st.markdown("📊 Performance Analytics")
 
 if len(df) > 0:
 
@@ -2103,7 +2103,7 @@ with right_col:
 
         st.error(f"Weather error: {e}")
 # ============================================================
-# 🌦️ AI WEATHER BASED DOSING PREDICTION CENTER
+# 🌦️ WEATHER BASED DOSING PREDICTION CENTER
 # ============================================================
 
 import requests
@@ -2116,7 +2116,7 @@ import streamlit as st
 # SECTION TITLE
 # ============================================================
 
-st.subheader("🌦️ AI Weather Based Prediction System")
+st.subheader("🌦️ Weather Based Prediction System")
 
 # ============================================================
 # CUSTOM CSS
@@ -2217,7 +2217,7 @@ if response.status_code == 200:
             """, unsafe_allow_html=True)
 
     # ========================================================
-    # AI WEATHER IMPACT ENGINE
+    # WEATHER IMPACT ENGINE
     # ========================================================
 
     predicted_alum = []
@@ -2334,10 +2334,10 @@ if response.status_code == 200:
     weather_df["Pred Chlorine"] = predicted_chlorine
 
     # ========================================================
-    # AI RECOMMENDATION SYSTEM
+    # RECOMMENDATION SYSTEM
     # ========================================================
 
-    st.markdown("AI Operational Recommendations")
+    st.markdown("Operational Recommendations")
 
     avg_temp = weather_df["Temp"].mean()
 
@@ -2451,7 +2451,7 @@ if response.status_code == 200:
 
     with left:
 
-        st.markdown("📈 Future AI Dosing Trend")
+        st.markdown("📈 Future Dosing Trend")
 
         fig = go.Figure()
 
@@ -2579,7 +2579,7 @@ if response.status_code == 200:
     # FINAL AI DECISION SUMMARY
     # ========================================================
 
-    st.markdown("✅ AI Smart Decision Summary")
+    st.markdown("✅Smart Decision Summary")
 
     c1, c2, c3 = st.columns(3)
 
