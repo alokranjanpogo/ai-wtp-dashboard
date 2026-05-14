@@ -2614,13 +2614,6 @@ if response.status_code == 200:
 else:
 
     st.error("Weather API Connection Failed")
-# WATER TOWERS
-# ===============================
-st.subheader("🗼 Distribution Water Towers")
-names=["Moharda WT","Zone 9 WT","Zone 3 WT","Zone 1 GSR outlet","Bagunhatu WT","Bagunnagar WT"]
-tc=st.columns(3)
-for i in range(6):
-    tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
 
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
