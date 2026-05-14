@@ -1538,7 +1538,7 @@ from sklearn.linear_model import LinearRegression
 
 st.set_page_config(layout="wide")
 
-st.markdown("## AI Water Treatment Feedback System")
+st.markdown("## Water Treatment Feedback System")
 
 left_col, right_col = st.columns([2,1])
 
@@ -3073,7 +3073,7 @@ if uploaded_img:
             # =========================
             # DASHBOARD OUTPUT
             # =========================
-            st.subheader("📊 AI Intake Monitoring Summary")
+            st.subheader("📊 Intake Monitoring Summary")
 
             col1, col2, col3 = st.columns(3)
 
@@ -3187,23 +3187,23 @@ if uploaded_img:
             # =========================
             # AI STATUS
             # =========================
-            st.subheader("🤖 AI Monitoring Status")
+            st.subheader(" Monitoring Status")
 
             st.success(
-                "Industrial AI Intake Monitoring Active"
+                "Industrial Intake Monitoring Active"
             )
 
         except Exception as e:
 
-            st.error(f"AI Analysis Failed: {e}")
+            st.error(f"Analysis Failed: {e}")
 # ==========================================
-# 🖥️ WATER QUALITY AI - ADVANCED PRACTICAL VERSION
+# 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
 # ==========================================
 
 import streamlit as st
 
-st.header("🖥️ Water Treatment AI Assistant")
+st.header("🖥️ Water Treatment Assistant")
 
 # ===============================
 # STEP 1: COMPLAINT
@@ -3256,7 +3256,7 @@ if complaint:
         # -------------------------------
         # 🧪 PRE-CHLORINATION CHECK
         # -------------------------------
-        st.markdown("### 🧪 Pre-Chlorination Status")
+        st.markdown("🧪 Pre-Chlorination Status")
 
         if pre_chlorine < 0.3:
             st.warning("⚠️ Low Pre-Chlorination")
