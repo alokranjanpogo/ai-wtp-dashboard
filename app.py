@@ -59,8 +59,7 @@ else:
 
     history_df["DateTime"] = history_df["Date"]
 
-# Drop invalid rows
-history_df = history_df.dropna(subset=["DateTime"])
+
 
 # Sort
 history_df = history_df.sort_values("DateTime")
