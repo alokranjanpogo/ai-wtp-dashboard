@@ -100,7 +100,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("💧 Turbidity & Alum Dosing Monitoring")
+st.subheader("💧 Turbidity & Alum Dosing Monitoring")
 # ==========================================
 # LOAD EXCEL FILE
 # ==========================================
@@ -114,7 +114,7 @@ try:
     df.columns = [str(c).strip() for c in df.columns]
 
     # Convert Date column
-    df["Date"] = pd.to_datetime(df["Date"])
+   df["Date"] = pd.to_datetime(df["Date"], dayfirst=True, errors="coerce")
 
     # ==========================================
     # TOP METRICS
