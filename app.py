@@ -65,7 +65,18 @@ history_df = history_df.dropna(subset=["DateTime"])
 # Sort
 history_df = history_df.sort_values("DateTime")
 
+# ------------------------------------------------------------
+# SLICER
+# ------------------------------------------------------------
 
+selected_time = st.select_slider(
+    "Select Date",
+    options=history_df["DateTime"],
+    value=history_df["DateTime"].iloc[-1]
+)
+
+# Extract row
+row = history_df[history_df["DateTime"] == selected_time]
 
 intake_turb = float(row["Turbidity (NTU)"].values[0])
 conductivity_today = float(row["Conductivity (µS/cm)"].values[0])
