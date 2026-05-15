@@ -191,43 +191,50 @@ try:
     # GRAPH 1
     # ==========================================
 
-    with col1:
+   with col1:
 
-        st.subheader("📊 Turbidity vs Alum Dosage")
+    st.subheader("📊 Turbidity & Alum Dosing")
 
-        fig1 = go.Figure()
+    fig1 = go.Figure()
 
-        # BLUE BAR
-        fig1.add_trace(
-            go.Bar(
-                x=filtered_df["Date"],
-                y=filtered_df["Turbidity (NTU)"],
-                name="Inlet Turbidity",
-                marker_color="blue",
-                opacity=0.75
-            )
+    # BLUE BAR FOR ALUM DOSAGE
+    fig1.add_trace(
+        go.Bar(
+            x=filtered_df["Date"],
+            y=filtered_df["Alum Dosage (ppm)"],
+            name="Alum Dosage",
+            marker_color="blue",
+            opacity=0.8
         )
+    )
 
-        # RED LINE
-        fig1.add_trace(
-            go.Scatter(
-                x=filtered_df["Date"],
-                y=filtered_df["Alum Dosage (ppm)"],
-                mode="lines+markers",
-                name="Alum Dosage",
-                line=dict(color="red", width=3)
-            )
+    # RED LINE FOR TURBIDITY
+    fig1.add_trace(
+        go.Scatter(
+            x=filtered_df["Date"],
+            y=filtered_df["Turbidity (NTU)"],
+            mode="lines+markers",
+            name="Raw Turbidity",
+            line=dict(color="red", width=3)
         )
+    )
 
-        fig1.update_layout(
-            height=450,
-            hovermode="x unified",
-            xaxis_title="Date",
-            yaxis_title="Value"
+    fig1.update_layout(
+        height=450,
+        hovermode="x unified",
+        xaxis_title="Date",
+        yaxis_title="Value",
+        barmode="group",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
         )
+    )
 
-        st.plotly_chart(fig1, use_container_width=True)
-
+    st.plotly_chart(fig1, use_container_width=True)
     # ==========================================
     # GRAPH 2
     # ==========================================
