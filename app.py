@@ -191,7 +191,7 @@ try:
     # GRAPH 1
     # ==========================================
 
-        with col1:
+    with col1:
     
         st.subheader("📊 Turbidity & Alum Dosing")
     
