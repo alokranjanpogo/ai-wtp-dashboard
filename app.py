@@ -81,6 +81,12 @@ row = history_df[history_df["DateTime"] == selected_time]
 intake_turb = float(row["Turbidity (NTU)"].values[0])
 conductivity_today = float(row["Conductivity (µS/cm)"].values[0])
 
+# Display
+c1,c2,c3 = st.columns(3)
+
+c1.metric("Date", selected_time.strftime("%d-%b-%Y"))
+c2.metric("Raw Turbidity", f"{intake_turb:.2f} NTU")
+c3.metric("Conductivity", f"{conductivity_today:.0f} µS/cm")
 
 import plotly.graph_objects as go
 
