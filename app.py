@@ -103,7 +103,7 @@ st.set_page_config(
 # LOAD EXCEL FILE
 # ==========================================
 
-file_name = "Inlet_outlet_turbidity_ dosing_details.xlsx"
+file_name = "Inlet_outlet_turbidity_dosing_ details.xlsx"
 
 try:
 
