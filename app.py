@@ -289,9 +289,10 @@ def gauge(title,value,max_val,mode="normal"):
 
 # ============================================================
 # SMART CLARIFIER + FILTER BED MONITORING SYSTEM
-# CLEAN LIGHT THEME VERSION
+# REALISTIC WTP MONITORING VERSION
 # ============================================================
 
+import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -321,7 +322,7 @@ st.markdown("""
 # LOAD EXCEL
 # ============================================================
 
-trend_df = pd.read_excel("Moharda_WTP_2026fc.xlsx")
+trend_df = pd.read_excel("Moharda_WTP_2026_Realistic_Adjusted.xlsx")
 
 trend_df["Date"] = pd.to_datetime(trend_df["Date"])
 
@@ -375,13 +376,24 @@ else:
 
     else:
 
-        clar_eff = clarifier_data["Efficiency (%)"].iloc[0]
-
         clar_inlet = clarifier_data["Inlet Turbidity"].iloc[0]
 
         clar_outlet = clarifier_data["Outlet Turbidity"].iloc[0]
 
         clar_cond = clarifier_data["Conductivity (µS/cm)"].iloc[0]
+
+        # ====================================================
+        # CLARIFIER HEALTH
+        # ====================================================
+
+        if clar_outlet <= 5:
+            clar_health = "Healthy"
+
+        elif clar_outlet <= 10:
+            clar_health = "Moderate"
+
+        else:
+            clar_health = "Critical"
 
         # ====================================================
         # BIG CLARIFIER GAUGE
@@ -393,10 +405,10 @@ else:
 
             mode="gauge+number",
 
-            value=clar_eff,
+            value=clar_outlet,
 
             number={
-                'suffix': "%",
+                'suffix': " NTU",
                 'font': {
                     'size': 44,
                     'color': "#0077b6"
@@ -404,7 +416,7 @@ else:
             },
 
             title={
-                'text': "Clarifier Efficiency",
+                'text': "Clarifier Outlet Turbidity",
                 'font': {
                     'size': 24
                 }
@@ -413,7 +425,7 @@ else:
             gauge={
 
                 'axis': {
-                    'range': [0,100]
+                    'range': [0,20]
                 },
 
                 'bar': {
@@ -430,18 +442,18 @@ else:
                 'steps': [
 
                     {
-                        'range':[0,60],
-                        'color': "#f8d7da"
+                        'range':[0,5],
+                        'color': "#d4edda"
                     },
 
                     {
-                        'range':[60,80],
+                        'range':[5,10],
                         'color': "#fff3cd"
                     },
 
                     {
-                        'range':[80,100],
-                        'color': "#d4edda"
+                        'range':[10,20],
+                        'color': "#f8d7da"
                     }
                 ]
             }
@@ -476,8 +488,8 @@ else:
         )
 
         m3.metric(
-            "Efficiency",
-            f"{clar_eff:.1f}%"
+            "Clarifier Health",
+            clar_health
         )
 
         m4.metric(
@@ -491,22 +503,22 @@ else:
 
         st.markdown("Analysis")
 
-        if clar_eff >= 90:
+        if clar_outlet <= 5:
 
             st.success(
-                "Clarifier operating at excellent efficiency."
+                "Clarifier performance stable. Turbidity under control."
             )
 
-        elif clar_eff >= 75:
+        elif clar_outlet <= 10:
 
             st.warning(
-                "Clarifier efficiency acceptable."
+                "Clarifier operating under moderate load."
             )
 
         else:
 
             st.error(
-                "Clarifier efficiency poor. Inspection recommended."
+                "High clarifier outlet turbidity detected. Check coagulant dosing and sludge blanket."
             )
 
     # ========================================================
@@ -531,42 +543,49 @@ else:
         if filter_data.empty:
             continue
 
-        filter_eff = filter_data["Efficiency (%)"].iloc[0]
+        filter_outlet = filter_data["Outlet Turbidity"].iloc[0]
 
         # ====================================================
-        # STATUS
+        # FILTER HEALTH
         # ====================================================
 
-        if filter_eff >= 90:
+        if filter_outlet <= 0.3:
+
             status = "Excellent"
 
-        elif filter_eff >= 75:
+        elif filter_outlet <= 0.7:
+
             status = "Good"
 
+        elif filter_outlet <= 1:
+
+            status = "Warning"
+
         else:
-            status = "Poor"
+
+            status = "Backwash Needed"
 
         filter_summary.append({
 
             "Filter Bed": filter_name,
 
-            "Efficiency (%)": round(filter_eff,1),
+            "Outlet Turbidity": round(filter_outlet,2),
 
             "Status": status
         })
 
         # ====================================================
-        # SMALL GAUGES
+        # SMALL FILTER GAUGES
         # ====================================================
 
         fig_small = go.Figure(go.Indicator(
 
             mode="gauge+number",
 
-            value=filter_eff,
+            value=filter_outlet,
 
             number={
-                'suffix': "%",
+                'suffix': " NTU",
                 'font': {
                     'size': 15,
                     'color': "#0077b6"
@@ -583,7 +602,7 @@ else:
             gauge={
 
                 'axis': {
-                    'range':[0,100]
+                    'range':[0,2]
                 },
 
                 'bar': {
@@ -600,18 +619,23 @@ else:
                 'steps':[
 
                     {
-                        'range':[0,60],
-                        'color': "#f8d7da"
+                        'range':[0,0.3],
+                        'color': "#d4edda"
                     },
 
                     {
-                        'range':[60,80],
+                        'range':[0.3,0.7],
+                        'color': "#cfe2ff"
+                    },
+
+                    {
+                        'range':[0.7,1],
                         'color': "#fff3cd"
                     },
 
                     {
-                        'range':[80,100],
-                        'color': "#d4edda"
+                        'range':[1,2],
+                        'color': "#f8d7da"
                     }
                 ]
             }
@@ -655,7 +679,7 @@ else:
     # ========================================================
 
     st.markdown("---")
-    st.subheader("📈 Historical Efficiency Trend")
+    st.subheader("📈 Historical Output Turbidity Trend")
 
     selected_unit = st.selectbox(
         "Select Unit",
@@ -676,9 +700,9 @@ else:
 
     else:
 
-        current_eff = previous_df[
+        current_turbidity = previous_df[
             previous_df["Date"] == selected_date
-        ]["Efficiency (%)"].iloc[0]
+        ]["Outlet Turbidity"].iloc[0]
 
         # ====================================================
         # TREND GRAPH
@@ -690,7 +714,7 @@ else:
 
             x=previous_df["Date"],
 
-            y=previous_df["Efficiency (%)"],
+            y=previous_df["Outlet Turbidity"],
 
             mode="lines+markers",
 
@@ -703,18 +727,18 @@ else:
                 size=6
             ),
 
-            name="Efficiency"
+            name="Outlet Turbidity"
         ))
 
         fig_trend.update_layout(
 
             template="simple_white",
 
-            title=f"{selected_unit} Efficiency Trend",
+            title=f"{selected_unit} Output Turbidity Trend",
 
             xaxis_title="Date",
 
-            yaxis_title="Efficiency (%)",
+            yaxis_title="Outlet Turbidity (NTU)",
 
             height=450
         )
@@ -730,22 +754,22 @@ else:
 
         st.markdown("Historical Analysis")
 
-        if current_eff >= 90:
+        if current_turbidity <= 0.5:
 
             st.success(
-                f"{selected_unit} operating at excellent efficiency."
+                f"{selected_unit} operating with excellent water quality."
             )
 
-        elif current_eff >= 75:
+        elif current_turbidity <= 1:
 
             st.warning(
-                f"{selected_unit} operating at moderate efficiency."
+                f"{selected_unit} performance acceptable."
             )
 
         else:
 
             st.error(
-                f"{selected_unit} efficiency poor. Maintenance recommended."
+                f"{selected_unit} turbidity rising. Maintenance or backwash recommended."
             )
 # ===============================
 # STREAMLIT UI
