@@ -89,6 +89,14 @@ c2.metric("Raw Turbidity", f"{intake_turb:.2f} NTU")
 c3.metric("Conductivity", f"{conductivity_today:.0f} µS/cm")
 
 import plotly.graph_objects as go
+# ==========================================
+# PAGE CONFIG
+# ==========================================
+
+st.set_page_config(
+    page_title="WTP Dashboard",
+    layout="wide"
+)
 
 
 # ==========================================
@@ -114,32 +122,7 @@ try:
     # Remove invalid dates if any
     df = df.dropna(subset=["Date"])
 
-    # ==========================================
-    # TOP METRICS
-    # ==========================================
-
-    latest = df.iloc[-1]
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric(
-            "Date",
-            latest["Date"].strftime("%d-%b-%Y")
-        )
-
-    with col2:
-        st.metric(
-            "Raw Turbidity",
-            f"{latest['Turbidity (NTU)']:.2f} NTU"
-        )
-
-    with col3:
-        if "Conductivity" in df.columns:
-            st.metric(
-                "Conductivity",
-                f"{latest['Conductivity']:.0f} µS/cm"
-            )
+    
 
     # ==========================================
     # DASHBOARD HEADING
