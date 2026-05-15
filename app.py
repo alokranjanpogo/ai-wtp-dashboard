@@ -88,38 +88,39 @@ c1.metric("Date", selected_time.strftime("%d-%b-%Y"))
 c2.metric("Raw Turbidity", f"{intake_turb:.2f} NTU")
 c3.metric("Conductivity", f"{conductivity_today:.0f} µS/cm")
 
-import streamlit as st
-import pandas as pd
 import plotly.graph_objects as go
 
 # ==========================================
 # PAGE CONFIG
 # ==========================================
+
 st.set_page_config(
     page_title="WTP Dashboard",
     layout="wide"
 )
 
-st.subheader("💧 Turbidity & Alum Dosing Monitoring")
 # ==========================================
 # LOAD EXCEL FILE
 # ==========================================
 
-file_name = "Inlet_outlet_turbidity_dosing_ details.xlsx"
+file_name = "Inlet_outlet_turbidity_ dosing_details.xlsx"
 
 try:
+
     df = pd.read_excel(file_name, sheet_name="RawWater")
 
     # Clean column names
     df.columns = [str(c).strip() for c in df.columns]
 
-   
-    # Convert Date column
+    # Convert Date column properly
     df["Date"] = pd.to_datetime(
-    df["Date"],
-    dayfirst=True,
-    errors="coerce"
-)
+        df["Date"],
+        dayfirst=True,
+        errors="coerce"
+    )
+
+    # Remove invalid dates if any
+    df = df.dropna(subset=["Date"])
 
     # ==========================================
     # TOP METRICS
@@ -149,107 +150,127 @@ try:
             )
 
     # ==========================================
-    # DATE FILTER
+    # DASHBOARD HEADING
     # ==========================================
 
-    st.sidebar.header("📅 Date Filter")
+    st.subheader("Turbidity & Alum Dosing Monitoring")
 
-    start_date = st.sidebar.date_input(
-        "Start Date",
-        df["Date"].min()
-    )
+    # ==========================================
+    # DATE FILTER BUTTONS
+    # ==========================================
 
-    end_date = st.sidebar.date_input(
-        "End Date",
-        df["Date"].max()
-    )
+    st.markdown("📅 Select Monitoring Period")
 
+    d1, d2 = st.columns(2)
+
+    with d1:
+        start_date = st.date_input(
+            "Start Date",
+            value=df["Date"].min()
+        )
+
+    with d2:
+        end_date = st.date_input(
+            "End Date",
+            value=df["Date"].max()
+        )
+
+    # Filter dataframe
     filtered_df = df[
         (df["Date"] >= pd.to_datetime(start_date)) &
         (df["Date"] <= pd.to_datetime(end_date))
     ]
 
     # ==========================================
-    # GRAPH 1
-    # BAR + LINE
+    # SIDE BY SIDE GRAPHS
     # ==========================================
 
-    st.subheader("📊 Turbidity vs Alum Dosage")
+    col1, col2 = st.columns(2)
 
-    fig1 = go.Figure()
+    # ==========================================
+    # GRAPH 1
+    # ==========================================
 
-    # BLUE BAR
-    fig1.add_trace(
-        go.Bar(
-            x=filtered_df["Date"],
-            y=filtered_df["Turbidity (NTU)"],
-            name="Inlet Turbidity",
-            marker_color="blue",
-            opacity=0.75
+    with col1:
+
+        st.subheader("📊 Turbidity vs Alum Dosage")
+
+        fig1 = go.Figure()
+
+        # BLUE BAR
+        fig1.add_trace(
+            go.Bar(
+                x=filtered_df["Date"],
+                y=filtered_df["Turbidity (NTU)"],
+                name="Inlet Turbidity",
+                marker_color="blue",
+                opacity=0.75
+            )
         )
-    )
 
-    # RED LINE
-    fig1.add_trace(
-        go.Scatter(
-            x=filtered_df["Date"],
-            y=filtered_df["Alum Dosage (ppm)"],
-            mode="lines+markers",
-            name="Alum Dosage",
-            line=dict(color="red", width=3)
+        # RED LINE
+        fig1.add_trace(
+            go.Scatter(
+                x=filtered_df["Date"],
+                y=filtered_df["Alum Dosage (ppm)"],
+                mode="lines+markers",
+                name="Alum Dosage",
+                line=dict(color="red", width=3)
+            )
         )
-    )
 
-    fig1.update_layout(
-        height=500,
-        xaxis_title="Date",
-        yaxis_title="Value",
-        hovermode="x unified"
-    )
+        fig1.update_layout(
+            height=450,
+            hovermode="x unified",
+            xaxis_title="Date",
+            yaxis_title="Value"
+        )
 
-    st.plotly_chart(fig1, use_container_width=True)
+        st.plotly_chart(fig1, use_container_width=True)
 
     # ==========================================
     # GRAPH 2
-    # INLET vs OUTLET TURBIDITY
     # ==========================================
 
-    st.subheader("📈 Inlet vs Outlet Turbidity")
+    with col2:
 
-    fig2 = go.Figure()
+        st.subheader("📈 Inlet vs Outlet Turbidity")
 
-    # RED LINE
-    fig2.add_trace(
-        go.Scatter(
-            x=filtered_df["Date"],
-            y=filtered_df["Turbidity (NTU)"],
-            mode="lines+markers",
-            name="Inlet Turbidity",
-            line=dict(color="red", width=3)
+        fig2 = go.Figure()
+
+        # RED LINE
+        fig2.add_trace(
+            go.Scatter(
+                x=filtered_df["Date"],
+                y=filtered_df["Turbidity (NTU)"],
+                mode="lines+markers",
+                name="Inlet Turbidity",
+                line=dict(color="red", width=3)
+            )
         )
-    )
 
-    # BLUE LINE
-    fig2.add_trace(
-        go.Scatter(
-            x=filtered_df["Date"],
-            y=filtered_df["Outlet Turbidity (NTU)"],
-            mode="lines+markers",
-            name="Outlet Turbidity",
-            line=dict(color="blue", width=3)
+        # BLUE LINE
+        fig2.add_trace(
+            go.Scatter(
+                x=filtered_df["Date"],
+                y=filtered_df["Outlet Turbidity (NTU)"],
+                mode="lines+markers",
+                name="Outlet Turbidity",
+                line=dict(color="blue", width=3)
+            )
         )
-    )
 
-    fig2.update_layout(
-        height=500,
-        xaxis_title="Date",
-        yaxis_title="Turbidity (NTU)",
-        hovermode="x unified"
-    )
+        fig2.update_layout(
+            height=450,
+            hovermode="x unified",
+            xaxis_title="Date",
+            yaxis_title="Turbidity (NTU)"
+        )
 
-    st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, use_container_width=True)
 
 except FileNotFoundError:
+
     st.error(
         "Excel file not found. "
         "Make sure 'Inlet_outlet_turbidity_dosing_details.xlsx' "
@@ -257,8 +278,8 @@ except FileNotFoundError:
     )
 
 except Exception as e:
-    st.error(f"Error: {e}")
 
+    st.error(f"Error: {e}")
 # ===============================
 # GAUGE FUNCTION WITH ZONES
 # ===============================
