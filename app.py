@@ -59,7 +59,8 @@ else:
 
     history_df["DateTime"] = history_df["Date"]
 
-
+# Drop invalid rows
+history_df = history_df.dropna(subset=["DateTime"])
 
 # Sort
 history_df = history_df.sort_values("DateTime")
@@ -89,14 +90,6 @@ c3.metric("Conductivity", f"{conductivity_today:.0f} µS/cm")
 
 import plotly.graph_objects as go
 
-# ==========================================
-# PAGE CONFIG
-# ==========================================
-
-st.set_page_config(
-    page_title="WTP Dashboard",
-    layout="wide"
-)
 
 # ==========================================
 # LOAD EXCEL FILE
