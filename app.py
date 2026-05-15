@@ -88,80 +88,65 @@ c1.metric("Date", selected_time.strftime("%d-%b-%Y"))
 c2.metric("Raw Turbidity", f"{intake_turb:.2f} NTU")
 c3.metric("Conductivity", f"{conductivity_today:.0f} µS/cm")
 
-from openpyxl import load_workbook
-from openpyxl.styles import Font
-import pandas as pd
-import numpy as np
-from datetime import datetime
-import os
-
-# Load uploaded Excel file
-input_file = "/mnt/data/plant_raw_water_history.xlsx"
-wb = load_workbook(input_file)
-ws = wb["RawWater"]
-
-# Read data into pandas
-df = pd.read_excel(input_file, sheet_name="RawWater")
-
-# Clean columns
-df.columns = [str(c).strip() for c in df.columns]
-
-# Generate Alum Dosage based on turbidity
-def alum_dose(turb):
-    if turb <= 5:
-        return 8
-    elif turb <= 10:
-        return 12
-    elif turb <= 20:
-        return 18
-    elif turb <= 50:
-        return 28
-    elif turb <= 100:
-        return 40
-    elif turb <= 200:
-        return 55
-    else:
-        return 70
-
-df["Alum Dosage (ppm)"] = df["Turbidity (NTU)"].apply(alum_dose)
-
-# Generate outlet turbidity values
-np.random.seed(42)
-df["Outlet Turbidity (NTU)"] = (
-    df["Turbidity (NTU)"] * np.random.uniform(0.015, 0.04, len(df))
-).round(2)
-
-# Ensure outlet turbidity remains realistic
-df["Outlet Turbidity (NTU)"] = df["Outlet Turbidity (NTU)"].clip(lower=0.15, upper=2.0)
-
-# Save enhanced Excel
-output_excel = "/mnt/data/enhanced_wtp_dashboard_data.xlsx"
-with pd.ExcelWriter(output_excel, engine="openpyxl") as writer:
-    df.to_excel(writer, sheet_name="RawWater", index=False)
-
-# Create Streamlit dashboard code
-streamlit_code = r'''
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="WTP Dashboard", layout="wide")
+# ==========================================
+# PAGE CONFIG
+# ==========================================
+st.set_page_config(
+    page_title="WTP Dashboard",
+    layout="wide"
+)
 
-st.title("💧 WTP Turbidity & Alum Dosing Dashboard")
+st.title("💧 Turbidity & Alum Dosing Monitoring")
+# ==========================================
+# LOAD EXCEL FILE
+# ==========================================
 
-uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+file_name = "Inlet_outlet_turbidity_dosing_ details.xlsx"
 
-if uploaded_file:
+try:
+    df = pd.read_excel(file_name, sheet_name="RawWater")
 
-    df = pd.read_excel(uploaded_file, sheet_name="RawWater")
-
+    # Clean column names
     df.columns = [str(c).strip() for c in df.columns]
 
+    # Convert Date column
     df["Date"] = pd.to_datetime(df["Date"])
 
-    # ===============================
+    # ==========================================
+    # TOP METRICS
+    # ==========================================
+
+    latest = df.iloc[-1]
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Date",
+            latest["Date"].strftime("%d-%b-%Y")
+        )
+
+    with col2:
+        st.metric(
+            "Raw Turbidity",
+            f"{latest['Turbidity (NTU)']:.2f} NTU"
+        )
+
+    with col3:
+        if "Conductivity" in df.columns:
+            st.metric(
+                "Conductivity",
+                f"{latest['Conductivity']:.0f} µS/cm"
+            )
+
+    # ==========================================
     # DATE FILTER
-    # ===============================
+    # ==========================================
+
     st.sidebar.header("📅 Date Filter")
 
     start_date = st.sidebar.date_input(
@@ -179,86 +164,95 @@ if uploaded_file:
         (df["Date"] <= pd.to_datetime(end_date))
     ]
 
-    # =========================================
-    # GRAPH 1 : TURBIDITY vs ALUM DOSAGE
-    # =========================================
+    # ==========================================
+    # GRAPH 1
+    # BAR + LINE
+    # ==========================================
 
     st.subheader("📊 Turbidity vs Alum Dosage")
 
     fig1 = go.Figure()
 
-    # Blue Bar Graph
-    fig1.add_trace(go.Bar(
-        x=filtered_df["Date"],
-        y=filtered_df["Turbidity (NTU)"],
-        name="Inlet Turbidity",
-        marker_color="blue",
-        opacity=0.7
-    ))
+    # BLUE BAR
+    fig1.add_trace(
+        go.Bar(
+            x=filtered_df["Date"],
+            y=filtered_df["Turbidity (NTU)"],
+            name="Inlet Turbidity",
+            marker_color="blue",
+            opacity=0.75
+        )
+    )
 
-    # Red Line Graph
-    fig1.add_trace(go.Scatter(
-        x=filtered_df["Date"],
-        y=filtered_df["Alum Dosage (ppm)"],
-        mode="lines+markers",
-        name="Alum Dosage",
-        line=dict(color="red", width=3)
-    ))
+    # RED LINE
+    fig1.add_trace(
+        go.Scatter(
+            x=filtered_df["Date"],
+            y=filtered_df["Alum Dosage (ppm)"],
+            mode="lines+markers",
+            name="Alum Dosage",
+            line=dict(color="red", width=3)
+        )
+    )
 
     fig1.update_layout(
+        height=500,
         xaxis_title="Date",
         yaxis_title="Value",
-        height=500
+        hovermode="x unified"
     )
 
     st.plotly_chart(fig1, use_container_width=True)
 
-    # =========================================
-    # GRAPH 2 : INLET vs OUTLET TURBIDITY
-    # =========================================
+    # ==========================================
+    # GRAPH 2
+    # INLET vs OUTLET TURBIDITY
+    # ==========================================
 
     st.subheader("📈 Inlet vs Outlet Turbidity")
 
     fig2 = go.Figure()
 
-    # Red Line
-    fig2.add_trace(go.Scatter(
-        x=filtered_df["Date"],
-        y=filtered_df["Turbidity (NTU)"],
-        mode="lines+markers",
-        name="Inlet Turbidity",
-        line=dict(color="red", width=3)
-    ))
+    # RED LINE
+    fig2.add_trace(
+        go.Scatter(
+            x=filtered_df["Date"],
+            y=filtered_df["Turbidity (NTU)"],
+            mode="lines+markers",
+            name="Inlet Turbidity",
+            line=dict(color="red", width=3)
+        )
+    )
 
-    # Blue Line
-    fig2.add_trace(go.Scatter(
-        x=filtered_df["Date"],
-        y=filtered_df["Outlet Turbidity (NTU)"],
-        mode="lines+markers",
-        name="Outlet Turbidity",
-        line=dict(color="blue", width=3)
-    ))
+    # BLUE LINE
+    fig2.add_trace(
+        go.Scatter(
+            x=filtered_df["Date"],
+            y=filtered_df["Outlet Turbidity (NTU)"],
+            mode="lines+markers",
+            name="Outlet Turbidity",
+            line=dict(color="blue", width=3)
+        )
+    )
 
     fig2.update_layout(
+        height=500,
         xaxis_title="Date",
         yaxis_title="Turbidity (NTU)",
-        height=500
+        hovermode="x unified"
     )
 
     st.plotly_chart(fig2, use_container_width=True)
 
-else:
-    st.info("Upload the enhanced Excel file to start the dashboard.")
-'''
+except FileNotFoundError:
+    st.error(
+        "Excel file not found. "
+        "Make sure 'Inlet_outlet_turbidity_dosing_details.xlsx' "
+        "is uploaded in your GitHub repository."
+    )
 
-code_file = "/mnt/data/wtp_dashboard_code.py"
-with open(code_file, "w", encoding="utf-8") as f:
-    f.write(streamlit_code)
-
-print("Files created successfully:")
-print(output_excel)
-print(code_file)
-
+except Exception as e:
+    st.error(f"Error: {e}")
 
 # ===============================
 # GAUGE FUNCTION WITH ZONES
