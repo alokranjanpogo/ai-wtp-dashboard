@@ -2109,13 +2109,13 @@ if submit:
 
         msg = f"""
 
-Subject: 🚨 WATER QUALITY ALERT
+Subject:🚨 WATER QUALITY ALERT 🚨
 
 Time: {now}
 
 Raw Turbidity: {raw_turbidity}
 
-Outlet Turbidity: {outlet_turbidity}
+Clarifier Outlet Turbidity: {outlet_turbidity}
 
 Final Turbidity: {final_turbidity}
 
@@ -2192,40 +2192,34 @@ if st.session_state.alarm:
             st.session_state.sound_enabled = True
 
     # =====================================================
-    # SOUND
-    # =====================================================
+# SOUND
+# =====================================================
 
-    if st.session_state.sound_enabled:
+if st.session_state.sound_enabled:
 
-        try:
+    try:
 
-            with open(
-                "mixkit-sport-start-bleeps-918.wav",
-                "rb"
-            ) as f:
+        audio_file = open(
+            "mixkit-sport-start-bleeps-918.wav",
+            "rb"
+        )
 
-                audio_bytes = f.read()
+        audio_bytes = audio_file.read()
 
-            b64 = base64.b64encode(
-                audio_bytes
-            ).decode()
+        st.audio(
+            audio_bytes,
+            format="audio/wav",
+            start_time=0,
+            loop=True
+        )
 
-            st.markdown(f"""
+        st.error("🔊 ALARM SOUND ACTIVE")
 
-            <audio autoplay loop>
+    except Exception as e:
 
-            <source
-            src="data:audio/wav;base64,{b64}"
-            type="audio/wav">
-
-            </audio>
-
-            """, unsafe_allow_html=True)
-
-        except:
-
-            st.warning("⚠️ Alarm sound file missing")
-
+        st.warning(
+            f"⚠️ Alarm sound file missing: {e}"
+        )
     # =====================================================
     # STOP BUTTON
     # =====================================================
