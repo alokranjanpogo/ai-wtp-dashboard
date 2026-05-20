@@ -2410,8 +2410,8 @@ if len(df) > 0:
     with a2:
 
         st.metric(
-            "Average Dose",
-            f"{df['average_dose'].mean():.1f} mg/L"
+            "Alum Dose",
+            f"{df['Alum_dose'].mean():.1f} mg/L"
         )
 
     with a3:
