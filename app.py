@@ -2411,7 +2411,7 @@ if len(df) > 0:
 
         st.metric(
             "Average Dose",
-            f"{df['dose'].mean():.1f} mg/L"
+            f"{df['average_dose'].mean():.1f} mg/L"
         )
 
     with a3:
