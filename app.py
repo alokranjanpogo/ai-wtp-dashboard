@@ -2219,7 +2219,7 @@ if len(df) > 0:
 
     st.line_chart(
 
-    chart_df.set_index("timestamp")[
+     chart_df.set_index("timestamp")[
 
         [
             "raw_turbidity",
