@@ -1719,6 +1719,7 @@ names=["Moharda WT","Zone 9 WT","Zone 3 WT","Zone 1 GSR outlet","Bagunhatu WT","
 tc=st.columns(3)
 for i in range(6):
     tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
+    
 import streamlit as st
 import smtplib
 import pandas as pd
@@ -1872,7 +1873,7 @@ if len(df) > 0:
 
 with left_col:
 
-    st.subheader("🧪 Plant Feedback Entry")
+    st.markdown("Plant Feedback Entry")
 
     c1, c2 = st.columns(2)
 
@@ -1998,7 +1999,7 @@ if submit:
 
     if len(df) >= 30:
 
-        st.markdown("## 🤖 AI Smart Recommendation")
+        st.markdown("Smart Recommendation")
 
         good_data = df[
             (df["final_turbidity"] <= 1)
@@ -2107,9 +2108,7 @@ if submit:
 
         st.session_state.alarm = True
 
-        msg = f"""
-
-Subject:🚨 WATER QUALITY ALERT 🚨
+msg = f"""Subject: 🚨WATER QUALITY ALERT🚨 
 
 Time: {now}
 
