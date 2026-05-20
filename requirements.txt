@@ -11,3 +11,5 @@ requests
 pytz
 streamlit-autorefresh
 edge-tts
+scikit-learn
+xlsxwriter
