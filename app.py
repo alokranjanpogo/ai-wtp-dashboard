@@ -2107,7 +2107,7 @@ if submit:
     ):
 
         st.session_state.alarm = True
-
+        
 msg = f"""Subject: 🚨WATER QUALITY ALERT🚨 
 
 Time: {now}
@@ -2128,7 +2128,7 @@ Immediate operator action required.
 
 """
 
-        send_email_alert(msg)
+send_email_alert(msg)
 
 # =========================================================
 # ACTIVE ALARM DISPLAY
