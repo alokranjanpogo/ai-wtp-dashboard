@@ -2464,11 +2464,19 @@ if len(df) > 0:
     )
 
     st.line_chart(
-        chart_df.set_index("timestamp")[
-            ["raw_turbidity", "dose"]
-        ]
-    )
 
+    chart_df.set_index("timestamp")[
+
+        [
+            "raw_turbidity",
+            "alum_dose",
+            "hypo_dose",
+            "outlet_turbidity"
+        ]
+
+    ]
+
+)
     # ========================================================
     # AI INSIGHT
     # ========================================================
