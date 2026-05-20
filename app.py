@@ -1762,7 +1762,7 @@ def send_email_alert(message):
         server.sendmail(
             sender,
             receiver,
-            message.encode("utf-8")
+            f"Subject: 🚨WATER QUALITY ALERT🚨\n\n{message}"
         )
 
         server.quit()
@@ -2108,7 +2108,6 @@ if submit:
 
         st.session_state.alarm = True
         
-msg = f"""Subject: 🚨WATER QUALITY ALERT🚨 
 
 Time: {now}
 
