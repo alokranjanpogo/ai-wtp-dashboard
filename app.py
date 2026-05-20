@@ -2201,36 +2201,88 @@ if len(df) > 0:
             f"{efficiency:.1f}%"
         )
 
-    # ========================================================
-    # TREND CHART
-    # ========================================================
+    # ===============================
+# TREND GRAPH
+# ===============================
 
-    st.markdown("📈 Treatment Trend")
+if len(df) > 0:
 
-    chart_df = df.copy()
+    st.markdown("## 📈 Treatment Trend")
 
-    chart_df["timestamp"] = pd.to_datetime(
-        chart_df["timestamp"]
-    )
+    try:
 
-    chart_df = chart_df.sort_values(
-        by="timestamp"
-    )
+        chart_df = df.copy()
 
-    st.line_chart(
+        # ==========================================
+        # ENSURE TIMESTAMP
+        # ==========================================
 
-     chart_df.set_index("timestamp")[
+        if "timestamp" not in chart_df.columns:
 
-        [
-            "raw_turbidity",
-            "alum_dose",
-            "hypo_dose",
-            "outlet_turbidity"
-        ]
+            st.error("Timestamp column missing.")
 
-    ]
+        else:
 
-)
+            chart_df["timestamp"] = pd.to_datetime(
+                chart_df["timestamp"],
+                errors="coerce"
+            )
+
+            chart_df = chart_df.dropna(
+                subset=["timestamp"]
+            )
+
+            chart_df = chart_df.sort_values(
+                by="timestamp"
+            )
+
+            # ==========================================
+            # CREATE SAFE COLUMN LIST
+            # ==========================================
+
+            chart_columns = []
+
+            if "raw_turbidity" in chart_df.columns:
+                chart_columns.append("raw_turbidity")
+
+            if "alum_dose" in chart_df.columns:
+                chart_columns.append("alum_dose")
+
+            if "outlet_turbidity" in chart_df.columns:
+                chart_columns.append("outlet_turbidity")
+
+            if "frc" in chart_df.columns:
+                chart_columns.append("frc")
+
+            # ==========================================
+            # SHOW AVAILABLE COLUMNS
+            # ==========================================
+
+            st.write("Available Columns:", chart_df.columns.tolist())
+
+            # ==========================================
+            # PLOT
+            # ==========================================
+
+            if len(chart_columns) > 0:
+
+                st.line_chart(
+
+                    chart_df.set_index(
+                        "timestamp"
+                    )[chart_columns]
+
+                )
+
+            else:
+
+                st.warning(
+                    "No valid chart columns available."
+                )
+
+    except Exception as e:
+
+        st.error(f"Trend graph error: {e}")
     # ========================================================
     # AI INSIGHT
     # ========================================================
