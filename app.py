@@ -1724,19 +1724,17 @@ import smtplib
 import pandas as pd
 import os
 import numpy as np
+import requests
 import base64
-
 from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
+
 
 # ===============================
 # PAGE
 # ===============================
 
-st.set_page_config(
-    page_title="Water Treatment Feedback System",
-    layout="wide"
-)
+st.set_page_config(layout="wide")
 
 st.markdown("## Water Treatment Feedback System")
 
@@ -1754,17 +1752,11 @@ def send_email_alert(message):
 
     try:
 
-        server = smtplib.SMTP(
-            "smtp.gmail.com",
-            587
-        )
+        server = smtplib.SMTP("smtp.gmail.com", 587)
 
         server.starttls()
 
-        server.login(
-            sender,
-            password
-        )
+        server.login(sender, password)
 
         server.sendmail(
             sender,
@@ -1781,17 +1773,11 @@ def send_email_alert(message):
         st.error(f"Email error: {e}")
 
 # ===============================
-# SESSION STATES
+# ALARM STATE
 # ===============================
 
 if "alarm" not in st.session_state:
     st.session_state.alarm = False
-
-if "mail_sent" not in st.session_state:
-    st.session_state.mail_sent = False
-
-if "sound_enabled" not in st.session_state:
-    st.session_state.sound_enabled = True
 
 # ===============================
 # DATA STORAGE
@@ -1800,18 +1786,16 @@ if "sound_enabled" not in st.session_state:
 FILE = "feedback_data.csv"
 
 required_columns = [
-
     "timestamp",
     "raw_turbidity",
-    "alum_dose",
-    "outlet_turbidity",
+    "dose",
+    "final_turbidity",
     "frc"
-
 ]
 
-# ===============================
+# ============================================================
 # LOAD EXISTING DATA
-# ===============================
+# ============================================================
 
 if os.path.exists(FILE):
 
@@ -1819,42 +1803,14 @@ if os.path.exists(FILE):
 
         df = pd.read_csv(FILE)
 
-        # ====================================================
-        # FIX OLD COLUMN NAMES
-        # ====================================================
-
-        if "dose" in df.columns:
-            df.rename(
-                columns={
-                    "dose":"alum_dose"
-                },
-                inplace=True
-            )
-
-        if "final_turbidity" in df.columns:
-            df.rename(
-                columns={
-                    "final_turbidity":"outlet_turbidity"
-                },
-                inplace=True
-            )
-
-        # ====================================================
-        # ENSURE ALL REQUIRED COLUMNS
-        # ====================================================
-
+        # Ensure required columns
         for col in required_columns:
 
             if col not in df.columns:
                 df[col] = None
 
-        # ====================================================
-        # TIMESTAMP FORMAT
-        # ====================================================
-
-        df["timestamp"] = pd.to_datetime(
-            df["timestamp"]
-        )
+        # Convert timestamp
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
 
         # ====================================================
         # KEEP ONLY LAST 3 YEARS DATA
@@ -1862,44 +1818,33 @@ if os.path.exists(FILE):
 
         cutoff_date = datetime.now() - timedelta(days=365*3)
 
-        df = df[
-            df["timestamp"] >= cutoff_date
-        ]
+        df = df[df["timestamp"] >= cutoff_date]
 
-        # ====================================================
-        # SAVE CLEAN DATA
-        # ====================================================
-
+        # Save cleaned data
         df.to_csv(FILE, index=False)
 
     except Exception as e:
 
         st.error(f"Data loading error: {e}")
 
-        df = pd.DataFrame(
-            columns=required_columns
-        )
+        df = pd.DataFrame(columns=required_columns)
 
 else:
 
-    df = pd.DataFrame(
-        columns=required_columns
-    )
+    df = pd.DataFrame(columns=required_columns)
 
     df.to_csv(FILE, index=False)
 
-# ===============================
+# ============================================================
 # ENSURE TIMESTAMP FORMAT
-# ===============================
+# ============================================================
 
 if len(df) > 0:
 
-    df["timestamp"] = pd.to_datetime(
-        df["timestamp"]
-    )
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
 
 # ===============================
-# INPUT SECTION
+# INPUT
 # ===============================
 
 with left_col:
@@ -1908,15 +1853,15 @@ with left_col:
 
     with c1:
 
-        alum_dose = st.slider(
-            "Alum Dose (mg/L)",
+        dose = st.slider(
+            "Dose (mg/L)",
             0.0,
             100.0,
             10.0
         )
 
-        outlet_turbidity = st.number_input(
-            "Outlet Turbidity",
+        final_turbidity = st.number_input(
+            "Final Turbidity",
             0.0,
             50.0,
             1.0
@@ -1944,7 +1889,7 @@ with left_col:
     )
 
 # ===============================
-# MAIN LOGIC
+# MAIN
 # ===============================
 
 if submit:
@@ -1954,29 +1899,22 @@ if submit:
     new = pd.DataFrame([{
 
         "timestamp": now,
-
         "raw_turbidity": raw_turbidity,
-
-        "alum_dose": alum_dose,
-
-        "outlet_turbidity": outlet_turbidity,
-
+        "dose": dose,
+        "final_turbidity": final_turbidity,
         "frc": frc
 
     }])
 
-    # ====================================================
+    # ========================================================
     # APPEND DATA
-    # ====================================================
+    # ========================================================
 
-    df = pd.concat(
-        [df, new],
-        ignore_index=True
-    )
+    df = pd.concat([df, new], ignore_index=True)
 
-    # ====================================================
+    # ========================================================
     # SAVE PERMANENTLY
-    # ====================================================
+    # ========================================================
 
     df.to_csv(FILE, index=False)
 
@@ -1984,26 +1922,20 @@ if submit:
         f"Saved at {now.strftime('%Y-%m-%d %H:%M:%S')}"
     )
 
-    st.info(
-        f"Total Samples: {len(df)}"
-    )
+    st.info(f"Total Samples: {len(df)}")
 
-    # ====================================================
-    # AI RECOMMENDATION
-    # ====================================================
+    # ===============================
+    # AI LOGIC
+    # ===============================
 
     if len(df) >= 30:
 
-        st.markdown("### Smart Recommendation")
+        st.markdown("Smart Recommendation")
 
         good = df[
-
-            (df["outlet_turbidity"] <= 1) &
-
+            (df["final_turbidity"] <= 1) &
             (df["frc"] >= 0.2) &
-
             (df["frc"] <= 1)
-
         ]
 
         if len(good) > 10:
@@ -2011,67 +1943,31 @@ if submit:
             good = good.copy()
 
             good["diff"] = abs(
-
-                good["raw_turbidity"]
-
-                -
-
-                raw_turbidity
-
+                good["raw_turbidity"] - raw_turbidity
             )
 
             similar = good.sort_values(
                 by="diff"
             ).head(10)
 
-            best = similar[
-                "alum_dose"
-            ].mean()
+            best = similar["dose"].mean()
 
             st.success(
-                f"Recommended Alum Dose: {best:.2f} mg/L"
+                f"Recommended Dose: {best:.2f} mg/L"
             )
 
-            # ================================================
-            # LINEAR REGRESSION
-            # ================================================
-
-            try:
-
-                X = good[["raw_turbidity"]]
-
-                y = good["alum_dose"]
-
-                model = LinearRegression()
-
-                model.fit(X, y)
-
-                predicted = model.predict(
-                    [[raw_turbidity]]
-                )[0]
-
-                st.info(
-                    f"AI Predicted Dose: {predicted:.2f} mg/L"
-                )
-
-            except Exception as e:
-
-                st.warning(
-                    f"Prediction issue: {e}"
-                )
-
-            # ================================================
+            # =================================================
             # TREND MESSAGE
-            # ================================================
+            # =================================================
 
-            if best > alum_dose:
+            if best > dose:
 
                 st.warning(
                     "⚠️ Historical data suggests "
                     "slightly higher dosing may improve quality."
                 )
 
-            elif best < alum_dose:
+            elif best < dose:
 
                 st.info(
                     "ℹ️ Historical data suggests "
@@ -2093,143 +1989,124 @@ if submit:
     else:
 
         st.info(
-
-            f"Suggestions will activate after 30 samples "
-
+            f"Suggestions will activates after 30 samples "
             f"(Current: {len(df)})"
-
         )
 
-    # ====================================================
+    # ===============================
     # ALERT + EMAIL
-    # ====================================================
+    # ===============================
 
-    if outlet_turbidity > 1 or frc < 0.2:
+    if final_turbidity > 1 or frc < 0.2:
 
         st.session_state.alarm = True
 
-        if not st.session_state.mail_sent:
-
-            msg = f"""Subject: 🚨 WATER QUALITY ALERT
+        msg = f"""Subject: 🚨 WATER QUALITY ALERT
 
 Time: {now}
 
-Outlet Turbidity: {outlet_turbidity}
+Final Turbidity: {final_turbidity}
 
 FRC: {frc}
 
 Immediate action required.
 """
 
-            send_email_alert(msg)
-
-            st.session_state.mail_sent = True
+        send_email_alert(msg)
 
     else:
-
-        st.session_state.mail_sent = False
 
         st.success("✅ Quality Achieved")
 
 # ===============================
-# ACTIVE ALARM
+# 🔊 ALARM SYSTEM
 # ===============================
+
+if "sound_enabled" not in st.session_state:
+    st.session_state.sound_enabled = False
+
+if not st.session_state.sound_enabled:
+
+    if st.button(
+        "🔊 Enable Alarm Sound",
+        key="enable_sound"
+    ):
+
+        st.session_state.sound_enabled = True
+
+        st.success("Sound Enabled ✅")
+
+# ============================================================
+# ACTIVE ALARM
+# ============================================================
 
 if st.session_state.alarm:
 
     st.error("🚨 CONTINUOUS ALARM ACTIVE")
 
-    # ====================================================
+    # ========================================================
     # FLASHING ALERT
-    # ====================================================
+    # ========================================================
 
     st.markdown("""
-
     <style>
-
     @keyframes blink {
-
         0% { background-color: red; }
-
         50% { background-color: transparent; }
-
         100% { background-color: red; }
-
     }
 
     .alarm-box {
-
         animation: blink 1s infinite;
-
         padding: 20px;
-
         text-align: center;
-
         font-size: 26px;
-
         color: white;
-
         font-weight: bold;
-
     }
-
     </style>
 
     <div class="alarm-box">
-
     🚨 CRITICAL WATER QUALITY ALERT 🚨
-
     </div>
-
     """, unsafe_allow_html=True)
 
-    # ====================================================
+    # ========================================================
     # SOUND
-    # ====================================================
+    # ========================================================
 
-    try:
+    if st.session_state.sound_enabled:
 
-        with open(
-            "mixkit-sport-start-bleeps-918.wav",
-            "rb"
-        ) as f:
+        try:
 
-            data = f.read()
+            with open(
+                "mixkit-sport-start-bleeps-918.wav",
+                "rb"
+            ) as f:
 
-            b64 = base64.b64encode(
-                data
-            ).decode()
+                data = f.read()
 
-        st.markdown(f"""
+                b64 = base64.b64encode(data).decode()
 
-        <audio id="alarmAudio" autoplay loop>
+            st.markdown(f"""
+            <audio autoplay loop>
+                <source
+                src="data:audio/wav;base64,{b64}"
+                type="audio/wav">
+            </audio>
+            """, unsafe_allow_html=True)
 
-            <source
-            src="data:audio/wav;base64,{b64}"
-            type="audio/wav">
+        except Exception as e:
 
-        </audio>
+            st.warning(f"⚠️ Sound issue: {e}")
 
-        <script>
+    else:
 
-        const audio =
-        document.getElementById("alarmAudio");
+        st.warning("🔊 Enable sound once")
 
-        audio.volume = 1.0;
-
-        audio.play();
-
-        </script>
-
-        """, unsafe_allow_html=True)
-
-    except Exception as e:
-
-        st.warning(f"⚠️ Sound issue: {e}")
-
-    # ====================================================
+    # ========================================================
     # STOP BUTTON
-    # ====================================================
+    # ========================================================
 
     if st.button(
         "🔴 Stop Alarm",
@@ -2238,17 +2115,13 @@ if st.session_state.alarm:
 
         st.session_state.alarm = False
 
-        st.session_state.mail_sent = False
-
         st.success("Alarm Stopped")
 
-        st.rerun()
-
 # ===============================
-# DATA TABLE
+# DATA TABLE + DELETE
 # ===============================
 
-st.markdown("## 📂 Stored Data")
+st.markdown("📂 Stored Data")
 
 if st.checkbox("Show Data Table"):
 
@@ -2259,14 +2132,7 @@ if st.checkbox("Show Data Table"):
             ascending=False
         )
 
-        st.dataframe(
-            display_df,
-            use_container_width=True
-        )
-
-        # ================================================
-        # DELETE ROW
-        # ================================================
+        st.dataframe(display_df)
 
         selected_index = st.selectbox(
             "Select row to delete",
@@ -2287,105 +2153,6 @@ if st.checkbox("Show Data Table"):
             st.success("Row deleted!")
 
             st.rerun()
-
-# ===============================
-# TREND GRAPH
-# ===============================
-
-if len(df) > 0:
-
-    st.markdown("## 📈 Treatment Trend")
-
-    chart_df = df.copy()
-
-    chart_df["timestamp"] = pd.to_datetime(
-        chart_df["timestamp"]
-    )
-
-    chart_df = chart_df.sort_values(
-        by="timestamp"
-    )
-
-    st.line_chart(
-
-        chart_df.set_index("timestamp")[
-
-            [
-                "raw_turbidity",
-                "alum_dose",
-                "outlet_turbidity"
-            ]
-
-        ]
-
-    )
-
-# ===============================
-# KPI SECTION
-# ===============================
-
-if len(df) > 0:
-
-    st.markdown("## 📊 Performance Analytics")
-
-    k1, k2, k3 = st.columns(3)
-
-    with k1:
-
-        st.metric(
-            "Total Samples",
-            len(df)
-        )
-
-    with k2:
-
-        st.metric(
-            "Average Alum Dose",
-            f"{df['alum_dose'].mean():.1f} mg/L"
-        )
-
-    with k3:
-
-        st.metric(
-            "Average Outlet Turbidity",
-            f"{df['outlet_turbidity'].mean():.2f}"
-        )
-
-# ===============================
-# AI INSIGHT
-# ===============================
-
-if len(df) > 0:
-
-    latest = df.iloc[-1]
-
-    if latest["outlet_turbidity"] <= 1:
-
-        st.success(
-            "✅ Latest treatment cycle achieved desired water quality."
-        )
-
-    else:
-
-        st.warning(
-            "⚠️ Latest cycle indicates possible coagulation or filtration issue."
-        )
-
-# ===============================
-# DOWNLOAD CSV
-# ===============================
-
-with open(FILE, "rb") as f:
-
-    st.download_button(
-
-        "📥 Download Stored Data",
-
-        f,
-
-        file_name="feedback_data.csv"
-
-    )
 # 📊 AI ANALYTICS DASHBOARD
 # ============================================================
 
