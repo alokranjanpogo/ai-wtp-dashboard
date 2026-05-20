@@ -1719,7 +1719,6 @@ names=["Moharda WT","Zone 9 WT","Zone 3 WT","Zone 1 GSR outlet","Bagunhatu WT","
 tc=st.columns(3)
 for i in range(6):
     tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
-
 import streamlit as st
 import smtplib
 import pandas as pd
@@ -1727,9 +1726,11 @@ import os
 import numpy as np
 import requests
 import base64
-from datetime import datetime, timedelta
-from sklearn.linear_model import LinearRegression
+import sqlite3
+import plotly.graph_objects as go
 
+from datetime import datetime, timedelta
+from sklearn.ensemble import RandomForestRegressor
 
 # ===============================
 # PAGE
@@ -1781,68 +1782,83 @@ if "alarm" not in st.session_state:
     st.session_state.alarm = False
 
 # ===============================
-# DATA STORAGE
+# DATABASE
 # ===============================
 
-FILE = "feedback_data.csv"
+conn = sqlite3.connect(
+    "feedback_data.db",
+    check_same_thread=False
+)
 
-required_columns = [
-    "timestamp",
-    "raw_turbidity",
-    "dose",
-    "final_turbidity",
-    "frc"
-]
+cursor = conn.cursor()
 
-# ============================================================
-# LOAD EXISTING DATA
-# ============================================================
+cursor.execute("""
 
-if os.path.exists(FILE):
+CREATE TABLE IF NOT EXISTS feedback (
+
+    timestamp TEXT,
+
+    raw_turbidity REAL,
+
+    alum_dose REAL,
+
+    hypo_dose REAL,
+
+    outlet_turbidity REAL,
+
+    frc REAL,
+
+    ph REAL,
+
+    conductivity REAL,
+
+    temperature REAL,
+
+    humidity REAL,
+
+    rainfall REAL
+)
+
+""")
+
+conn.commit()
+
+# ===============================
+# WEATHER FETCH
+# ===============================
+
+def get_weather_data():
 
     try:
 
-        df = pd.read_csv(FILE)
+        API_KEY = "f899db331049be78181d1afddbc92935"
 
-        # Ensure required columns
-        for col in required_columns:
+        CITY = "Jamshedpur"
 
-            if col not in df.columns:
-                df[col] = None
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}&units=metric"
 
-        # Convert timestamp
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        data = requests.get(url).json()
 
-        # ====================================================
-        # KEEP ONLY LAST 3 YEARS DATA
-        # ====================================================
+        temperature = data["main"]["temp"]
 
-        cutoff_date = datetime.now() - timedelta(days=365*3)
+        humidity = data["main"]["humidity"]
 
-        df = df[df["timestamp"] >= cutoff_date]
+        rainfall = data.get("rain", {}).get("1h", 0)
 
-        # Save cleaned data
-        df.to_csv(FILE, index=False)
+        return temperature, humidity, rainfall
 
-    except Exception as e:
+    except:
 
-        st.error(f"Data loading error: {e}")
+        return 30,70,0
 
-        df = pd.DataFrame(columns=required_columns)
+# ===============================
+# LOAD DATA
+# ===============================
 
-else:
-
-    df = pd.DataFrame(columns=required_columns)
-
-    df.to_csv(FILE, index=False)
-
-# ============================================================
-# ENSURE TIMESTAMP FORMAT
-# ============================================================
-
-if len(df) > 0:
-
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
+df = pd.read_sql(
+    "SELECT * FROM feedback",
+    conn
+)
 
 # ===============================
 # INPUT
@@ -1854,15 +1870,22 @@ with left_col:
 
     with c1:
 
-        dose = st.slider(
-            "Dose (mg/L)",
+        alum_dose = st.slider(
+            "Alum Dose (mg/L)",
             0.0,
             100.0,
             10.0
         )
 
-        final_turbidity = st.number_input(
-            "Final Turbidity",
+        hypo_dose = st.slider(
+            "Hypo Dose (mg/L)",
+            0.0,
+            20.0,
+            3.0
+        )
+
+        outlet_turbidity = st.number_input(
+            "Outlet Turbidity",
             0.0,
             50.0,
             1.0
@@ -1884,8 +1907,22 @@ with left_col:
             50.0
         )
 
+        ph = st.number_input(
+            "pH",
+            0.0,
+            14.0,
+            7.0
+        )
+
+        conductivity = st.number_input(
+            "Conductivity",
+            0.0,
+            5000.0,
+            350.0
+        )
+
     submit = st.button(
-        "Submit Feedback",
+        "💾 Save Operational Data",
         key="submit_btn"
     )
 
@@ -1897,127 +1934,239 @@ if submit:
 
     now = datetime.now()
 
-    new = pd.DataFrame([{
+    temperature, humidity, rainfall = get_weather_data()
 
-        "timestamp": now,
-        "raw_turbidity": raw_turbidity,
-        "dose": dose,
-        "final_turbidity": final_turbidity,
-        "frc": frc
+    cursor.execute("""
 
-    }])
+    INSERT INTO feedback VALUES (
+        ?,?,?,?,?,?,?,?,?,?,?
+    )
 
-    # ========================================================
-    # APPEND DATA
-    # ========================================================
+    """, (
 
-    df = pd.concat([df, new], ignore_index=True)
+        now.strftime("%Y-%m-%d %H:%M:%S"),
 
-    # ========================================================
-    # SAVE PERMANENTLY
-    # ========================================================
+        raw_turbidity,
 
-    df.to_csv(FILE, index=False)
+        alum_dose,
+
+        hypo_dose,
+
+        outlet_turbidity,
+
+        frc,
+
+        ph,
+
+        conductivity,
+
+        temperature,
+
+        humidity,
+
+        rainfall
+
+    ))
+
+    conn.commit()
 
     st.success(
         f"Saved at {now.strftime('%Y-%m-%d %H:%M:%S')}"
     )
 
-    st.info(f"Total Samples: {len(df)}")
+# ===============================
+# RELOAD DATA
+# ===============================
 
-    # ===============================
-    # AI LOGIC
-    # ===============================
+df = pd.read_sql(
+    "SELECT * FROM feedback",
+    conn
+)
 
-    if len(df) >= 30:
+# ===============================
+# EXPORT EXCEL
+# ===============================
 
-        st.markdown("Smart Recommendation")
+excel_file = "feedback_export.xlsx"
 
-        good = df[
-            (df["final_turbidity"] <= 1) &
-            (df["frc"] >= 0.2) &
-            (df["frc"] <= 1)
-        ]
+df.to_excel(
+    excel_file,
+    index=False
+)
 
-        if len(good) > 10:
+# ===============================
+# KPI SECTION
+# ===============================
 
-            good = good.copy()
+st.markdown("## 📊 Learning Statistics")
 
-            good["diff"] = abs(
-                good["raw_turbidity"] - raw_turbidity
-            )
+k1, k2, k3, k4 = st.columns(4)
 
-            similar = good.sort_values(
-                by="diff"
-            ).head(10)
+good_data = df[
+    (df["outlet_turbidity"] <= 1)
+    &
+    (df["frc"] >= 0.2)
+    &
+    (df["frc"] <= 1)
+]
 
-            best = similar["dose"].mean()
+k1.metric(
+    "Total Samples",
+    len(df)
+)
 
-            st.success(
-                f"Recommended Dose: {best:.2f} mg/L"
-            )
+k2.metric(
+    "Successful Records",
+    len(good_data)
+)
 
-            # =================================================
-            # TREND MESSAGE
-            # =================================================
+if len(df) > 0:
 
-            if best > dose:
+    k3.metric(
+        "Average Alum",
+        f"{df['alum_dose'].mean():.1f} mg/L"
+    )
 
-                st.warning(
-                    "⚠️ Historical data suggests "
-                    "slightly higher dosing may improve quality."
-                )
+    k4.metric(
+        "Average Hypo",
+        f"{df['hypo_dose'].mean():.2f} mg/L"
+    )
 
-            elif best < dose:
+# ===============================
+# AI MODEL
+# ===============================
 
-                st.info(
-                    "ℹ️ Historical data suggests "
-                    "dose optimization potential."
-                )
+if len(good_data) >= 30:
 
-            else:
+    st.markdown("## 🤖 Smart AI Recommendation")
 
-                st.success(
-                    "✅ Current dosing aligns with historical performance."
-                )
+    X = good_data[[
 
-        else:
+        "raw_turbidity",
+        "ph",
+        "conductivity",
+        "temperature",
+        "humidity",
+        "rainfall"
 
-            st.warning(
-                "Collect more good quality operational data."
-            )
+    ]]
 
-    else:
+    y_alum = good_data["alum_dose"]
 
-        st.info(
-            f"Suggestions will activates after 30 samples "
-            f"(Current: {len(df)})"
+    y_hypo = good_data["hypo_dose"]
+
+    alum_model = RandomForestRegressor(
+        n_estimators=300,
+        random_state=42
+    )
+
+    hypo_model = RandomForestRegressor(
+        n_estimators=300,
+        random_state=42
+    )
+
+    alum_model.fit(X, y_alum)
+
+    hypo_model.fit(X, y_hypo)
+
+    temperature, humidity, rainfall = get_weather_data()
+
+    input_data = np.array([[
+
+        raw_turbidity,
+
+        ph,
+
+        conductivity,
+
+        temperature,
+
+        humidity,
+
+        rainfall
+
+    ]])
+
+    predicted_alum = alum_model.predict(
+        input_data
+    )[0]
+
+    predicted_hypo = hypo_model.predict(
+        input_data
+    )[0]
+
+    confidence = min(
+        95,
+        60 + (len(good_data) * 0.7)
+    )
+
+    a1,a2,a3 = st.columns(3)
+
+    a1.metric(
+        "Recommended Alum Dose",
+        f"{predicted_alum:.1f} mg/L"
+    )
+
+    a2.metric(
+        "Recommended Hypo Dose",
+        f"{predicted_hypo:.2f} mg/L"
+    )
+
+    a3.metric(
+        "AI Confidence",
+        f"{confidence:.0f}%"
+    )
+
+    if predicted_alum > alum_dose:
+
+        st.warning(
+            "⚠️ AI suggests higher alum dosing."
         )
 
-    # ===============================
-    # ALERT + EMAIL
-    # ===============================
+    elif predicted_alum < alum_dose:
 
-    if final_turbidity > 1 or frc < 0.2:
+        st.info(
+            "ℹ️ AI indicates alum optimization opportunity."
+        )
 
-        st.session_state.alarm = True
+    if predicted_hypo > hypo_dose:
 
-        msg = f"""Subject: 🚨 WATER QUALITY ALERT
+        st.warning(
+            "⚠️ AI suggests higher chlorination demand."
+        )
 
-Time: {now}
+else:
 
-Final Turbidity: {final_turbidity}
+    remaining = 30 - len(good_data)
+
+    st.info(
+        f"AI activates after {remaining} more successful records."
+    )
+
+# ===============================
+# ALERT + EMAIL
+# ===============================
+
+if outlet_turbidity > 1 or frc < 0.2:
+
+    st.session_state.alarm = True
+
+    msg = f"""Subject: 🚨 WATER QUALITY ALERT
+
+Time: {datetime.now()}
+
+Outlet Turbidity: {outlet_turbidity}
 
 FRC: {frc}
 
 Immediate action required.
 """
 
-        send_email_alert(msg)
+    send_email_alert(msg)
 
-    else:
+else:
 
-        st.success("✅ Quality Achieved")
+    st.success("✅ Quality Achieved")
 
 # ===============================
 # 🔊 ALARM SYSTEM
@@ -2037,44 +2186,53 @@ if not st.session_state.sound_enabled:
 
         st.success("Sound Enabled ✅")
 
-# ============================================================
+# ===============================
 # ACTIVE ALARM
-# ============================================================
+# ===============================
 
 if st.session_state.alarm:
 
     st.error("🚨 CONTINUOUS ALARM ACTIVE")
 
-    # ========================================================
-    # FLASHING ALERT
-    # ========================================================
-
     st.markdown("""
+
     <style>
+
     @keyframes blink {
+
         0% { background-color: red; }
+
         50% { background-color: transparent; }
+
         100% { background-color: red; }
+
     }
 
     .alarm-box {
+
         animation: blink 1s infinite;
+
         padding: 20px;
+
         text-align: center;
+
         font-size: 26px;
+
         color: white;
+
         font-weight: bold;
+
     }
+
     </style>
 
     <div class="alarm-box">
-    🚨 CRITICAL WATER QUALITY ALERT 🚨
-    </div>
-    """, unsafe_allow_html=True)
 
-    # ========================================================
-    # SOUND
-    # ========================================================
+    🚨 CRITICAL WATER QUALITY ALERT 🚨
+
+    </div>
+
+    """, unsafe_allow_html=True)
 
     if st.session_state.sound_enabled:
 
@@ -2090,11 +2248,17 @@ if st.session_state.alarm:
                 b64 = base64.b64encode(data).decode()
 
             st.markdown(f"""
+
             <audio autoplay loop>
+
                 <source
+
                 src="data:audio/wav;base64,{b64}"
+
                 type="audio/wav">
+
             </audio>
+
             """, unsafe_allow_html=True)
 
         except Exception as e:
@@ -2104,10 +2268,6 @@ if st.session_state.alarm:
     else:
 
         st.warning("🔊 Enable sound once")
-
-    # ========================================================
-    # STOP BUTTON
-    # ========================================================
 
     if st.button(
         "🔴 Stop Alarm",
@@ -2119,41 +2279,114 @@ if st.session_state.alarm:
         st.success("Alarm Stopped")
 
 # ===============================
-# DATA TABLE + DELETE
+# DATA TABLE
 # ===============================
 
-st.markdown("📂 Stored Data")
+st.markdown("## 📂 Stored Operational Data")
 
-if st.checkbox("Show Data Table"):
+if len(df) > 0:
 
-    if len(df) > 0:
+    display_df = df.sort_values(
+        by="timestamp",
+        ascending=False
+    )
 
-        display_df = df.sort_values(
-            by="timestamp",
-            ascending=False
+    st.dataframe(
+        display_df,
+        use_container_width=True
+    )
+
+# ===============================
+# DELETE SYSTEM
+# ===============================
+
+if len(df) > 0:
+
+    selected_index = st.selectbox(
+        "Select Row to Delete",
+        df.index
+    )
+
+    if st.button(
+        "🗑 Delete Selected Row"
+    ):
+
+        cursor.execute(
+            "DELETE FROM feedback WHERE rowid = ?",
+            (int(selected_index)+1,)
         )
 
-        st.dataframe(display_df)
+        conn.commit()
 
-        selected_index = st.selectbox(
-            "Select row to delete",
-            df.index
-        )
+        st.success("Row deleted")
 
-        if st.button(
-            "🗑 Delete Selected Row",
-            key="delete_btn"
-        ):
+        st.rerun()
 
-            df = df.drop(
-                selected_index
-            ).reset_index(drop=True)
+# ===============================
+# TREND GRAPH
+# ===============================
 
-            df.to_csv(FILE, index=False)
+if len(df) > 0:
 
-            st.success("Row deleted!")
+    st.markdown("## 📈 Operational Trends")
 
-            st.rerun()
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+
+        x=df["timestamp"],
+
+        y=df["alum_dose"],
+
+        mode="lines+markers",
+
+        name="Alum Dose"
+
+    ))
+
+    fig.add_trace(go.Scatter(
+
+        x=df["timestamp"],
+
+        y=df["hypo_dose"],
+
+        mode="lines+markers",
+
+        name="Hypo Dose"
+
+    ))
+
+    fig.update_layout(
+
+        template="plotly_dark",
+
+        height=450,
+
+        xaxis_title="Timestamp",
+
+        yaxis_title="Dose"
+
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+# ===============================
+# DOWNLOAD EXCEL
+# ===============================
+
+with open(excel_file, "rb") as f:
+
+    st.download_button(
+
+        "📥 Download Excel Data",
+
+        f,
+
+        file_name="feedback_export.xlsx"
+    )
 
 # ============================================================
 # 📊 AI ANALYTICS DASHBOARD
