@@ -2139,45 +2139,45 @@ if st.session_state.alarm:
 
     st.markdown("""
 
-    <style>
+<style>
 
-    @keyframes blink {
+@keyframes blink {
 
-        0% {background-color:red;}
+    0% {background-color:red;}
 
-        50% {background-color:white;}
+    50% {background-color:white;}
 
-        100% {background-color:red;}
+    100% {background-color:red;}
 
-    }
+}
 
-    .alarm-box {
+.alarm-box {
 
-        animation: blink 1s infinite;
+    animation: blink 1s infinite;
 
-        padding: 25px;
+    padding: 25px;
 
-        font-size: 30px;
+    font-size: 30px;
 
-        text-align:center;
+    text-align: center;
 
-        font-weight:bold;
+    font-weight: bold;
 
-        color:black;
+    color: black;
 
-        border-radius:10px;
+    border-radius: 10px;
 
-    }
+}
 
-    </style>
+</style>
 
-    <div class="alarm-box">
+<div class="alarm-box">
 
-    🚨 CRITICAL WATER QUALITY ISSUE 🚨
+🚨 CRITICAL WATER QUALITY ISSUE 🚨
 
-    </div>
+</div>
 
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
     # =====================================================
     # ENABLE SOUND
