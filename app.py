@@ -1733,12 +1733,15 @@ from datetime import datetime
 from sklearn.ensemble import RandomForestRegressor
 
 # =====================================================
-# PAGE
+# PAGE CONFIG
 # =====================================================
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title="AI WTP Feedback System",
+    layout="wide"
+)
 
-st.markdown("## 🧠 Water Treatment Feedback System")
+st.title("🧠 AI Water Treatment Feedback System")
 
 # =====================================================
 # EMAIL FUNCTION
@@ -1766,7 +1769,7 @@ def send_email_alert(message):
 
         server.quit()
 
-        st.success("📧 Email Sent Successfully")
+        st.success("📧 Alert Email Sent")
 
     except Exception as e:
 
@@ -1821,6 +1824,7 @@ CREATE TABLE IF NOT EXISTS feedback (
     humidity REAL,
 
     rainfall REAL
+
 )
 
 """)
@@ -1828,7 +1832,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 conn.commit()
 
 # =====================================================
-# WEATHER API
+# WEATHER FUNCTION
 # =====================================================
 
 def get_weather_data():
@@ -1927,9 +1931,7 @@ with c2:
         350.0
     )
 
-submit = st.button(
-    "💾 Save Operational Data"
-)
+submit = st.button("💾 Save Operational Data")
 
 # =====================================================
 # SAVE DATA
@@ -1975,7 +1977,7 @@ if submit:
 
     conn.commit()
 
-    st.success("✅ Data Saved Successfully")
+    st.success("✅ Operational Data Saved")
 
     st.rerun()
 
@@ -2002,7 +2004,7 @@ export_df.to_excel(
 )
 
 # =====================================================
-# KPIs
+# KPI SECTION
 # =====================================================
 
 st.markdown("## 📊 Performance Analytics")
@@ -2015,7 +2017,7 @@ good_data = df[
     (df["frc"] <= 1)
 ]
 
-a1,a2,a3,a4 = st.columns(4)
+a1, a2, a3, a4 = st.columns(4)
 
 with a1:
 
@@ -2117,22 +2119,28 @@ if len(good_data) >= 30:
         60 + (len(good_data) * 0.7)
     )
 
-    r1,r2,r3 = st.columns(3)
+    r1, r2, r3 = st.columns(3)
 
-    r1.metric(
-        "Recommended Alum",
-        f"{predicted_alum:.1f} mg/L"
-    )
+    with r1:
 
-    r2.metric(
-        "Recommended Hypo",
-        f"{predicted_hypo:.2f} mg/L"
-    )
+        st.metric(
+            "Recommended Alum",
+            f"{predicted_alum:.1f} mg/L"
+        )
 
-    r3.metric(
-        "AI Confidence",
-        f"{confidence:.0f}%"
-    )
+    with r2:
+
+        st.metric(
+            "Recommended Hypo",
+            f"{predicted_hypo:.2f} mg/L"
+        )
+
+    with r3:
+
+        st.metric(
+            "AI Confidence",
+            f"{confidence:.0f}%"
+        )
 
 else:
 
@@ -2254,15 +2262,7 @@ if st.session_state.alarm:
 
         audio.volume = 1.0;
 
-        const playPromise = audio.play();
-
-        if (playPromise !== undefined) {{
-
-            playPromise.catch(error => {{
-                console.log("Autoplay blocked");
-            }});
-
-        }}
+        audio.play();
 
         </script>
 
@@ -2327,7 +2327,7 @@ if len(df) > 0:
 
         conn.commit()
 
-        st.success("Row Deleted Successfully")
+        st.success("✅ Row Deleted")
 
         st.rerun()
 
