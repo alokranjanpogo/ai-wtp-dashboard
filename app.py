@@ -2410,22 +2410,22 @@ if len(df) > 0:
     with a2:
 
         st.metric(
-            "Alum Dose",
-            f"{df['Alum_dose'].mean():.1f} mg/L"
+            "alum Dose",
+            f"{df['alum_dose'].mean():.1f} mg/L"
         )
 
     with a3:
 
         st.metric(
-            "Avg Outlet Turbidity",
-            f"{df['Outlet_turbidity'].mean():.2f}"
+            "Avg outlet Turbidity",
+            f"{df['outlet_turbidity'].mean():.2f}"
         )
 
     with a4:
 
         good_quality = len(
             df[
-                (df["Outlet_turbidity"] <= 1)
+                (df["outlet_turbidity"] <= 1)
             ]
         )
 
