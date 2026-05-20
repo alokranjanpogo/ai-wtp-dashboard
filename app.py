@@ -1735,7 +1735,7 @@ from datetime import datetime, timedelta
 
 st.set_page_config(layout="wide")
 
-st.title("💧 AI WATER TREATMENT FEEDBACK SYSTEM")
+st.subheader("AI WATER TREATMENT FEEDBACK SYSTEM")
 
 left_col, right_col = st.columns([2,1])
 
@@ -2136,7 +2136,7 @@ Immediate operator action required.
 # =========================================================
 
 if st.session_state.alarm:
-
+    st.session_state.sound_enabled = True
     st.error("🚨 ACTIVE WATER QUALITY ALARM")
 
     st.markdown("""
@@ -2191,35 +2191,53 @@ if st.session_state.alarm:
 
             st.session_state.sound_enabled = True
 
-    # =====================================================
-# SOUND
+# =====================================================
+# AUTO PLAY ALARM SOUND
 # =====================================================
 
 if st.session_state.sound_enabled:
 
     try:
 
-        audio_file = open(
+        with open(
             "mixkit-sport-start-bleeps-918.wav",
             "rb"
-        )
+        ) as f:
 
-        audio_bytes = audio_file.read()
+            audio_bytes = f.read()
 
-        st.audio(
-            audio_bytes,
-            format="audio/wav",
-            start_time=0,
-            loop=True
+            b64 = base64.b64encode(
+                audio_bytes
+            ).decode()
+
+        audio_html = f"""
+        <audio autoplay loop id="alarm-audio">
+            <source
+            src="data:audio/wav;base64,{b64}"
+            type="audio/wav">
+        </audio>
+
+        <script>
+
+        var audio = document.getElementById("alarm-audio");
+
+        audio.volume = 1.0;
+
+        audio.play();
+
+        </script>
+        """
+
+        st.components.v1.html(
+            audio_html,
+            height=0
         )
 
         st.error("🔊 ALARM SOUND ACTIVE")
 
     except Exception as e:
 
-        st.warning(
-            f"⚠️ Alarm sound file missing: {e}"
-        )
+        st.warning(f"Alarm sound issue: {e}")
     # =====================================================
     # STOP BUTTON
     # =====================================================
