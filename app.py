@@ -1722,14 +1722,13 @@ for i in range(6):
 import streamlit as st
 import smtplib
 import pandas as pd
-import os
 import numpy as np
 import requests
 import base64
 import sqlite3
 import plotly.graph_objects as go
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from sklearn.ensemble import RandomForestRegressor
 
 # ===============================
@@ -1775,11 +1774,17 @@ def send_email_alert(message):
         st.error(f"Email error: {e}")
 
 # ===============================
-# ALARM STATE
+# SESSION STATES
 # ===============================
 
 if "alarm" not in st.session_state:
     st.session_state.alarm = False
+
+if "mail_sent" not in st.session_state:
+    st.session_state.mail_sent = False
+
+if "sound_enabled" not in st.session_state:
+    st.session_state.sound_enabled = False
 
 # ===============================
 # DATABASE
@@ -1824,7 +1829,7 @@ CREATE TABLE IF NOT EXISTS feedback (
 conn.commit()
 
 # ===============================
-# WEATHER FETCH
+# WEATHER API
 # ===============================
 
 def get_weather_data():
@@ -1856,12 +1861,12 @@ def get_weather_data():
 # ===============================
 
 df = pd.read_sql(
-    "SELECT * FROM feedback",
+    "SELECT rowid,* FROM feedback",
     conn
 )
 
 # ===============================
-# INPUT
+# INPUT SECTION
 # ===============================
 
 with left_col:
@@ -1927,7 +1932,7 @@ with left_col:
     )
 
 # ===============================
-# MAIN
+# SAVE DATA
 # ===============================
 
 if submit:
@@ -1974,12 +1979,14 @@ if submit:
         f"Saved at {now.strftime('%Y-%m-%d %H:%M:%S')}"
     )
 
+    st.rerun()
+
 # ===============================
 # RELOAD DATA
 # ===============================
 
 df = pd.read_sql(
-    "SELECT * FROM feedback",
+    "SELECT rowid,* FROM feedback",
     conn
 )
 
@@ -1989,18 +1996,18 @@ df = pd.read_sql(
 
 excel_file = "feedback_export.xlsx"
 
-df.to_excel(
+export_df = df.drop(columns=["rowid"])
+
+export_df.to_excel(
     excel_file,
     index=False
 )
 
 # ===============================
-# KPI SECTION
+# KPIs
 # ===============================
 
 st.markdown("## 📊 Learning Statistics")
-
-k1, k2, k3, k4 = st.columns(4)
 
 good_data = df[
     (df["outlet_turbidity"] <= 1)
@@ -2009,6 +2016,8 @@ good_data = df[
     &
     (df["frc"] <= 1)
 ]
+
+k1,k2,k3,k4 = st.columns(4)
 
 k1.metric(
     "Total Samples",
@@ -2087,13 +2096,9 @@ if len(good_data) >= 30:
 
     ]])
 
-    predicted_alum = alum_model.predict(
-        input_data
-    )[0]
+    predicted_alum = alum_model.predict(input_data)[0]
 
-    predicted_hypo = hypo_model.predict(
-        input_data
-    )[0]
+    predicted_hypo = hypo_model.predict(input_data)[0]
 
     confidence = min(
         95,
@@ -2117,24 +2122,6 @@ if len(good_data) >= 30:
         f"{confidence:.0f}%"
     )
 
-    if predicted_alum > alum_dose:
-
-        st.warning(
-            "⚠️ AI suggests higher alum dosing."
-        )
-
-    elif predicted_alum < alum_dose:
-
-        st.info(
-            "ℹ️ AI indicates alum optimization opportunity."
-        )
-
-    if predicted_hypo > hypo_dose:
-
-        st.warning(
-            "⚠️ AI suggests higher chlorination demand."
-        )
-
 else:
 
     remaining = 30 - len(good_data)
@@ -2151,7 +2138,9 @@ if outlet_turbidity > 1 or frc < 0.2:
 
     st.session_state.alarm = True
 
-    msg = f"""Subject: 🚨 WATER QUALITY ALERT
+    if not st.session_state.mail_sent:
+
+        msg = f"""Subject: 🚨 WATER QUALITY ALERT
 
 Time: {datetime.now()}
 
@@ -2162,18 +2151,17 @@ FRC: {frc}
 Immediate action required.
 """
 
-    send_email_alert(msg)
+        send_email_alert(msg)
+
+        st.session_state.mail_sent = True
 
 else:
 
-    st.success("✅ Quality Achieved")
+    st.session_state.mail_sent = False
 
 # ===============================
-# 🔊 ALARM SYSTEM
+# ENABLE SOUND
 # ===============================
-
-if "sound_enabled" not in st.session_state:
-    st.session_state.sound_enabled = False
 
 if not st.session_state.sound_enabled:
 
@@ -2234,6 +2222,10 @@ if st.session_state.alarm:
 
     """, unsafe_allow_html=True)
 
+    # ===============================
+    # SOUND
+    # ===============================
+
     if st.session_state.sound_enabled:
 
         try:
@@ -2243,23 +2235,28 @@ if st.session_state.alarm:
                 "rb"
             ) as f:
 
-                data = f.read()
+                audio_bytes = f.read()
 
-                b64 = base64.b64encode(data).decode()
+                b64 = base64.b64encode(
+                    audio_bytes
+                ).decode()
 
-            st.markdown(f"""
+            audio_html = f"""
 
-            <audio autoplay loop>
+            <audio autoplay loop controls>
 
                 <source
-
                 src="data:audio/wav;base64,{b64}"
-
                 type="audio/wav">
 
             </audio>
 
-            """, unsafe_allow_html=True)
+            """
+
+            st.markdown(
+                audio_html,
+                unsafe_allow_html=True
+            )
 
         except Exception as e:
 
@@ -2269,6 +2266,10 @@ if st.session_state.alarm:
 
         st.warning("🔊 Enable sound once")
 
+    # ===============================
+    # STOP BUTTON
+    # ===============================
+
     if st.button(
         "🔴 Stop Alarm",
         key="stop_alarm_btn"
@@ -2276,7 +2277,9 @@ if st.session_state.alarm:
 
         st.session_state.alarm = False
 
-        st.success("Alarm Stopped")
+        st.session_state.mail_sent = False
+
+        st.rerun()
 
 # ===============================
 # DATA TABLE
@@ -2292,33 +2295,31 @@ if len(df) > 0:
     )
 
     st.dataframe(
-        display_df,
+        display_df.drop(columns=["rowid"]),
         use_container_width=True
     )
 
 # ===============================
-# DELETE SYSTEM
+# DELETE ROW
 # ===============================
 
 if len(df) > 0:
 
-    selected_index = st.selectbox(
+    selected_rowid = st.selectbox(
         "Select Row to Delete",
-        df.index
+        display_df["rowid"]
     )
 
-    if st.button(
-        "🗑 Delete Selected Row"
-    ):
+    if st.button("🗑 Delete Selected Row"):
 
         cursor.execute(
-            "DELETE FROM feedback WHERE rowid = ?",
-            (int(selected_index)+1,)
+            "DELETE FROM feedback WHERE rowid=?",
+            (int(selected_rowid),)
         )
 
         conn.commit()
 
-        st.success("Row deleted")
+        st.success("Row Deleted")
 
         st.rerun()
 
@@ -2364,7 +2365,7 @@ if len(df) > 0:
 
         xaxis_title="Timestamp",
 
-        yaxis_title="Dose"
+        yaxis_title="Dose (mg/L)"
 
     )
 
