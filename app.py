@@ -2127,7 +2127,7 @@ Immediate operator action required.
 
 """
 
-send_email_alert(msg)
+    send_email_alert(msg)
 
 # =========================================================
 # ACTIVE ALARM DISPLAY
