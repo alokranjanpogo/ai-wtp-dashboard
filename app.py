@@ -2804,77 +2804,80 @@ if response.status_code == 200:
 
     left, right = st.columns([5,1])
 
-    # ========================================================
-# FUTURE DOSING PREDICTION ENGINE
+# ========================================================
+# FUTURE DOSING PREDICTION ENGINE (FULLY CORRECTED)
 # ========================================================
 
+import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 
 # ========================================================
+# SAFETY CHECKS
+# ========================================================
+
+required_columns = ["Rain", "Humidity", "Temperature"]
+
+for col in required_columns:
+
+    if col not in weather_df.columns:
+
+        weather_df[col] = 0
+
+# ========================================================
+# RAW TURBIDITY SAFETY
+# ========================================================
+
+try:
+    raw_turbidity
+except NameError:
+    raw_turbidity = 50
+
+# ========================================================
+# RESET INDEX
+# ========================================================
+
+weather_df = weather_df.reset_index(drop=True)
+
+# ========================================================
 # TIME SERIES GENERATION
 # ========================================================
-weather_df = weather_df.reset_index(drop=True)
+
 weather_df["DateTime"] = pd.date_range(
-
     start=datetime.now(),
-
-    periods=len(weather_df),
-
+    periods=int(len(weather_df)),
     freq="3h"
-
 )
 
-# ========================================================
-# ADVANCED AI DOSING LOGIC
-# ========================================================
-
-# ========================================================
-# FACTORS CONSIDERED:
-# ========================================================
-# 1. Raw Water Turbidity
-# 2. Rainfall Intensity
-# 3. Temperature
-# 4. Humidity
-# 5. Turbidity Rise Rate
-# 6. Chlorine Decay due to Temperature
-# 7. Weather Instability
-# 8. Operational Safety Margin
-# ========================================================
 # ========================================================
 # PREDICTED TURBIDITY MODEL
 # ========================================================
 
 weather_df["Predicted Turbidity"] = (
 
-    # Base turbidity
     raw_turbidity
 
     +
 
-    # Rain contribution
     (weather_df["Rain"] * 1.5)
 
     +
 
-    # Humidity contribution
     (weather_df["Humidity"] * 0.08)
 
 )
 
 # ========================================================
-# LIMIT RANGE
+# LIMIT TURBIDITY RANGE
 # ========================================================
 
 weather_df["Predicted Turbidity"] = weather_df[
     "Predicted Turbidity"
 ].clip(
-
     lower=5,
-
     upper=500
-
 )
+
 # ========================================================
 # TURBIDITY CHANGE RATE
 # ========================================================
@@ -2913,27 +2916,22 @@ weather_df["Weather Instability"] = (
 
 weather_df["Pred Alum"] = (
 
-    # Base coagulation demand
     (weather_df["Predicted Turbidity"] * 0.11)
 
     +
 
-    # Rain effect
     (weather_df["Rain"] * 0.07)
 
     +
 
-    # Sudden turbidity variation effect
     (weather_df["Turbidity Rise"] * 0.20)
 
     +
 
-    # Weather instability effect
     (weather_df["Weather Instability"] * 0.03)
 
     +
 
-    # Safety operational buffer
     8
 
 )
@@ -2945,11 +2943,8 @@ weather_df["Pred Alum"] = (
 weather_df["Pred Alum"] = weather_df[
     "Pred Alum"
 ].clip(
-
     lower=10,
-
     upper=80
-
 )
 
 # ========================================================
@@ -2958,27 +2953,22 @@ weather_df["Pred Alum"] = weather_df[
 
 weather_df["Pred Chlorine"] = (
 
-    # Base chlorine demand
     (weather_df["Predicted Turbidity"] * 0.012)
 
     +
 
-    # Temperature chlorine decay effect
     (weather_df["Temperature"] * 0.025)
 
     +
 
-    # Humidity impact
     (weather_df["Humidity"] * 0.003)
 
     +
 
-    # Rain impact
     (weather_df["Rain"] * 0.015)
 
     +
 
-    # Operational reserve
     0.45
 
 )
@@ -2990,12 +2980,33 @@ weather_df["Pred Chlorine"] = (
 weather_df["Pred Chlorine"] = weather_df[
     "Pred Chlorine"
 ].clip(
-
     lower=0.5,
-
     upper=5
+)
+
+# ========================================================
+# WEATHER RISK SCORE
+# ========================================================
+
+risk_score = int(
+
+    (
+
+        weather_df["Rain"].mean() * 3
+
+        +
+
+        weather_df["Humidity"].mean() * 0.4
+
+        +
+
+        weather_df["Temperature"].mean() * 0.8
+
+    )
 
 )
+
+risk_score = max(0, min(risk_score, 100))
 
 # ========================================================
 # FUTURE DOSING TREND
@@ -3083,17 +3094,11 @@ with left:
         ),
 
         legend=dict(
-
             orientation="h",
-
             yanchor="bottom",
-
             y=1.02,
-
             xanchor="right",
-
             x=1
-
         ),
 
         xaxis_title="Forecast Time",
@@ -3112,7 +3117,7 @@ with left:
     )
 
 # ========================================================
-# SMALL WEATHER RISK GAUGE
+# WEATHER RISK GAUGE
 # ========================================================
 
 with right:
@@ -3123,21 +3128,21 @@ with right:
 
         value=risk_score,
 
-        title={'text':"Weather Risk"},
+        title={'text': "Weather Risk"},
 
         gauge={
 
-            'axis': {'range':[0,100]},
+            'axis': {'range': [0, 100]},
 
-            'bar': {'color':"cyan"},
+            'bar': {'color': "cyan"},
 
             'steps': [
 
-                {'range':[0,30], 'color':"lightgreen"},
+                {'range': [0, 30], 'color': "lightgreen"},
 
-                {'range':[30,70], 'color':"yellow"},
+                {'range': [30, 70], 'color': "yellow"},
 
-                {'range':[70,100], 'color':"red"}
+                {'range': [70, 100], 'color': "red"}
 
             ]
 
@@ -3163,7 +3168,7 @@ with right:
         use_container_width=True
     )
 
-   # ========================================================
+# ========================================================
 # FINAL AI DECISION SUMMARY
 # ========================================================
 
@@ -3178,11 +3183,8 @@ c1, c2, c3 = st.columns(3)
 with c1:
 
     st.metric(
-
         "Peak Alum Dose",
-
         f"{weather_df['Pred Alum'].max():.1f} mg/L"
-
     )
 
 # ========================================================
@@ -3192,11 +3194,8 @@ with c1:
 with c2:
 
     st.metric(
-
         "Peak Chlorine Dose",
-
         f"{weather_df['Pred Chlorine'].max():.1f} mg/L"
-
     )
 
 # ========================================================
@@ -3249,7 +3248,6 @@ else:
         "Normal treatment performance expected."
 
     )
-
 
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
