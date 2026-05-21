@@ -1736,7 +1736,7 @@ from datetime import datetime, timedelta
 
 st.set_page_config(layout="wide")
 
-st.markdown("AI WATER TREATMENT FEEDBACK SYSTEM")
+st.title("AI WATER TREATMENT FEEDBACK SYSTEM")
 
 left_col, right_col = st.columns([2,1])
 
