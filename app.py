@@ -2134,50 +2134,45 @@ Immediate operator action required.
 # =========================================================
 
 if st.session_state.alarm:
+
     st.session_state.sound_enabled = True
+
     st.error("🚨 ACTIVE WATER QUALITY ALARM")
 
     st.markdown("""
+    <style>
 
-<style>
+    @keyframes blink {
+        0% {
+            background-color: red;
+        }
 
-@keyframes blink {
+        50% {
+            background-color: white;
+        }
 
-    0% {background-color:red;}
+        100% {
+            background-color: red;
+        }
+    }
 
-    50% {background-color:white;}
+    .alarm-box {
+        animation: blink 1s infinite;
+        padding: 25px;
+        font-size: 30px;
+        text-align: center;
+        font-weight: bold;
+        color: black;
+        border-radius: 10px;
+        margin-top: 10px;
+    }
 
-    100% {background-color:red;}
+    </style>
 
-}
-
-.alarm-box {
-
-    animation: blink 1s infinite;
-
-    padding: 25px;
-
-    font-size: 30px;
-
-    text-align: center;
-
-    font-weight: bold;
-
-    color: black;
-
-    border-radius: 10px;
-
-}
-
-</style>
-
-<div class="alarm-box">
-
-🚨 CRITICAL WATER QUALITY ISSUE 🚨
-
-</div>
-
-""", unsafe_allow_html=True)
+    <div class="alarm-box">
+        🚨 CRITICAL WATER QUALITY ISSUE 🚨
+    </div>
+    """, unsafe_allow_html=True)
 
     # =====================================================
     # ENABLE SOUND
