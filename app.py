@@ -1740,6 +1740,9 @@ st.subheader("AI WATER TREATMENT FEEDBACK SYSTEM")
 
 left_col, right_col = st.columns([2,1])
 
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 # =========================================================
 # EMAIL ALERT
 # =========================================================
@@ -1753,7 +1756,24 @@ def send_email_alert(message):
 
     try:
 
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        msg = MIMEMultipart()
+
+        msg["From"] = sender
+
+        msg["To"] = receiver
+
+        msg["Subject"] = "🚨 WATER QUALITY ALERT 🚨"
+
+        body = message
+
+        msg.attach(
+            MIMEText(body, "plain", "utf-8")
+        )
+
+        server = smtplib.SMTP(
+            "smtp.gmail.com",
+            587
+        )
 
         server.starttls()
 
@@ -1762,7 +1782,7 @@ def send_email_alert(message):
         server.sendmail(
             sender,
             receiver,
-            f"Subject: 🚨 WATER QUALITY ALERT 🚨\n\n{message}"
+            msg.as_string()
         )
 
         server.quit()
@@ -1772,6 +1792,7 @@ def send_email_alert(message):
     except Exception as e:
 
         st.error(f"Email Error: {e}")
+       
 
 # =========================================================
 # SESSION STATES
