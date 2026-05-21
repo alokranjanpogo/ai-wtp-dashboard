@@ -3217,9 +3217,6 @@ else:
 
     )
 
-else:
-
-    st.error("Weather API Connection Failed")
 
 # ===============================
 # CUSTOMER END GIS MAP (FIXED)
