@@ -1762,7 +1762,7 @@ def send_email_alert(message):
         server.sendmail(
             sender,
             receiver,
-            f"Subject: 🚨WATER QUALITY ALERT🚨\n\n{message}"
+            f"Subject: 🚨 WATER QUALITY ALERT 🚨\n\n{message}"
         )
 
         server.quit()
@@ -1823,16 +1823,12 @@ required_columns = [
     "time",
     "temperature",
     "humidity",
-
     "raw_turbidity",
     "alum_dose",
     "hypo_dose",
-
     "outlet_turbidity",
     "final_turbidity",
-
     "frc",
-
     "status"
 
 ]
@@ -1873,7 +1869,7 @@ if len(df) > 0:
 
 with left_col:
 
-    st.markdown("Plant Feedback Entry")
+    st.markdown("## Plant Feedback Entry")
 
     c1, c2 = st.columns(2)
 
@@ -1937,7 +1933,7 @@ if submit:
     # HEALTH STATUS
     # =====================================================
 
-    if final_turbidity <= 1 and frc >= 0.2 and frc <= 1:
+    if final_turbidity <= 1 and 0.2 <= frc <= 1:
 
         status = "GOOD"
 
@@ -1978,13 +1974,13 @@ if submit:
     }])
 
     # =====================================================
-    # APPEND
+    # APPEND DATA
     # =====================================================
 
     df = pd.concat([df, new_data], ignore_index=True)
 
     # =====================================================
-    # SAVE TO EXCEL/CSV
+    # SAVE CSV
     # =====================================================
 
     df.to_csv(FILE, index=False)
@@ -1999,7 +1995,7 @@ if submit:
 
     if len(df) >= 30:
 
-        st.markdown("Smart Recommendation")
+        st.markdown("## Smart Recommendation")
 
         good_data = df[
             (df["final_turbidity"] <= 1)
@@ -2041,29 +2037,22 @@ if submit:
                 f"{recommended_hypo:.2f} ppm"
             )
 
-            # =================================================
-            # ADVANCED AI INSIGHTS
-            # =================================================
-
             if raw_turbidity > 150:
 
                 st.warning(
-                    "⚠️ High raw turbidity detected. "
-                    "Increase coagulation monitoring."
+                    "⚠️ High raw turbidity detected."
                 )
 
             if temperature > 35:
 
                 st.warning(
-                    "🌡 High temperature may increase "
-                    "chlorine decay."
+                    "🌡 High temperature may increase chlorine decay."
                 )
 
             if frc < 0.2:
 
                 st.error(
-                    "🚨 Low FRC detected. "
-                    "Disinfection risk possible."
+                    "🚨 Low FRC detected."
                 )
 
             if outlet_turbidity > 10:
@@ -2107,7 +2096,13 @@ if submit:
     ):
 
         st.session_state.alarm = True
-        
+
+        # =================================================
+        # EMAIL MESSAGE
+        # =================================================
+
+        msg = f"""
+🚨 WATER QUALITY ALERT 🚨
 
 Time: {now}
 
@@ -2124,10 +2119,9 @@ Alum Dose: {alum_dose}
 Hypo Dose: {hypo_dose}
 
 Immediate operator action required.
-
 """
 
-    send_email_alert(msg)
+        send_email_alert(msg)
 
 # =========================================================
 # ACTIVE ALARM DISPLAY
@@ -2166,16 +2160,6 @@ if st.session_state.alarm:
     </div>
 
     """, unsafe_allow_html=True)
-
-    # =====================================================
-    # ENABLE SOUND
-    # =====================================================
-
-    if not st.session_state.sound_enabled:
-
-        if st.button("🔊 Enable Alarm Sound"):
-
-            st.session_state.sound_enabled = True
 
 # =====================================================
 # AUTO PLAY ALARM SOUND
@@ -2224,15 +2208,17 @@ if st.session_state.sound_enabled:
     except Exception as e:
 
         st.warning(f"Alarm sound issue: {e}")
-    # =====================================================
-    # STOP BUTTON
-    # =====================================================
 
-    if st.button("🛑 Stop Alarm"):
+# =====================================================
+# STOP BUTTON
+# =====================================================
 
-        st.session_state.alarm = False
+if st.button("🛑 Stop Alarm"):
 
-        st.success("Alarm Stopped")
+    st.session_state.alarm = False
+    st.session_state.sound_enabled = False
+
+    st.success("Alarm Stopped")
 
 # =========================================================
 # ANALYTICS DASHBOARD
@@ -2287,10 +2273,6 @@ if len(df) > 0:
             "Treatment Efficiency",
             f"{efficiency:.1f}%"
         )
-
-# =========================================================
-# HEALTH STATUS
-# =========================================================
 
     if efficiency >= 90:
 
@@ -2382,10 +2364,6 @@ with right_col:
         "Humidity",
         f"{humidity}%"
     )
-
-    # =====================================================
-    # WEATHER INSIGHT
-    # =====================================================
 
     if temperature > 35:
 
