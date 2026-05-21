@@ -2841,7 +2841,40 @@ weather_df["DateTime"] = pd.date_range(
 # 7. Weather Instability
 # 8. Operational Safety Margin
 # ========================================================
+# ========================================================
+# PREDICTED TURBIDITY MODEL
+# ========================================================
 
+weather_df["Predicted Turbidity"] = (
+
+    # Base turbidity
+    raw_turbidity
+
+    +
+
+    # Rain contribution
+    (weather_df["Rain"] * 1.5)
+
+    +
+
+    # Humidity contribution
+    (weather_df["Humidity"] * 0.08)
+
+)
+
+# ========================================================
+# LIMIT RANGE
+# ========================================================
+
+weather_df["Predicted Turbidity"] = weather_df[
+    "Predicted Turbidity"
+].clip(
+
+    lower=5,
+
+    upper=500
+
+)
 # ========================================================
 # TURBIDITY CHANGE RATE
 # ========================================================
