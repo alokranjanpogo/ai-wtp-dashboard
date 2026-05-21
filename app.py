@@ -2805,134 +2805,330 @@ if response.status_code == 200:
     left, right = st.columns([5,1])
 
     # ========================================================
-    # FUTURE DOSING TREND
-    # ========================================================
+# FUTURE DOSING PREDICTION ENGINE
+# ========================================================
 
-    with left:
+import plotly.graph_objects as go
+from datetime import datetime
 
-        st.markdown("📈 Future Dosing Trend")
+# ========================================================
+# TIME SERIES GENERATION
+# ========================================================
 
-        fig = go.Figure()
+weather_df["DateTime"] = pd.date_range(
 
-        # ====================================================
-        # ALUM TREND
-        # ====================================================
+    start=datetime.now(),
 
-        fig.add_trace(go.Scatter(
+    periods=len(weather_df),
 
-            x=weather_df["Time"],
+    freq="3H"
 
-            y=weather_df["Pred Alum"],
+)
 
-            mode='lines+markers',
+# ========================================================
+# ADVANCED AI DOSING LOGIC
+# ========================================================
 
-            name='Predicted Alum Dose',
+# ========================================================
+# FACTORS CONSIDERED:
+# ========================================================
+# 1. Raw Water Turbidity
+# 2. Rainfall Intensity
+# 3. Temperature
+# 4. Humidity
+# 5. Turbidity Rise Rate
+# 6. Chlorine Decay due to Temperature
+# 7. Weather Instability
+# 8. Operational Safety Margin
+# ========================================================
 
-            line=dict(width=3)
+# ========================================================
+# TURBIDITY CHANGE RATE
+# ========================================================
 
-        ))
+weather_df["Turbidity Rise"] = (
 
-        # ====================================================
-        # CHLORINE TREND
-        # ====================================================
+    weather_df["Predicted Turbidity"]
 
-        fig.add_trace(go.Scatter(
+    -
 
-            x=weather_df["Time"],
+    weather_df["Predicted Turbidity"].shift(1)
 
-            y=weather_df["Pred Chlorine"],
+).fillna(0)
 
-            mode='lines+markers',
+# ========================================================
+# WEATHER INSTABILITY INDEX
+# ========================================================
 
-            name='Predicted Chlorine Dose',
+weather_df["Weather Instability"] = (
 
-            line=dict(width=3)
+    (weather_df["Rain"] * 0.4)
 
-        ))
+    +
 
-        # ====================================================
-        # RAINFALL OVERLAY
-        # ====================================================
+    (weather_df["Humidity"] * 0.2)
 
-        fig.add_trace(go.Bar(
+    +
 
-            x=weather_df["Time"],
+    (weather_df["Temperature"] * 0.15)
 
-            y=weather_df["Rain"],
+)
 
-            name='Rainfall',
+# ========================================================
+# ADVANCED ALUM PREDICTION
+# ========================================================
 
-            opacity=0.25
+weather_df["Pred Alum"] = (
 
-        ))
+    # Base coagulation demand
+    (weather_df["Predicted Turbidity"] * 0.11)
 
-        fig.update_layout(
+    +
 
-            height=300,
+    # Rain effect
+    (weather_df["Rain"] * 0.07)
 
-            template="plotly_dark",
+    +
 
-            margin=dict(
-                l=5,
-                r=5,
-                t=25,
-                b=5
-            ),
+    # Sudden turbidity variation effect
+    (weather_df["Turbidity Rise"] * 0.20)
 
-            legend_orientation="h",
+    +
 
-            xaxis_title="Time",
+    # Weather instability effect
+    (weather_df["Weather Instability"] * 0.03)
 
-            yaxis_title="Predicted Dose (mg/L)"
+    +
 
+    # Safety operational buffer
+    8
+
+)
+
+# ========================================================
+# LIMIT ALUM RANGE
+# ========================================================
+
+weather_df["Pred Alum"] = weather_df[
+    "Pred Alum"
+].clip(
+
+    lower=10,
+
+    upper=80
+
+)
+
+# ========================================================
+# ADVANCED CHLORINE PREDICTION
+# ========================================================
+
+weather_df["Pred Chlorine"] = (
+
+    # Base chlorine demand
+    (weather_df["Predicted Turbidity"] * 0.012)
+
+    +
+
+    # Temperature chlorine decay effect
+    (weather_df["Temperature"] * 0.025)
+
+    +
+
+    # Humidity impact
+    (weather_df["Humidity"] * 0.003)
+
+    +
+
+    # Rain impact
+    (weather_df["Rain"] * 0.015)
+
+    +
+
+    # Operational reserve
+    0.45
+
+)
+
+# ========================================================
+# LIMIT CHLORINE RANGE
+# ========================================================
+
+weather_df["Pred Chlorine"] = weather_df[
+    "Pred Chlorine"
+].clip(
+
+    lower=0.5,
+
+    upper=5
+
+)
+
+# ========================================================
+# FUTURE DOSING TREND
+# ========================================================
+
+with left:
+
+    st.markdown("## 📈 Future Dosing Trend")
+
+    fig = go.Figure()
+
+    # ====================================================
+    # ALUM TREND
+    # ====================================================
+
+    fig.add_trace(go.Scatter(
+
+        x=weather_df["DateTime"],
+
+        y=weather_df["Pred Alum"],
+
+        mode='lines+markers',
+
+        name='Predicted Alum Dose',
+
+        line=dict(width=4),
+
+        marker=dict(size=8)
+
+    ))
+
+    # ====================================================
+    # CHLORINE TREND
+    # ====================================================
+
+    fig.add_trace(go.Scatter(
+
+        x=weather_df["DateTime"],
+
+        y=weather_df["Pred Chlorine"],
+
+        mode='lines+markers',
+
+        name='Predicted Chlorine Dose',
+
+        line=dict(width=4),
+
+        marker=dict(size=8)
+
+    ))
+
+    # ====================================================
+    # RAINFALL OVERLAY
+    # ====================================================
+
+    fig.add_trace(go.Bar(
+
+        x=weather_df["DateTime"],
+
+        y=weather_df["Rain"],
+
+        name='Rainfall',
+
+        opacity=0.20
+
+    ))
+
+    # ====================================================
+    # GRAPH SETTINGS
+    # ====================================================
+
+    fig.update_layout(
+
+        height=350,
+
+        template="plotly_white",
+
+        hovermode="x unified",
+
+        margin=dict(
+            l=5,
+            r=5,
+            t=40,
+            b=5
+        ),
+
+        legend=dict(
+
+            orientation="h",
+
+            yanchor="bottom",
+
+            y=1.02,
+
+            xanchor="right",
+
+            x=1
+
+        ),
+
+        xaxis_title="Forecast Time",
+
+        yaxis_title="Predicted Chemical Dose",
+
+        xaxis=dict(
+            tickformat="%H:%M"
         )
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+# ========================================================
+# SMALL WEATHER RISK GAUGE
+# ========================================================
+
+with right:
+
+    fig2 = go.Figure(go.Indicator(
+
+        mode="gauge+number",
+
+        value=risk_score,
+
+        title={'text':"Weather Risk"},
+
+        gauge={
+
+            'axis': {'range':[0,100]},
+
+            'bar': {'color':"cyan"},
+
+            'steps': [
+
+                {'range':[0,30], 'color':"lightgreen"},
+
+                {'range':[30,70], 'color':"yellow"},
+
+                {'range':[70,100], 'color':"red"}
+
+            ]
+
+        }
+
+    ))
+
+    fig2.update_layout(
+
+        height=230,
+
+        margin=dict(
+            l=5,
+            r=5,
+            t=35,
+            b=5
         )
 
-    # ========================================================
-    # SMALL WEATHER RISK GAUGE
-    # ========================================================
+    )
 
-    with right:
-
-        fig2 = go.Figure(go.Indicator(
-
-            mode="gauge+number",
-
-            value=risk_score,
-
-            title={'text':"Weather Risk"},
-
-            gauge={
-
-                'axis': {'range':[0,100]},
-
-                'bar': {'color':"cyan"}
-
-            }
-
-        ))
-
-        fig2.update_layout(
-
-            height=220,
-
-            margin=dict(
-                l=5,
-                r=5,
-                t=35,
-                b=5
-            )
-
-        )
-
-        st.plotly_chart(
-            fig2,
-            use_container_width=True
-        )
+    st.plotly_chart(
+        fig2,
+        use_container_width=True
+    )
 
     # ========================================================
     # FINAL AI DECISION SUMMARY
