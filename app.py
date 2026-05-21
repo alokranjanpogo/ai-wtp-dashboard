@@ -3130,41 +3130,92 @@ with right:
         use_container_width=True
     )
 
-    # ========================================================
-    # FINAL AI DECISION SUMMARY
-    # ========================================================
+   # ========================================================
+# FINAL AI DECISION SUMMARY
+# ========================================================
 
-    st.markdown("✅Smart Decision Summary")
+st.markdown("## ✅ Smart Decision Summary")
 
-    c1, c2, c3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
 
-    with c1:
+# ========================================================
+# PEAK ALUM
+# ========================================================
 
-        st.metric(
-            "Peak Alum Dose",
-            f"{max(predicted_alum):.1f} mg/L"
-        )
+with c1:
 
-    with c2:
+    st.metric(
 
-        st.metric(
-            "Peak Chlorine Dose",
-            f"{max(predicted_chlorine):.1f} mg/L"
-        )
+        "Peak Alum Dose",
 
-    with c3:
+        f"{weather_df['Pred Alum'].max():.1f} mg/L"
 
-        if risk_score > 60:
+    )
 
-            st.error("High Impact")
+# ========================================================
+# PEAK CHLORINE
+# ========================================================
 
-        elif risk_score > 30:
+with c2:
 
-            st.warning("Moderate")
+    st.metric(
 
-        else:
+        "Peak Chlorine Dose",
 
-            st.success("Stable")
+        f"{weather_df['Pred Chlorine'].max():.1f} mg/L"
+
+    )
+
+# ========================================================
+# WEATHER RISK STATUS
+# ========================================================
+
+with c3:
+
+    if risk_score > 60:
+
+        st.error("🔴 High Impact")
+
+    elif risk_score > 30:
+
+        st.warning("🟡 Moderate")
+
+    else:
+
+        st.success("🟢 Stable")
+
+# ========================================================
+# SYSTEM INTERPRETATION
+# ========================================================
+
+if risk_score > 60:
+
+    st.error(
+
+        "⚠️ Severe weather instability detected. "
+        "High probability of turbidity fluctuation "
+        "and increased chemical demand."
+
+    )
+
+elif risk_score > 30:
+
+    st.warning(
+
+        "⚠️ Moderate weather influence detected. "
+        "Operator monitoring and dosing adjustments "
+        "may be required."
+
+    )
+
+else:
+
+    st.success(
+
+        "✅ Weather conditions are operationally stable. "
+        "Normal treatment performance expected."
+
+    )
 
 else:
 
