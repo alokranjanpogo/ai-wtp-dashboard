@@ -2143,17 +2143,9 @@ if st.session_state.alarm:
     <style>
 
     @keyframes blink {
-        0% {
-            background-color: red;
-        }
-
-        50% {
-            background-color: white;
-        }
-
-        100% {
-            background-color: red;
-        }
+        0% { background-color: red; }
+        50% { background-color: white; }
+        100% { background-color: red; }
     }
 
     .alarm-box {
@@ -2172,6 +2164,7 @@ if st.session_state.alarm:
     <div class="alarm-box">
         🚨 CRITICAL WATER QUALITY ISSUE 🚨
     </div>
+
     """, unsafe_allow_html=True)
 
     # =====================================================
