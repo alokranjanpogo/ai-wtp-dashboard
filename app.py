@@ -2311,42 +2311,100 @@ if len(df) > 0:
 # TREND CHART
 # =========================================================
 
-    st.markdown("## 📈 Treatment Trend")
+st.markdown("## 📈 Treatment Trend")
 
-    chart_df = df.copy()
+import plotly.graph_objects as go
 
-    chart_df["timestamp"] = pd.to_datetime(
-        chart_df["timestamp"],
-        errors="coerce"
-    )
+chart_df = df.copy()
 
-    chart_df = chart_df.dropna(
-        subset=["timestamp"]
-    )
+chart_df["timestamp"] = pd.to_datetime(
+    chart_df["timestamp"],
+    errors="coerce"
+)
 
-    chart_df = chart_df.sort_values(
-        by="timestamp"
-    )
+chart_df = chart_df.dropna(
+    subset=["timestamp"]
+)
 
-    chart_columns = [
+chart_df = chart_df.sort_values(
+    by="timestamp"
+)
 
-        "raw_turbidity",
-        "alum_dose",
-        "hypo_dose",
-        "outlet_turbidity",
-        "final_turbidity",
-        "frc"
+fig = go.Figure()
 
-    ]
+# =====================================================
+# ADD PARAMETERS
+# =====================================================
 
-    st.line_chart(
+fig.add_trace(go.Scatter(
+    x=chart_df["timestamp"],
+    y=chart_df["raw_turbidity"],
+    mode='lines+markers',
+    name='Raw Turbidity'
+))
 
-        chart_df.set_index(
-            "timestamp"
-        )[chart_columns]
+fig.add_trace(go.Scatter(
+    x=chart_df["timestamp"],
+    y=chart_df["alum_dose"],
+    mode='lines+markers',
+    name='Alum Dose'
+))
 
-    )
+fig.add_trace(go.Scatter(
+    x=chart_df["timestamp"],
+    y=chart_df["hypo_dose"],
+    mode='lines+markers',
+    name='Hypo Dose'
+))
 
+fig.add_trace(go.Scatter(
+    x=chart_df["timestamp"],
+    y=chart_df["outlet_turbidity"],
+    mode='lines+markers',
+    name='Outlet Turbidity'
+))
+
+fig.add_trace(go.Scatter(
+    x=chart_df["timestamp"],
+    y=chart_df["final_turbidity"],
+    mode='lines+markers',
+    name='Final Turbidity'
+))
+
+fig.add_trace(go.Scatter(
+    x=chart_df["timestamp"],
+    y=chart_df["frc"],
+    mode='lines+markers',
+    name='FRC'
+))
+
+# =====================================================
+# GRAPH SETTINGS
+# =====================================================
+
+fig.update_layout(
+
+    title="Water Treatment Plant Trend Analysis",
+
+    xaxis_title="Time",
+
+    yaxis_title="Values",
+
+    hovermode="x unified",
+
+    height=600,
+
+    legend_title="Parameters"
+)
+
+# =====================================================
+# DISPLAY GRAPH
+# =====================================================
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
 # =========================================================
 # STORED DATA
 # =========================================================
