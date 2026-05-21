@@ -1736,7 +1736,7 @@ from datetime import datetime, timedelta
 
 st.set_page_config(layout="wide")
 
-st.subheader("AI WATER TREATMENT FEEDBACK SYSTEM")
+st.markdown("AI WATER TREATMENT FEEDBACK SYSTEM")
 
 left_col, right_col = st.columns([2,1])
 
@@ -1890,7 +1890,7 @@ if len(df) > 0:
 
 with left_col:
 
-    st.markdown("## Plant Feedback Entry")
+    st.subheader("Plant Feedback Entry")
 
     c1, c2 = st.columns(2)
 
