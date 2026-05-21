@@ -2814,14 +2814,14 @@ from datetime import datetime
 # ========================================================
 # TIME SERIES GENERATION
 # ========================================================
-
+weather_df = weather_df.reset_index(drop=True)
 weather_df["DateTime"] = pd.date_range(
 
     start=datetime.now(),
 
     periods=len(weather_df),
 
-    freq="3H"
+    freq="3h"
 
 )
 
