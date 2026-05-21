@@ -1890,7 +1890,7 @@ if len(df) > 0:
 
 with left_col:
 
-    st.subheader("Plant Feedback Entry")
+    st.markdown("Plant Feedback Entry")
 
     c1, c2 = st.columns(2)
 
