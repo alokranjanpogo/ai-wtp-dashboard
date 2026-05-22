@@ -2459,25 +2459,42 @@ st.markdown("### 🗑 Delete Stored Row")
 
 if len(df) > 0:
 
-    delete_index = st.number_input(
-        "Enter Row Number to Delete",
-        min_value=0,
-        max_value=len(df)-1,
-        step=1
+    display_df = df.sort_values(
+        by="timestamp",
+        ascending=False
+    ).reset_index()
+
+    selected_row = st.selectbox(
+
+        "Select Row To Delete",
+
+        display_df.index,
+
+        format_func=lambda x:
+        f"Row {x} | "
+        f"Time: {display_df.loc[x, 'time']} | "
+        f"Raw Turbidity: {display_df.loc[x, 'raw_turbidity']} | "
+        f"Final Turbidity: {display_df.loc[x, 'final_turbidity']}"
+
     )
 
-    if st.button("Delete Selected Row"):
+    if st.button("🗑 Delete Selected Row"):
 
         try:
 
-            df = df.drop(delete_index)
+            original_index = display_df.loc[
+                selected_row,
+                "index"
+            ]
+
+            df = df.drop(original_index)
 
             df = df.reset_index(drop=True)
 
             df.to_csv(FILE, index=False)
 
             st.success(
-                f"Row {delete_index} deleted successfully"
+                "Selected row deleted successfully"
             )
 
             st.rerun()
