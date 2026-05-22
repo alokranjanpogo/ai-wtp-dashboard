@@ -1835,7 +1835,16 @@ except:
 # DATA STORAGE
 # =========================================================
 
-FILE = "feedback_data.csv"
+DATA_FOLDER = "saved_data"
+
+if not os.path.exists(DATA_FOLDER):
+
+    os.makedirs(DATA_FOLDER)
+
+FILE = os.path.join(
+    DATA_FOLDER,
+    "feedback_data.csv"
+)
 
 required_columns = [
 
@@ -1858,20 +1867,37 @@ required_columns = [
 # LOAD DATA
 # =========================================================
 
-if os.path.exists(FILE):
+try:
 
-    df = pd.read_csv(FILE)
+    if os.path.exists(FILE):
 
-    for col in required_columns:
+        df = pd.read_csv(FILE)
 
-        if col not in df.columns:
-            df[col] = 0
+    else:
 
-else:
+        df = pd.DataFrame(
+            columns=required_columns
+        )
 
-    df = pd.DataFrame(columns=required_columns)
+        df.to_csv(FILE, index=False)
 
-    df.to_csv(FILE, index=False)
+except Exception as e:
+
+    st.error(f"File Load Error: {e}")
+
+    df = pd.DataFrame(
+        columns=required_columns
+    )
+
+# =========================================================
+# ENSURE COLUMNS EXIST
+# =========================================================
+
+for col in required_columns:
+
+    if col not in df.columns:
+
+        df[col] = None
 
 # =========================================================
 # CONVERT TIMESTAMP
