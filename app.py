@@ -1729,7 +1729,7 @@ import requests
 import base64
 
 from datetime import datetime, timedelta
-
+import pytz
 # =========================================================
 # PAGE CONFIG
 # =========================================================
@@ -1974,7 +1974,7 @@ with left_col:
 
 if submit:
 
-    now = datetime.now()
+    now = datetime.now(pytz.timezone("Asia/Kolkata"))
 
     # =====================================================
     # HEALTH STATUS
