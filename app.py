@@ -2451,6 +2451,40 @@ if st.checkbox("Show Stored Data"):
         use_container_width=True
 
     )
+   # =========================================================
+# DELETE ROW OPTION
+# =========================================================
+
+st.markdown("### 🗑 Delete Stored Row")
+
+if len(df) > 0:
+
+    delete_index = st.number_input(
+        "Enter Row Number to Delete",
+        min_value=0,
+        max_value=len(df)-1,
+        step=1
+    )
+
+    if st.button("Delete Selected Row"):
+
+        try:
+
+            df = df.drop(delete_index)
+
+            df = df.reset_index(drop=True)
+
+            df.to_csv(FILE, index=False)
+
+            st.success(
+                f"Row {delete_index} deleted successfully"
+            )
+
+            st.rerun()
+
+        except Exception as e:
+
+            st.error(f"Delete Error: {e}") 
 
 # =========================================================
 # WEATHER PANEL
