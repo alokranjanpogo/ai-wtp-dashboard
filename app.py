@@ -979,67 +979,6 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-# ============================================================
-# ONLY THIS SECTION STYLING
-# ============================================================
-
-st.markdown("""
-<style>
-
-/* =========================================================
-   SECTION POLISH ONLY
-========================================================= */
-
-/* KPI Cards */
-[data-testid="metric-container"] {
-    background: linear-gradient(
-        135deg,
-        rgba(255,255,255,0.92),
-        rgba(248,250,252,0.96)
-    );
-    border: 1px solid rgba(0,0,0,0.06);
-    padding: 14px 12px;
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-/* Graph Card */
-[data-testid="stPlotlyChart"] {
-    background: rgba(255,255,255,0.72);
-    border-radius: 16px;
-    padding: 8px;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-}
-
-/* Alerts */
-.stAlert {
-    border-radius: 12px;
-}
-
-/* Better spacing */
-.block-container {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
-
-/* Cleaner markdown */
-p {
-    line-height: 1.55;
-}
-
-/* Right panel polish */
-[data-testid="stMarkdownContainer"] ul {
-    padding-left: 18px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ============================================================
-# TITLE
-# ============================================================
-
 st.subheader(" Intelligent Alum Dosing Decision System")
 
 # ============================================================
