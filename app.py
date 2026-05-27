@@ -1914,7 +1914,7 @@ except:
 # DATA STORAGE
 # =========================================================
 
-File = "feedback_data.csv"
+FILE = "feedback_data.csv"
 
 required_columns = [
 
