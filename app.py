@@ -1914,16 +1914,7 @@ except:
 # DATA STORAGE
 # =========================================================
 
-DATA_FOLDER = "saved_data"
-
-if not os.path.exists(DATA_FOLDER):
-
-    os.makedirs(DATA_FOLDER)
-
-FILE = os.path.join(
-    DATA_FOLDER,
-    "feedback_data.csv"
-)
+File = "feedback_data.csv"
 
 required_columns = [
 
@@ -1940,25 +1931,23 @@ required_columns = [
     "frc",
     "status"
 
+
 ]
+if not os.path.exists(FILE)
+
+   empty_df = pd.DataFrame(
+       columns=required_columns
+)
+empty_df.to_csv(File, index=False)
 
 # =========================================================
 # LOAD DATA
 # =========================================================
 
+
 try:
 
-    if os.path.exists(FILE):
-
-        df = pd.read_csv(FILE)
-
-    else:
-
-        df = pd.DataFrame(
-            columns=required_columns
-        )
-
-        df.to_csv(FILE, index=False)
+    df = pd.read_csv(FILE)
 
 except Exception as e:
 
@@ -1967,7 +1956,6 @@ except Exception as e:
     df = pd.DataFrame(
         columns=required_columns
     )
-
 # =========================================================
 # ENSURE COLUMNS EXIST
 # =========================================================
@@ -2109,7 +2097,7 @@ if submit:
     # SAVE CSV
     # =====================================================
 
-    df.to_csv(FILE, index=False)
+    df.to_csv(FILE, index=False, encoding='utf-8-sig')
 
     st.success("✅ Feedback Stored Successfully")
 
@@ -2534,7 +2522,7 @@ if st.checkbox("Show Stored Data"):
 # DELETE ROW OPTION
 # =========================================================
 
-st.markdown("### 🗑 Delete Stored Row")
+st.markdown("🗑 Delete Stored Row")
 
 if len(df) > 0:
 
