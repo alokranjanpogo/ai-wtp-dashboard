@@ -980,52 +980,57 @@ import numpy as np
 import plotly.graph_objects as go
 
 # ============================================================
-# PROFESSIONAL MINIMAL UI IMPROVEMENTS
+# ONLY THIS SECTION STYLING
 # ============================================================
 
 st.markdown("""
 <style>
 
-/* Main background */
-.stApp {
-    background-color: #0E1117;
+/* =========================================================
+   SECTION POLISH ONLY
+========================================================= */
+
+/* KPI Cards */
+[data-testid="metric-container"] {
+    background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.92),
+        rgba(248,250,252,0.96)
+    );
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 14px 12px;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-/* Reduce spacing */
+/* Graph Card */
+[data-testid="stPlotlyChart"] {
+    background: rgba(255,255,255,0.72);
+    border-radius: 16px;
+    padding: 8px;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+/* Alerts */
+.stAlert {
+    border-radius: 12px;
+}
+
+/* Better spacing */
 .block-container {
     padding-top: 1rem;
     padding-bottom: 1rem;
 }
 
-/* Metric cards */
-[data-testid="metric-container"] {
-    background-color: #161B22;
-    border: 1px solid rgba(255,255,255,0.05);
-    padding: 12px;
-    border-radius: 10px;
-}
-
-/* Plot container */
-[data-testid="stPlotlyChart"] {
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.05);
-    padding: 8px;
-    background-color: #161B22;
-}
-
-/* Rounded containers */
-[data-testid="stVerticalBlock"] > div {
-    border-radius: 10px;
-}
-
-/* Alerts */
-.stAlert {
-    border-radius: 10px;
-}
-
-/* Better markdown spacing */
+/* Cleaner markdown */
 p {
-    line-height: 1.5;
+    line-height: 1.55;
+}
+
+/* Right panel polish */
+[data-testid="stMarkdownContainer"] ul {
+    padding-left: 18px;
 }
 
 </style>
@@ -1044,14 +1049,7 @@ st.subheader(" Intelligent Alum Dosing Decision System")
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
-# Existing turbidity input
-# Replace this with your existing intake_turb input if already present
-turbidity = st.slider(
-    "Raw Water Turbidity (NTU)",
-    1,
-    400,
-    120
-)
+turbidity = float(intake_turb)
 
 ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
 
@@ -1369,7 +1367,7 @@ else:
 # LAYOUT
 # ============================================================
 
-left, right = st.columns([1.05, 1.15], gap="large")
+left, right = st.columns([1.05, 1.2], gap="large")
 
 # ============================================================
 # 📊 LEFT → GRAPH + METRICS
@@ -1377,7 +1375,7 @@ left, right = st.columns([1.05, 1.15], gap="large")
 
 with left:
 
-    st.markdown("📊 Dosing Decision Curve")
+    st.markdown("### 📊 Dosing Decision Curve")
 
     x = np.linspace(0, 400, 150)
 
@@ -1460,24 +1458,18 @@ with left:
     # ========================================================
 
     fig.update_layout(
-        template="plotly_dark",
-
-        paper_bgcolor="#161B22",
-        plot_bgcolor="#161B22",
-        font=dict(color="#E5E7EB"),
-
+        template="plotly_white",
         height=350,
 
         margin=dict(
             l=10,
             r=10,
-            t=40,
+            t=35,
             b=10
         ),
 
         xaxis_title="Turbidity (NTU)",
         yaxis_title="Alum Dose (mg/L)",
-
         showlegend=False
     )
 
@@ -1488,8 +1480,10 @@ with left:
     )
 
     # ========================================================
-    # METRICS
+    # KPI CARDS
     # ========================================================
+
+    st.markdown("### 📌 Key Performance Indicators")
 
     m1, m2 = st.columns(2)
 
@@ -1523,42 +1517,68 @@ with left:
 
 with right:
 
-    st.markdown("📘 Recommendation Logic")
+    st.markdown("### 📘 AI Recommendation Summary")
 
-    st.markdown(f"""
-### Input Conditions
+    # ========================================================
+    # SUMMARY CARDS
+    # ========================================================
 
-- Turbidity: **{turbidity:.1f} NTU**
-- pH: **{ph:.1f}**
-- Industrial Discharge: **{"Yes" if industrial else "No"}**
-- Risk Category: **{raw_risk}**
-""")
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.info(
+            f"""
+Turbidity  
+### {turbidity:.1f} NTU
+"""
+        )
+
+    with c2:
+        st.info(
+            f"""
+pH Level  
+### {ph:.1f}
+"""
+        )
+
+    st.markdown("")
+
+    # ========================================================
+    # INDUSTRIAL SUMMARY
+    # ========================================================
 
     if industrial:
 
         st.markdown(f"""
-### Industrial Impact
+### 🏭 Industrial Assessment
 
-- Discharge Type: **{industrial_type}**
-- Conductivity: **{conductivity} µS/cm**
-- Water Appearance: **{water_color}**
-- Odor Detected: **{"Yes" if odor_detected else "No"}**
-- Severity Level: **{discharge_level}/5**
-- Severity Category: **{severity_label}**
-- Industrial Correction Factor: **{industrial_factor:.2f}**
+| Parameter | Status |
+|---|---|
+| Discharge Type | **{industrial_type}** |
+| Conductivity | **{conductivity} µS/cm** |
+| Water Appearance | **{water_color}** |
+| Odor Detected | **{"Yes" if odor_detected else "No"}** |
+| Severity | **{severity_label} ({discharge_level}/5)** |
+| Industrial Factor | **{industrial_factor:.2f}** |
 """)
 
-    st.markdown("---")
+    # ========================================================
+    # ENGINEERING ESTIMATES
+    # ========================================================
 
     st.markdown(f"""
-### Standard Engineering Estimates
+### 📐 Engineering Model Estimates
 
-- CPHEEO Model: **{cpheeo:.1f} mg/L**
-- AWWA Model: **{awwa:.1f} mg/L**
-- BIS Estimate: **{bis:.1f} mg/L**
+| Model | Dose |
+|---|---|
+| CPHEEO | **{cpheeo:.1f} mg/L** |
+| AWWA | **{awwa:.1f} mg/L** |
+| BIS | **{bis:.1f} mg/L** |
 """)
 
-    st.markdown("---")
+    # ========================================================
+    # JAR TEST STATUS
+    # ========================================================
 
     if jar_available:
 
@@ -1572,36 +1592,77 @@ with right:
             "⚠️ Jar Test not used — relying on theoretical models"
         )
 
-    st.markdown("---")
+    # ========================================================
+    # FINAL RECOMMENDATION
+    # ========================================================
 
     st.markdown(f"""
-# ✅ Final AI Recommendation
+### ✅ Final AI Recommendation
 
-👉 **{ai_dose:.1f} mg/L Alum Dose Recommended**
+## {ai_dose:.1f} mg/L Alum Dose
 
-### Applied Engineering Corrections
+### Applied Corrections
 
-✔ pH Factor: **{ph_factor:.2f}**  
-✔ Industrial Factor: **{industrial_factor:.2f}**  
-✔ Turbidity Factor: **{turb_factor:.2f}**
+| Factor | Value |
+|---|---|
+| pH Factor | **{ph_factor:.2f}** |
+| Industrial Factor | **{industrial_factor:.2f}** |
+| Turbidity Factor | **{turb_factor:.2f}** |
 
 ### Expected Outcomes
 
-✔ Effective coagulation  
-✔ Stable sludge blanket  
-✔ Reduced filter loading  
-✔ Improved settling efficiency  
-✔ Better filtration stability
+- Effective coagulation
+- Stable sludge blanket
+- Reduced filter loading
+- Improved settling efficiency
+- Better filtration stability
 
 ### Chemical Requirement
 
- Alum Requirement: **{alum_kg_day:,.0f} kg/day**  
- PAC Equivalent Dose: **{pac_dose:.1f} mg/L**
+- Alum Requirement:
+  **{alum_kg_day:,.0f} kg/day**
+
+- PAC Equivalent Dose:
+  **{pac_dose:.1f} mg/L**
 
 ### AI Confidence
 
-🎯 Confidence Level: **{confidence}%**
+🎯 **{confidence}%**
 """)
+
+# ============================================================
+# ALERT SYSTEM
+# ============================================================
+
+st.markdown("---")
+st.markdown("### 🚨 Intelligent Alert System")
+
+if ai_dose > 80:
+
+    st.error(
+        "🔴 Extremely high chemical demand detected. "
+        "Consider PAC optimization or pre-treatment."
+    )
+
+elif turbidity > 300:
+
+    st.warning(
+        "🟠 Severe raw water turbidity detected. "
+        "Closely monitor sludge blanket and filter loading."
+    )
+
+elif jar_available and abs(ai_dose - jar_dose) > 5:
+
+    st.warning(
+        "🟡 AI recommendation deviates from Jar Test. "
+        "Verify coagulation conditions."
+    )
+
+else:
+
+    st.success(
+        "🟢 System operating within optimal dosing conditions."
+    )
 
 # ============================================================
 # ALERT SYSTEM
