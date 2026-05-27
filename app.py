@@ -914,7 +914,7 @@ else:
 # INTERPRETATION BOX
 # ===============================
 
-st.subheader("### Interpretation")
+st.subheader("Interpretation")
 
 st.info(f"""
 - **Unit Selected:** {unit_type}  
@@ -979,10 +979,63 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-st.subheader(" Intelligent Alum Dosing Decision System")
+# ============================================================
+# PROFESSIONAL MINIMAL UI IMPROVEMENTS
+# ============================================================
 
-import numpy as np
-import plotly.graph_objects as go
+st.markdown("""
+<style>
+
+/* Main background */
+.stApp {
+    background-color: #0E1117;
+}
+
+/* Reduce spacing */
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* Metric cards */
+[data-testid="metric-container"] {
+    background-color: #161B22;
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 12px;
+    border-radius: 10px;
+}
+
+/* Plot container */
+[data-testid="stPlotlyChart"] {
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 8px;
+    background-color: #161B22;
+}
+
+/* Rounded containers */
+[data-testid="stVerticalBlock"] > div {
+    border-radius: 10px;
+}
+
+/* Alerts */
+.stAlert {
+    border-radius: 10px;
+}
+
+/* Better markdown spacing */
+p {
+    line-height: 1.5;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# TITLE
+# ============================================================
+
+st.subheader(" Intelligent Alum Dosing Decision System")
 
 # ============================================================
 # INPUTS
@@ -991,7 +1044,14 @@ import plotly.graph_objects as go
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
-turbidity = float(intake_turb) # from existing slider/input
+# Existing turbidity input
+# Replace this with your existing intake_turb input if already present
+turbidity = st.slider(
+    "Raw Water Turbidity (NTU)",
+    1,
+    400,
+    120
+)
 
 ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
 
@@ -1019,10 +1079,6 @@ if industrial:
             "Mixed Effluent"
         ]
     )
-
-    # ========================================================
-    # INDUSTRIAL WATER QUALITY INDICATORS
-    # ========================================================
 
     st.markdown("🧪 Industrial Impact Indicators")
 
@@ -1052,29 +1108,24 @@ if industrial:
 
     severity_score = 0
 
-    # Conductivity effect
     if conductivity > 1200:
         severity_score += 2
 
     elif conductivity > 800:
         severity_score += 1
 
-    # pH abnormality
     if ph < 6 or ph > 8.5:
         severity_score += 1
 
-    # Turbidity effect
     if turbidity > 250:
         severity_score += 2
 
     elif turbidity > 120:
         severity_score += 1
 
-    # Odor effect
     if odor_detected:
         severity_score += 1
 
-    # Color effect
     if water_color == "Highly Colored":
         severity_score += 2
 
@@ -1110,16 +1161,19 @@ if industrial:
     # ========================================================
 
     if discharge_level >= 5:
+
         st.error(
             f"🔴 Industrial Severity: {severity_label}"
         )
 
     elif discharge_level >= 3:
+
         st.warning(
             f"🟠 Industrial Severity: {severity_label}"
         )
 
     else:
+
         st.success(
             f"🟢 Industrial Severity: {severity_label}"
         )
@@ -1226,6 +1280,7 @@ if jar_available:
     deviation = abs(jar_dose - cpheeo)
 
     if deviation > 25:
+
         st.warning(
             "⚠️ Jar Test significantly differs from theoretical estimate"
         )
@@ -1251,7 +1306,6 @@ else:
 
 ai_dose = ai_dose * ph_factor * industrial_factor * turb_factor
 
-# Safety limit
 ai_dose = float(np.clip(ai_dose, 5, 150))
 
 # ============================================================
@@ -1260,7 +1314,6 @@ ai_dose = float(np.clip(ai_dose, 5, 150))
 
 alum_kg_day = (ai_dose * flow_m3_day) / 1000
 
-# PAC generally requires lower dose than alum
 pac_dose = ai_dose * 0.45
 
 # ============================================================
@@ -1301,19 +1354,22 @@ confidence = max(confidence, 60)
 # ============================================================
 
 if ai_dose > 80:
+
     st.error("🔴 High Chemical Demand")
 
 elif ai_dose > 40:
+
     st.warning("🟡 Moderate Condition")
 
 else:
+
     st.success("🟢 Normal Operation")
 
 # ============================================================
 # LAYOUT
 # ============================================================
 
-left, right = st.columns([1.1, 1.4])
+left, right = st.columns([1.05, 1.15], gap="large")
 
 # ============================================================
 # 📊 LEFT → GRAPH + METRICS
@@ -1325,7 +1381,6 @@ with left:
 
     x = np.linspace(0, 400, 150)
 
-    # More realistic nonlinear curve
     y_ai = (
         8 +
         0.22 * x +
@@ -1406,37 +1461,61 @@ with left:
 
     fig.update_layout(
         template="plotly_dark",
+
+        paper_bgcolor="#161B22",
+        plot_bgcolor="#161B22",
+        font=dict(color="#E5E7EB"),
+
         height=350,
+
         margin=dict(
             l=10,
             r=10,
             t=40,
             b=10
         ),
+
         xaxis_title="Turbidity (NTU)",
         yaxis_title="Alum Dose (mg/L)",
+
         showlegend=False
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"displayModeBar": False}
+    )
 
     # ========================================================
     # METRICS
     # ========================================================
 
-    st.metric("Recommended Alum Dose", f"{ai_dose:.1f} mg/L")
+    m1, m2 = st.columns(2)
 
-    st.metric(
-        "Alum Required",
-        f"{alum_kg_day:,.0f} kg/day"
-    )
+    with m1:
 
-    st.metric("Raw Water Risk", raw_risk)
+        st.metric(
+            "Recommended Alum Dose",
+            f"{ai_dose:.1f} mg/L"
+        )
 
-    st.metric(
-        "Prediction Confidence",
-        f"{confidence}%"
-    )
+        st.metric(
+            "Raw Water Risk",
+            raw_risk
+        )
+
+    with m2:
+
+        st.metric(
+            "Alum Required",
+            f"{alum_kg_day:,.0f} kg/day"
+        )
+
+        st.metric(
+            "Prediction Confidence",
+            f"{confidence}%"
+        )
 
 # ============================================================
 # 📘 RIGHT → DECISION PANEL
