@@ -1937,8 +1937,8 @@ if not os.path.exists(FILE):
 
    empty_df = pd.DataFrame(
        columns=required_columns
-)
-empty_df.to_csv(FILE, index=False)
+   )
+   empty_df.to_csv(FILE, index=False)
 
 # =========================================================
 # LOAD DATA
