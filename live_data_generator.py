@@ -182,14 +182,51 @@ while True:
     )
 
     # ======================================
-    # SAVE EXCEL FILES
-    # ======================================
+# APPEND RAW WATER DATA
+# ======================================
 
-    raw_df.to_excel(raw_file, index=False)
+if os.path.exists(raw_file):
 
-    turb_df.to_excel(turb_file, index=False)
+    old_raw = pd.read_excel(raw_file)
 
-    trend_df.to_excel(filter_file, index=False)
+    raw_df = pd.concat(
+        [old_raw, raw_df],
+        ignore_index=True
+    )
+
+raw_df.to_excel(raw_file, index=False)
+
+# ======================================
+# APPEND TURBIDITY DATA
+# ======================================
+
+if os.path.exists(turb_file):
+
+    old_turb = pd.read_excel(turb_file)
+
+    turb_df = pd.concat(
+        [old_turb, turb_df],
+        ignore_index=True
+    )
+
+turb_df.to_excel(turb_file, index=False)
+
+# ======================================
+# APPEND FILTER DATA
+# ======================================
+
+if os.path.exists(filter_file):
+
+    old_filter = pd.read_excel(filter_file)
+
+    trend_df = pd.concat(
+        [old_filter, trend_df],
+        ignore_index=True
+    )
+
+trend_df.to_excel(filter_file, index=False)
+
+
 
     print("Live WTP Data Updated")
 
