@@ -52,16 +52,16 @@ else:
     # REAL-TIME GENERATED DATA
     # ======================================
 
-    history_df = pd.read_csv(
-        "live_raw_water_data.csv"
+    history_df = pd.read_excel(
+        "live_raw_water_data.xlsx"
     )
 
-    df = pd.read_csv(
-        "live_turbidity_data.csv"
+    df = pd.read_excel(
+        "live_turbidity_data.xlsx"
     )
 
-    trend_df = pd.read_csv(
-        "live_filterbed_data.csv"
+    trend_df = pd.read_excel(
+        "live_filterbed_data.xlsx"
     )
 
     st.sidebar.success("Real-Time Data Mode Active")
