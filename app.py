@@ -952,20 +952,8 @@ def gauge(title,value,max_val,mode="normal"):
     return fig
 
 # ============================================================
-# SMART CLARIFIER + FILTER BED MONITORING SYSTEM
-# FINAL STATIC + DYNAMIC VERSION
-# ============================================================
-
-import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import random
-import pytz
-from datetime import datetime
-import base64
-
-# ============================================================
-# TITLE
+# SMART CLARIFIER + FILTER BED MONITORING
+# FINAL PROFESSIONAL VERSION
 # ============================================================
 
 st.markdown("---")
@@ -985,18 +973,6 @@ monitor_mode = st.radio(
 
     index=0
 
-)
-
-# ============================================================
-# LOAD DATA
-# ============================================================
-
-trend_df = pd.read_excel(
-    "Moharda_WTP_2026_Realistic_Adjusted.xlsx"
-)
-
-trend_df["Date"] = pd.to_datetime(
-    trend_df["Date"]
 )
 
 # ============================================================
@@ -1030,27 +1006,27 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.subheader("🌀 Clarifier Live Monitoring")
+st.subheader("🌀 Smart Clarifier Monitoring")
 
 # ============================================================
-# VALUES
+# LIVE / STATIC VALUES
 # ============================================================
 
 if monitor_mode == "🟢 Dynamic Live Monitoring":
 
     clar_inlet = round(
-        random.uniform(25, 120),
+        random.uniform(25,120),
         2
     )
 
     clar_outlet = round(
-        random.uniform(0.8, 8.5),
+        random.uniform(0.8,8.5),
         2
     )
 
     clar_cond = round(
-        random.uniform(280, 420),
-        2
+        random.uniform(280,420),
+        0
     )
 
 else:
@@ -1072,20 +1048,20 @@ else:
     ].iloc[0]
 
 # ============================================================
-# HEALTH STATUS
+# CLARIFIER STATUS
 # ============================================================
 
 if clar_outlet <= 5:
 
-    clar_health = "🟢 Healthy"
+    clar_health = "🟢 HEALTHY"
 
 elif clar_outlet <= 10:
 
-    clar_health = "🟡 Moderate"
+    clar_health = "🟡 MODERATE"
 
 else:
 
-    clar_health = "🔴 Critical"
+    clar_health = "🔴 CRITICAL"
 
 # ============================================================
 # SPEEDOMETER GAUGE
@@ -1093,9 +1069,22 @@ else:
 
 fig_clar = go.Figure(go.Indicator(
 
-    mode="gauge+number",
+    mode="gauge+number+delta",
 
     value=clar_outlet,
+
+    delta={
+
+        'reference': clar_outlet - random.uniform(0.2,1),
+
+        'increasing': {
+            'color': "#28a745"
+        },
+
+        'decreasing': {
+            'color': "#dc3545"
+        }
+    },
 
     number={
         'suffix': " NTU",
@@ -1115,7 +1104,7 @@ fig_clar = go.Figure(go.Indicator(
     gauge={
 
         'axis': {
-            'range': [0,20]
+            'range':[0,20]
         },
 
         'bar': {
@@ -1129,7 +1118,7 @@ fig_clar = go.Figure(go.Indicator(
 
         'bordercolor': "#0077b6",
 
-        'steps': [
+        'steps':[
 
             {
                 'range':[0,5],
@@ -1156,11 +1145,12 @@ fig_clar.update_layout(
     height=420,
 
     transition={
-        'duration': 800,
+        'duration': 900,
         'easing': 'cubic-in-out'
     },
 
-    uirevision="clarifier_speedometer"
+    uirevision="clarifier_live"
+
 )
 
 st.plotly_chart(
@@ -1169,7 +1159,7 @@ st.plotly_chart(
 )
 
 # ============================================================
-# METRICS
+# CLARIFIER METRICS
 # ============================================================
 
 m1,m2,m3,m4 = st.columns(4)
@@ -1195,7 +1185,7 @@ m4.metric(
 )
 
 # ============================================================
-# ANALYSIS
+# CLARIFIER ANALYSIS
 # ============================================================
 
 st.markdown("### Analysis")
@@ -1242,7 +1232,7 @@ for i in range(1,7):
     if monitor_mode == "🟢 Dynamic Live Monitoring":
 
         filter_outlet = round(
-            random.uniform(0.08, 1.5),
+            random.uniform(0.08,1.5),
             2
         )
 
@@ -1262,19 +1252,35 @@ for i in range(1,7):
 
     if filter_outlet <= 0.3:
 
-        status = "🟢 Excellent"
+        status = "🟢 NORMAL"
+
+        bg = "#d4edda"
+
+        text = "#155724"
 
     elif filter_outlet <= 0.7:
 
-        status = "🟡 Good"
+        status = "🟡 GOOD"
+
+        bg = "#fff3cd"
+
+        text = "#856404"
 
     elif filter_outlet <= 1:
 
-        status = "🟠 Warning"
+        status = "🟠 WARNING"
+
+        bg = "#ffe5b4"
+
+        text = "#9c5700"
 
     else:
 
-        status = "🔴 Backwash Needed"
+        status = "🔴 BACKWASH NEEDED"
+
+        bg = "#f8d7da"
+
+        text = "#721c24"
 
         alarm_triggered = True
 
@@ -1287,7 +1293,11 @@ for i in range(1,7):
             2
         ),
 
-        "Status": status
+        "Status": status,
+
+        "BG": bg,
+
+        "TEXT": text
 
     })
 
@@ -1362,7 +1372,7 @@ for i in range(1,7):
 
         paper_bgcolor="#f5f7fa",
 
-        height=135,
+        height=140,
 
         margin=dict(
             l=5,
@@ -1372,11 +1382,12 @@ for i in range(1,7):
         ),
 
         transition={
-            'duration': 800,
+            'duration': 900,
             'easing': 'cubic-in-out'
         },
 
         uirevision=f"fb_{i}"
+
     )
 
     cols[i-1].plotly_chart(
@@ -1421,52 +1432,45 @@ st.subheader("📋 Filter Bed Summary")
 
 for item in filter_summary:
 
-    if "Excellent" in item["Status"]:
-
-        bg = "#d4edda"
-        text = "#155724"
-
-    elif "Good" in item["Status"]:
-
-        bg = "#fff3cd"
-        text = "#856404"
-
-    elif "Warning" in item["Status"]:
-
-        bg = "#ffe5b4"
-        text = "#9c5700"
-
-    else:
-
-        bg = "#f8d7da"
-        text = "#721c24"
-
     st.markdown(
         f"""
         <div style="
-            background-color:{bg};
-            padding:12px;
-            border-radius:12px;
+            background-color:{item['BG']};
+            padding:14px;
+            border-radius:14px;
             margin-bottom:10px;
-            border-left:8px solid {text};
+            border-left:8px solid {item['TEXT']};
+            box-shadow:0 2px 8px rgba(0,0,0,0.08);
         ">
 
-        <h4 style="margin:0;color:{text};">
-            {item['Filter Bed']}
+        <h4 style="
+            margin:0;
+            color:{item['TEXT']};
+        ">
+
+        {item['Filter Bed']}
+
         </h4>
 
         <p style="
             font-size:18px;
             font-weight:bold;
-            color:{text};
+            color:{item['TEXT']};
             margin:4px 0;
         ">
-            {item['Status']}
+
+        {item['Status']}
+
         </p>
 
-        <p style="color:{text}; margin:0;">
-            Outlet Turbidity:
-            {item['Outlet Turbidity']} NTU
+        <p style="
+            color:{item['TEXT']};
+            margin:0;
+        ">
+
+        Outlet Turbidity:
+        {item['Outlet Turbidity']} NTU
+
         </p>
 
         </div>
@@ -1481,11 +1485,39 @@ for item in filter_summary:
 st.markdown("---")
 st.subheader("📈 Output Turbidity Trend")
 
+# ============================================================
+# UNIT SELECTOR
+# ============================================================
+
+selected_unit = st.selectbox(
+
+    "Select Unit",
+
+    [
+        "Clarifier",
+        "Filter Bed 1",
+        "Filter Bed 2",
+        "Filter Bed 3",
+        "Filter Bed 4",
+        "Filter Bed 5",
+        "Filter Bed 6"
+    ]
+
+)
+
+# ============================================================
+# LIVE MODE
+# ============================================================
+
 if monitor_mode == "🟢 Dynamic Live Monitoring":
 
     if "hist_trend" not in st.session_state:
 
-        st.session_state.hist_trend = pd.DataFrame({
+        st.session_state.hist_trend = {}
+
+    if selected_unit not in st.session_state.hist_trend:
+
+        st.session_state.hist_trend[selected_unit] = pd.DataFrame({
 
             "Time": [],
 
@@ -1493,16 +1525,29 @@ if monitor_mode == "🟢 Dynamic Live Monitoring":
 
         })
 
-    hist_df = st.session_state.hist_trend
+    hist_df = st.session_state.hist_trend[selected_unit]
 
     current_time = datetime.now(
         pytz.timezone("Asia/Kolkata")
     ).strftime("%H:%M:%S")
 
-    new_output = round(
-        random.uniform(0.08, 1.5),
-        2
-    )
+    # ========================================================
+    # LIVE VALUES
+    # ========================================================
+
+    if selected_unit == "Clarifier":
+
+        new_output = round(
+            random.uniform(1.5,8),
+            2
+        )
+
+    else:
+
+        new_output = round(
+            random.uniform(0.08,1.5),
+            2
+        )
 
     new_row = pd.DataFrame({
 
@@ -1513,13 +1558,13 @@ if monitor_mode == "🟢 Dynamic Live Monitoring":
     })
 
     hist_df = pd.concat(
-        [hist_df, new_row],
+        [hist_df,new_row],
         ignore_index=True
     )
 
     hist_df = hist_df.tail(25)
 
-    st.session_state.hist_trend = hist_df
+    st.session_state.hist_trend[selected_unit] = hist_df
 
     fig_hist = go.Figure()
 
@@ -1547,15 +1592,17 @@ if monitor_mode == "🟢 Dynamic Live Monitoring":
 
     fig_hist.update_layout(
 
-        height=400,
+        height=420,
 
         template="plotly_white",
+
+        hovermode="x unified",
 
         xaxis_title="Live Time",
 
         yaxis_title="Outlet Turbidity (NTU)",
 
-        transition_duration=700,
+        transition_duration=800,
 
         uirevision="live_hist"
 
@@ -1566,15 +1613,11 @@ if monitor_mode == "🟢 Dynamic Live Monitoring":
         use_container_width=True
     )
 
+# ============================================================
+# STATIC MODE
+# ============================================================
+
 else:
-
-    selected_unit = st.selectbox(
-
-        "Select Unit",
-
-        trend_df["Unit"].unique()
-
-    )
 
     unit_df = trend_df[
         trend_df["Unit"] == selected_unit
@@ -1606,9 +1649,11 @@ else:
 
     fig_hist.update_layout(
 
-        height=400,
+        height=420,
 
         template="plotly_white",
+
+        hovermode="x unified",
 
         xaxis_title="Date",
 
@@ -1622,30 +1667,6 @@ else:
     )
 
 
-
-    # ====================================================
-    # TREND ANALYSIS
-    # ====================================================
-
-    st.markdown("Historical Analysis")
-
-    if current_turbidity <= 0.5:
-
-        st.success(
-            f"{selected_unit} operating with excellent water quality."
-        )
-
-    elif current_turbidity <= 1:
-
-        st.warning(
-            f"{selected_unit} performance acceptable."
-        )
-
-    else:
-
-        st.error(
-            f"{selected_unit} turbidity rising. Maintenance or backwash recommended."
-        )
 # ===============================
 # STREAMLIT UI
 # ===============================
