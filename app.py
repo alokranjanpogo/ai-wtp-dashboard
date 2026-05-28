@@ -194,30 +194,30 @@ else:
     
     for i in range(1,7):
 
-    outlet = round(
-        random.uniform(0.08, 1.4),
-        2
-    )
-
-    trend_rows.append({
-
-        "Date": current_date,
-
-        "Unit": f"Filter Bed {i}",
-
-        "Inlet Turbidity": clarifier_outlet,
-
-        "Outlet Turbidity": outlet,
-
-        "Conductivity (µS/cm)": conductivity
-
-    })
-
-trend_df = pd.DataFrame(trend_rows)
-
-st.sidebar.success("Real-Time Data Mode Active")
-
+        outlet = round(
+            random.uniform(0.08, 1.4),
+            2
+        )
     
+        trend_rows.append({
+    
+            "Date": current_date,
+    
+            "Unit": f"Filter Bed {i}",
+    
+            "Inlet Turbidity": clarifier_outlet,
+    
+            "Outlet Turbidity": outlet,
+    
+            "Conductivity (µS/cm)": conductivity
+    
+        })
+    
+    trend_df = pd.DataFrame(trend_rows)
+    
+    st.sidebar.success("Real-Time Data Mode Active")
+    
+        
 
 # ===============================
 # TITLE
