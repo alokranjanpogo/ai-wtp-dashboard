@@ -1591,7 +1591,15 @@ else:
     selected_unit = st.selectbox(
 
         "Select Unit",
-
+         [
+        "Clarifier",
+        "Filter Bed 1",
+        "Filter Bed 2",
+        "Filter Bed 3",
+        "Filter Bed 4",
+        "Filter Bed 5",
+        "Filter Bed 6"
+    ],
         trend_df["Unit"].unique()
 
     )
