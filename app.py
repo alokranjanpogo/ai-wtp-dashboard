@@ -953,42 +953,16 @@ def gauge(title,value,max_val,mode="normal"):
 
 # ============================================================
 # SMART CLARIFIER + FILTER BED MONITORING SYSTEM
-# REALISTIC WTP MONITORING VERSION
+# FINAL STATIC + DYNAMIC VERSION
 # ============================================================
 
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-
-# ============================================================
-# LIGHT CLEAN UI
-# ============================================================
-
-st.markdown("""
-<style>
-
-.stApp {
-    background-color: #f5f7fa;
-}
-
-[data-testid="stMetric"] {
-    background-color: white;
-    border-radius: 12px;
-    padding: 12px;
-    border: 1px solid #dbe4ee;
-    box-shadow: 0px 1px 4px rgba(0,0,0,0.08);
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ============================================================
-# LOAD EXCEL
-# ============================================================
-
-trend_df = pd.read_excel("Moharda_WTP_2026_Realistic_Adjusted.xlsx")
-
-trend_df["Date"] = pd.to_datetime(trend_df["Date"])
+import random
+import pytz
+from datetime import datetime
+import base64
 
 # ============================================================
 # TITLE
@@ -998,351 +972,421 @@ st.markdown("---")
 st.subheader("📊 Smart Clarifier & Filter Bed Monitoring")
 
 # ============================================================
-# DATE FILTER
+# MODE BUTTONS
 # ============================================================
 
-selected_date = st.date_input(
-    "Select Monitoring Date",
-    value=trend_df["Date"].max()
+monitor_mode = st.radio(
+
+    "Select Monitoring Mode",
+
+    ["📊 Static Monitoring", "🟢 Dynamic Live Monitoring"],
+
+    horizontal=True,
+
+    index=0
+
 )
 
-selected_date = pd.to_datetime(selected_date)
-
 # ============================================================
-# FILTER DATA
+# LOAD DATA
 # ============================================================
 
-day_df = trend_df[
-    trend_df["Date"] == selected_date
-]
+trend_df = pd.read_excel(
+    "Moharda_WTP_2026_Realistic_Adjusted.xlsx"
+)
+
+trend_df["Date"] = pd.to_datetime(
+    trend_df["Date"]
+)
 
 # ============================================================
-# SAFETY CHECK
+# STATIC DATE FILTER
 # ============================================================
 
-if day_df.empty:
+if monitor_mode == "📊 Static Monitoring":
 
-    st.error("No monitoring data available for selected date.")
+    selected_date = st.date_input(
+
+        "Select Monitoring Date",
+
+        value=trend_df["Date"].max()
+
+    )
+
+    selected_date = pd.to_datetime(
+        selected_date
+    )
+
+    day_df = trend_df[
+        trend_df["Date"] == selected_date
+    ]
 
 else:
 
-    # ========================================================
-    # CLARIFIER DATA
-    # ========================================================
+    day_df = trend_df.tail(20)
+
+# ============================================================
+# CLARIFIER SECTION
+# ============================================================
+
+st.markdown("---")
+st.subheader("🌀 Clarifier Live Monitoring")
+
+# ============================================================
+# VALUES
+# ============================================================
+
+if monitor_mode == "🟢 Dynamic Live Monitoring":
+
+    clar_inlet = round(
+        random.uniform(25, 120),
+        2
+    )
+
+    clar_outlet = round(
+        random.uniform(0.8, 8.5),
+        2
+    )
+
+    clar_cond = round(
+        random.uniform(280, 420),
+        2
+    )
+
+else:
 
     clarifier_data = day_df[
         day_df["Unit"] == "Clarifier"
     ]
 
-    if clarifier_data.empty:
+    clar_inlet = clarifier_data[
+        "Inlet Turbidity"
+    ].iloc[0]
 
-        st.error("Clarifier data not found.")
+    clar_outlet = clarifier_data[
+        "Outlet Turbidity"
+    ].iloc[0]
+
+    clar_cond = clarifier_data[
+        "Conductivity (µS/cm)"
+    ].iloc[0]
+
+# ============================================================
+# HEALTH STATUS
+# ============================================================
+
+if clar_outlet <= 5:
+
+    clar_health = "🟢 Healthy"
+
+elif clar_outlet <= 10:
+
+    clar_health = "🟡 Moderate"
+
+else:
+
+    clar_health = "🔴 Critical"
+
+# ============================================================
+# SPEEDOMETER GAUGE
+# ============================================================
+
+fig_clar = go.Figure(go.Indicator(
+
+    mode="gauge+number",
+
+    value=clar_outlet,
+
+    number={
+        'suffix': " NTU",
+        'font': {
+            'size': 42,
+            'color': "#0077b6"
+        }
+    },
+
+    title={
+        'text': "Clarifier Outlet Turbidity",
+        'font': {
+            'size': 24
+        }
+    },
+
+    gauge={
+
+        'axis': {
+            'range': [0,20]
+        },
+
+        'bar': {
+            'color': "#0077b6",
+            'thickness': 0.35
+        },
+
+        'bgcolor': "#edf2f7",
+
+        'borderwidth': 2,
+
+        'bordercolor': "#0077b6",
+
+        'steps': [
+
+            {
+                'range':[0,5],
+                'color': "#d4edda"
+            },
+
+            {
+                'range':[5,10],
+                'color': "#fff3cd"
+            },
+
+            {
+                'range':[10,20],
+                'color': "#f8d7da"
+            }
+        ]
+    }
+))
+
+fig_clar.update_layout(
+
+    paper_bgcolor="#f5f7fa",
+
+    height=420,
+
+    transition={
+        'duration': 800,
+        'easing': 'cubic-in-out'
+    },
+
+    uirevision="clarifier_speedometer"
+)
+
+st.plotly_chart(
+    fig_clar,
+    use_container_width=True
+)
+
+# ============================================================
+# METRICS
+# ============================================================
+
+m1,m2,m3,m4 = st.columns(4)
+
+m1.metric(
+    "Inlet Turbidity",
+    f"{clar_inlet:.1f} NTU"
+)
+
+m2.metric(
+    "Outlet Turbidity",
+    f"{clar_outlet:.1f} NTU"
+)
+
+m3.metric(
+    "Clarifier Health",
+    clar_health
+)
+
+m4.metric(
+    "Conductivity",
+    f"{clar_cond:.0f} µS/cm"
+)
+
+# ============================================================
+# ANALYSIS
+# ============================================================
+
+st.markdown("### Analysis")
+
+if clar_outlet <= 5:
+
+    st.success(
+        "Clarifier performance stable. Turbidity under control."
+    )
+
+elif clar_outlet <= 10:
+
+    st.warning(
+        "Clarifier operating under moderate load."
+    )
+
+else:
+
+    st.error(
+        "High clarifier outlet turbidity detected. Check coagulant dosing and sludge blanket."
+    )
+
+# ============================================================
+# FILTER BED SECTION
+# ============================================================
+
+st.markdown("---")
+st.subheader("🧪 Filter Bed Live Status")
+
+cols = st.columns(6)
+
+filter_summary = []
+
+alarm_triggered = False
+
+for i in range(1,7):
+
+    filter_name = f"Filter Bed {i}"
+
+    # ========================================================
+    # LIVE / STATIC VALUES
+    # ========================================================
+
+    if monitor_mode == "🟢 Dynamic Live Monitoring":
+
+        filter_outlet = round(
+            random.uniform(0.08, 1.5),
+            2
+        )
 
     else:
-
-        clar_inlet = clarifier_data["Inlet Turbidity"].iloc[0]
-
-        clar_outlet = clarifier_data["Outlet Turbidity"].iloc[0]
-
-        clar_cond = clarifier_data["Conductivity (µS/cm)"].iloc[0]
-
-        # ====================================================
-        # CLARIFIER HEALTH
-        # ====================================================
-
-        if clar_outlet <= 5:
-            clar_health = "Healthy"
-
-        elif clar_outlet <= 10:
-            clar_health = "Moderate"
-
-        else:
-            clar_health = "Critical"
-
-        # ====================================================
-        # BIG CLARIFIER GAUGE
-        # ====================================================
-
-        st.markdown("🌀 Clarifier Live Monitoring")
-
-        fig_clar = go.Figure(go.Indicator(
-
-            mode="gauge+number",
-
-            value=clar_outlet,
-
-            number={
-                'suffix': " NTU",
-                'font': {
-                    'size': 44,
-                    'color': "#0077b6"
-                }
-            },
-
-            title={
-                'text': "Clarifier Outlet Turbidity",
-                'font': {
-                    'size': 24
-                }
-            },
-
-            gauge={
-
-                'axis': {
-                    'range': [0,20]
-                },
-
-                'bar': {
-                    'color': "#0077b6",
-                    'thickness': 0.35
-                },
-
-                'bgcolor': "#edf2f7",
-
-                'borderwidth': 2,
-
-                'bordercolor': "#0077b6",
-
-                'steps': [
-
-                    {
-                        'range':[0,5],
-                        'color': "#d4edda"
-                    },
-
-                    {
-                        'range':[5,10],
-                        'color': "#fff3cd"
-                    },
-
-                    {
-                        'range':[10,20],
-                        'color': "#f8d7da"
-                    }
-                ]
-            }
-        ))
-
-        fig_clar.update_layout(
-
-            paper_bgcolor="#f5f7fa",
-
-            height=420
-        )
-
-        st.plotly_chart(
-            fig_clar,
-            use_container_width=True
-        )
-
-        # ====================================================
-        # METRICS
-        # ====================================================
-
-        m1,m2,m3,m4 = st.columns(4)
-
-        m1.metric(
-            "Inlet Turbidity",
-            f"{clar_inlet:.1f} NTU"
-        )
-
-        m2.metric(
-            "Outlet Turbidity",
-            f"{clar_outlet:.1f} NTU"
-        )
-
-        m3.metric(
-            "Clarifier Health",
-            clar_health
-        )
-
-        m4.metric(
-            "Conductivity",
-            f"{clar_cond:.0f} µS/cm"
-        )
-
-        # ====================================================
-        # AI ANALYSIS
-        # ====================================================
-
-        st.markdown("Analysis")
-
-        if clar_outlet <= 5:
-
-            st.success(
-                "Clarifier performance stable. Turbidity under control."
-            )
-
-        elif clar_outlet <= 10:
-
-            st.warning(
-                "Clarifier operating under moderate load."
-            )
-
-        else:
-
-            st.error(
-                "High clarifier outlet turbidity detected. Check coagulant dosing and sludge blanket."
-            )
-
-    # ========================================================
-    # FILTER BED SECTION
-    # ========================================================
-
-    st.markdown("---")
-    st.markdown("🧪 Filter Bed Live Status")
-
-    cols = st.columns(6)
-
-    filter_summary = []
-
-    for i in range(1,7):
-
-        filter_name = f"Filter Bed {i}"
 
         filter_data = day_df[
             day_df["Unit"] == filter_name
         ]
 
-        if filter_data.empty:
-            continue
+        filter_outlet = filter_data[
+            "Outlet Turbidity"
+        ].iloc[0]
 
-        filter_outlet = filter_data["Outlet Turbidity"].iloc[0]
+    # ========================================================
+    # STATUS
+    # ========================================================
 
-        # ====================================================
-        # FILTER HEALTH
-        # ====================================================
+    if filter_outlet <= 0.3:
 
-        if filter_outlet <= 0.3:
+        status = "🟢 Excellent"
 
-            status = "Excellent"
+    elif filter_outlet <= 0.7:
 
-        elif filter_outlet <= 0.7:
+        status = "🟡 Good"
 
-            status = "Good"
+    elif filter_outlet <= 1:
 
-        elif filter_outlet <= 1:
+        status = "🟠 Warning"
 
-            status = "Warning"
+    else:
 
-        else:
-
-            status = "Backwash Needed"
-
-        filter_summary.append({
-
-            "Filter Bed": filter_name,
-
-            "Outlet Turbidity": round(filter_outlet,2),
-
-            "Status": status
-        })
-
-        # ====================================================
-        # SMALL FILTER GAUGES
-        # ====================================================
-
-        fig_small = go.Figure(go.Indicator(
-
-            mode="gauge+number",
-
-            value=filter_outlet,
-
-            number={
-                'suffix': " NTU",
-                'font': {
-                    'size': 15,
-                    'color': "#0077b6"
-                }
-            },
-
-            title={
-                'text': f"FB-{i}",
-                'font': {
-                    'size': 13
-                }
-            },
-
-            gauge={
-
-                'axis': {
-                    'range':[0,2]
-                },
-
-                'bar': {
-                    'color': "#0077b6",
-                    'thickness': 0.22
-                },
-
-                'bgcolor': "#edf2f7",
-
-                'borderwidth': 1,
-
-                'bordercolor': "#0077b6",
-
-                'steps':[
-
-                    {
-                        'range':[0,0.3],
-                        'color': "#d4edda"
-                    },
-
-                    {
-                        'range':[0.3,0.7],
-                        'color': "#cfe2ff"
-                    },
-
-                    {
-                        'range':[0.7,1],
-                        'color': "#fff3cd"
-                    },
-
-                    {
-                        'range':[1,2],
-                        'color': "#f8d7da"
-                    }
-                ]
-            }
-        ))
-
-        fig_small.update_layout(
-
-            paper_bgcolor="#f5f7fa",
-
-            height=135,
-
-            margin=dict(
-                l=5,
-                r=5,
-                t=28,
-                b=5
-            )
-        )
-
-        cols[i-1].plotly_chart(
-            fig_small,
-            use_container_width=True
-        )
-    # ==========================================
-# FILTER BED ALARM SYSTEM
-# ==========================================
-
-alarm_triggered = False
-
-for item in filter_summary:
-
-    if item["Outlet Turbidity"] > 1:
+        status = "🔴 Backwash Needed"
 
         alarm_triggered = True
 
-        st.error(
-            f"⚠ {item['Filter Bed']} Outlet Turbidity High "
-            f"({item['Outlet Turbidity']} NTU)"
-        )
+    filter_summary.append({
 
-# ==========================================
-# PLAY ALARM SOUND
-# ==========================================
+        "Filter Bed": filter_name,
+
+        "Outlet Turbidity": round(
+            filter_outlet,
+            2
+        ),
+
+        "Status": status
+
+    })
+
+    # ========================================================
+    # SMALL SPEEDOMETER GAUGE
+    # ========================================================
+
+    fig_small = go.Figure(go.Indicator(
+
+        mode="gauge+number",
+
+        value=filter_outlet,
+
+        number={
+            'suffix': " NTU",
+            'font': {
+                'size': 15,
+                'color': "#0077b6"
+            }
+        },
+
+        title={
+            'text': f"FB-{i}",
+            'font': {
+                'size': 13
+            }
+        },
+
+        gauge={
+
+            'axis': {
+                'range':[0,2]
+            },
+
+            'bar': {
+                'color': "#0077b6",
+                'thickness': 0.22
+            },
+
+            'bgcolor': "#edf2f7",
+
+            'borderwidth': 1,
+
+            'bordercolor': "#0077b6",
+
+            'steps':[
+
+                {
+                    'range':[0,0.3],
+                    'color': "#d4edda"
+                },
+
+                {
+                    'range':[0.3,0.7],
+                    'color': "#cfe2ff"
+                },
+
+                {
+                    'range':[0.7,1],
+                    'color': "#fff3cd"
+                },
+
+                {
+                    'range':[1,2],
+                    'color': "#f8d7da"
+                }
+            ]
+        }
+    ))
+
+    fig_small.update_layout(
+
+        paper_bgcolor="#f5f7fa",
+
+        height=135,
+
+        margin=dict(
+            l=5,
+            r=5,
+            t=28,
+            b=5
+        ),
+
+        transition={
+            'duration': 800,
+            'easing': 'cubic-in-out'
+        },
+
+        uirevision=f"fb_{i}"
+    )
+
+    cols[i-1].plotly_chart(
+        fig_small,
+        use_container_width=True
+    )
+
+# ============================================================
+# AUTO ALARM
+# ============================================================
 
 if alarm_triggered:
 
@@ -1353,94 +1397,231 @@ if alarm_triggered:
 
     audio_bytes = audio_file.read()
 
-    st.audio(audio_bytes, format="audio/wav")
-    # ========================================================
-    # FILTER SUMMARY
-    # ========================================================
+    b64 = base64.b64encode(
+        audio_bytes
+    ).decode()
 
-    st.markdown("---")
-    st.markdown("📋 Filter Bed Summary")
+    audio_html = f"""
+    <audio autoplay>
+    <source src="data:audio/wav;base64,{b64}" type="audio/wav">
+    </audio>
+    """
 
-    filter_summary_df = pd.DataFrame(filter_summary)
+    st.markdown(
+        audio_html,
+        unsafe_allow_html=True
+    )
 
-    st.dataframe(
-        filter_summary_df,
+# ============================================================
+# FILTER SUMMARY
+# ============================================================
+
+st.markdown("---")
+st.subheader("📋 Filter Bed Summary")
+
+for item in filter_summary:
+
+    if "Excellent" in item["Status"]:
+
+        bg = "#d4edda"
+        text = "#155724"
+
+    elif "Good" in item["Status"]:
+
+        bg = "#fff3cd"
+        text = "#856404"
+
+    elif "Warning" in item["Status"]:
+
+        bg = "#ffe5b4"
+        text = "#9c5700"
+
+    else:
+
+        bg = "#f8d7da"
+        text = "#721c24"
+
+    st.markdown(
+        f"""
+        <div style="
+            background-color:{bg};
+            padding:12px;
+            border-radius:12px;
+            margin-bottom:10px;
+            border-left:8px solid {text};
+        ">
+
+        <h4 style="margin:0;color:{text};">
+            {item['Filter Bed']}
+        </h4>
+
+        <p style="
+            font-size:18px;
+            font-weight:bold;
+            color:{text};
+            margin:4px 0;
+        ">
+            {item['Status']}
+        </p>
+
+        <p style="color:{text}; margin:0;">
+            Outlet Turbidity:
+            {item['Outlet Turbidity']} NTU
+        </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# ============================================================
+# OUTPUT TURBIDITY TREND
+# ============================================================
+
+st.markdown("---")
+st.subheader("📈 Output Turbidity Trend")
+
+if monitor_mode == "🟢 Dynamic Live Monitoring":
+
+    if "hist_trend" not in st.session_state:
+
+        st.session_state.hist_trend = pd.DataFrame({
+
+            "Time": [],
+
+            "Output": []
+
+        })
+
+    hist_df = st.session_state.hist_trend
+
+    current_time = datetime.now(
+        pytz.timezone("Asia/Kolkata")
+    ).strftime("%H:%M:%S")
+
+    new_output = round(
+        random.uniform(0.08, 1.5),
+        2
+    )
+
+    new_row = pd.DataFrame({
+
+        "Time": [current_time],
+
+        "Output": [new_output]
+
+    })
+
+    hist_df = pd.concat(
+        [hist_df, new_row],
+        ignore_index=True
+    )
+
+    hist_df = hist_df.tail(25)
+
+    st.session_state.hist_trend = hist_df
+
+    fig_hist = go.Figure()
+
+    fig_hist.add_trace(
+
+        go.Scatter(
+
+            x=hist_df["Time"],
+
+            y=hist_df["Output"],
+
+            mode="lines",
+
+            line=dict(
+                color="#0077b6",
+                width=4
+            ),
+
+            fill='tozeroy',
+
+            name="Output Turbidity"
+
+        )
+    )
+
+    fig_hist.update_layout(
+
+        height=400,
+
+        template="plotly_white",
+
+        xaxis_title="Live Time",
+
+        yaxis_title="Outlet Turbidity (NTU)",
+
+        transition_duration=700,
+
+        uirevision="live_hist"
+
+    )
+
+    st.plotly_chart(
+        fig_hist,
         use_container_width=True
     )
 
-    # ========================================================
-    # TREND SECTION
-    # ========================================================
-
-    st.markdown("---")
-    st.subheader("📈 Historical Output Turbidity Trend")
+else:
 
     selected_unit = st.selectbox(
+
         "Select Unit",
+
         trend_df["Unit"].unique()
+
     )
 
     unit_df = trend_df[
         trend_df["Unit"] == selected_unit
     ]
 
-    previous_df = unit_df[
-        unit_df["Date"] <= selected_date
-    ].sort_values("Date")
+    fig_hist = go.Figure()
 
-    if previous_df.empty:
+    fig_hist.add_trace(
 
-        st.warning("No trend data available.")
+        go.Scatter(
 
-    else:
+            x=unit_df["Date"],
 
-        current_turbidity = previous_df[
-            previous_df["Date"] == selected_date
-        ]["Outlet Turbidity"].iloc[0]
-
-        # ====================================================
-        # TREND GRAPH
-        # ====================================================
-
-        fig_trend = go.Figure()
-
-        fig_trend.add_trace(go.Scatter(
-
-            x=previous_df["Date"],
-
-            y=previous_df["Outlet Turbidity"],
+            y=unit_df["Outlet Turbidity"],
 
             mode="lines+markers",
 
             line=dict(
                 color="#0077b6",
-                width=3
+                width=4
             ),
 
-            marker=dict(
-                size=6
-            ),
+            fill='tozeroy',
 
             name="Outlet Turbidity"
-        ))
 
-        fig_trend.update_layout(
-
-            template="simple_white",
-
-            title=f"{selected_unit} Output Turbidity Trend",
-
-            xaxis_title="Date",
-
-            yaxis_title="Outlet Turbidity (NTU)",
-
-            height=450
         )
+    )
 
-        st.plotly_chart(
-            fig_trend,
-            use_container_width=True
-        )
+    fig_hist.update_layout(
+
+        height=400,
+
+        template="plotly_white",
+
+        xaxis_title="Date",
+
+        yaxis_title="Outlet Turbidity (NTU)"
+
+    )
+
+    st.plotly_chart(
+        fig_hist,
+        use_container_width=True
+    )
+
+
 
         # ====================================================
         # TREND ANALYSIS
