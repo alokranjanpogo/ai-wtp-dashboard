@@ -347,10 +347,10 @@ if mode == "📁 Manual Data":
         "Date",
         selected_time.strftime("%d-%b-%Y")
     )
-    st.session_state["live_turbidity"] = intake_turb
+    st.session_state["live_turbidity"] = float(intake_turb)
     c2.metric(
         "Raw Turbidity",
-        f"{intake_turb:.2f} NTU"
+        f"{st.session_state['live_turbidity']:.2f}NTU"
     )
    
     c3.metric(
@@ -1932,7 +1932,7 @@ st.subheader(" Intelligent Alum Dosing Decision System")
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
-turbidity = st.session_state.get("live_turbidity",50)
+turbidity = float(st.session_state["live_turbidity"])
 
 ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
 
