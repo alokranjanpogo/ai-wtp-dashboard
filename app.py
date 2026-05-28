@@ -11,7 +11,20 @@ from datetime import datetime
 # ===============================
 # AUTO REFRESH
 # ===============================
-st_autorefresh(interval=10000, key="scada_refresh")
+if mode == "🟢 Real-Time Data":
+
+    refresh_placeholder = st.empty()
+
+    refresh_placeholder.markdown(
+        """
+        <script>
+        setTimeout(function(){
+            window.location.reload();
+        }, 10000);
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
 # ==========================================
@@ -329,95 +342,444 @@ try:
 
     
 
-    # ==========================================
-    # DASHBOARD HEADING
-    # ==========================================
+    
+     # ==========================================
+# DASHBOARD HEADING
+# ==========================================
 
-    st.subheader("Turbidity & Alum Dosing Monitoring")
+st.subheader("Turbidity & Alum Dosing Monitoring")
 
-    # ==========================================
-    # DATE FILTER BUTTONS
-    # ==========================================
+# ==========================================
+# REAL-TIME / MANUAL DATA HANDLING
+# ==========================================
+
+if mode == "🟢 Real-Time Data":
+
+    # ======================================
+    # SESSION STATE STORAGE
+    # ======================================
+
+    if "live_trend_df" not in st.session_state:
+
+        st.session_state.live_trend_df = pd.DataFrame({
+            "Time": [],
+            "Inlet": [],
+            "Outlet": [],
+            "Alum": []
+        })
+
+    live_df = st.session_state.live_trend_df
+
+    # ======================================
+    # NEW LIVE VALUES
+    # ======================================
+
+    current_time_live = datetime.now().strftime("%H:%M:%S")
+
+    new_inlet = round(
+        random.uniform(35, 120),
+        2
+    )
+
+    new_outlet = round(
+        max(
+            new_inlet * random.uniform(0.01, 0.04),
+            0.08
+        ),
+        2
+    )
+
+    new_alum = round(
+        new_inlet * 0.38,
+        2
+    )
+
+    # ======================================
+    # APPEND NEW ROW
+    # ======================================
+
+    new_row = pd.DataFrame({
+
+        "Time": [current_time_live],
+
+        "Inlet": [new_inlet],
+
+        "Outlet": [new_outlet],
+
+        "Alum": [new_alum]
+
+    })
+
+    live_df = pd.concat(
+        [live_df, new_row],
+        ignore_index=True
+    )
+
+    # ======================================
+    # KEEP LAST 20 POINTS
+    # ======================================
+
+    live_df = live_df.tail(20)
+
+    st.session_state.live_trend_df = live_df
+
+    # ======================================
+    # AUTO REFRESH ONLY REAL-TIME PART
+    # ======================================
+
+    st_autorefresh(
+        interval=10000,
+        key="live_only_refresh"
+    )
+
+    # ======================================
+    # TWO COLUMNS
+    # ======================================
+
+    col1, col2 = st.columns(2)
+
+    # ======================================
+    # GRAPH 1
+    # ======================================
+
+    with col1:
+
+        st.subheader("📊 Live Alum & Turbidity")
+
+        fig1 = go.Figure()
+
+        # ALUM DOSAGE
+        fig1.add_trace(
+
+            go.Bar(
+
+                x=live_df["Time"],
+
+                y=live_df["Alum"],
+
+                name="Alum Dosage",
+
+                marker_color="blue",
+
+                opacity=0.8
+
+            )
+        )
+
+        # INLET TURBIDITY
+        fig1.add_trace(
+
+            go.Scatter(
+
+                x=live_df["Time"],
+
+                y=live_df["Inlet"],
+
+                mode="lines",
+
+                name="Raw Turbidity",
+
+                line=dict(
+                    color="red",
+                    width=3
+                )
+
+            )
+        )
+
+        fig1.update_layout(
+
+            height=450,
+
+            hovermode="x unified",
+
+            xaxis_title="Live Time",
+
+            yaxis_title="Value",
+
+            template="plotly_white",
+
+            transition_duration=800,
+
+            uirevision="LIVE_GRAPH_1",
+
+            legend=dict(
+
+                orientation="h",
+
+                yanchor="bottom",
+
+                y=1.02,
+
+                xanchor="right",
+
+                x=1
+
+            )
+        )
+
+        st.plotly_chart(
+            fig1,
+            use_container_width=True
+        )
+
+    # ======================================
+    # GRAPH 2
+    # ======================================
+
+    with col2:
+
+        st.subheader("📈 Live Inlet vs Outlet Trend")
+
+        fig2 = go.Figure()
+
+        # INLET
+        fig2.add_trace(
+
+            go.Scatter(
+
+                x=live_df["Time"],
+
+                y=live_df["Inlet"],
+
+                mode="lines",
+
+                name="Inlet Turbidity",
+
+                line=dict(
+                    color="red",
+                    width=3
+                )
+
+            )
+        )
+
+        # OUTLET
+        fig2.add_trace(
+
+            go.Scatter(
+
+                x=live_df["Time"],
+
+                y=live_df["Outlet"],
+
+                mode="lines",
+
+                name="Outlet Turbidity",
+
+                line=dict(
+                    color="blue",
+                    width=3
+                )
+
+            )
+        )
+
+        # ALUM
+        fig2.add_trace(
+
+            go.Scatter(
+
+                x=live_df["Time"],
+
+                y=live_df["Alum"],
+
+                mode="lines",
+
+                name="Alum Dosage",
+
+                line=dict(
+                    color="green",
+                    width=3
+                )
+
+            )
+        )
+
+        fig2.update_layout(
+
+            height=450,
+
+            hovermode="x unified",
+
+            xaxis_title="Live Time",
+
+            yaxis_title="Value",
+
+            template="plotly_white",
+
+            transition_duration=800,
+
+            uirevision="LIVE_GRAPH_2",
+
+            legend=dict(
+
+                orientation="h",
+
+                yanchor="bottom",
+
+                y=1.02,
+
+                xanchor="right",
+
+                x=1
+
+            )
+        )
+
+        st.plotly_chart(
+            fig2,
+            use_container_width=True
+        )
+
+# ==========================================
+# MANUAL MODE
+# ==========================================
+
+else:
+
+    # ======================================
+    # CLEAN DATA
+    # ======================================
+
+    df.columns = [str(c).strip() for c in df.columns]
+
+    df["Date"] = pd.to_datetime(
+        df["Date"],
+        dayfirst=True,
+        errors="coerce"
+    )
+
+    df = df.dropna(subset=["Date"])
+
+    # ======================================
+    # DATE FILTER
+    # ======================================
 
     st.markdown("📅 Select Monitoring Period")
 
     d1, d2 = st.columns(2)
 
     with d1:
+
         start_date = st.date_input(
+
             "Start Date",
+
             value=df["Date"].min()
+
         )
 
     with d2:
+
         end_date = st.date_input(
+
             "End Date",
+
             value=df["Date"].max()
+
         )
 
-    # Filter dataframe
+    # ======================================
+    # FILTER DATA
+    # ======================================
+
     filtered_df = df[
+
         (df["Date"] >= pd.to_datetime(start_date)) &
+
         (df["Date"] <= pd.to_datetime(end_date))
+
     ]
 
-    # ==========================================
-    # SIDE BY SIDE GRAPHS
-    # ==========================================
+    # ======================================
+    # TWO COLUMNS
+    # ======================================
 
     col1, col2 = st.columns(2)
 
-    # ==========================================
+    # ======================================
     # GRAPH 1
-    # ==========================================
+    # ======================================
 
     with col1:
-    
+
         st.subheader("📊 Turbidity & Alum Dosing")
-    
+
         fig1 = go.Figure()
-    
-        # BLUE BAR FOR ALUM DOSAGE
+
         fig1.add_trace(
+
             go.Bar(
+
                 x=filtered_df["Date"],
+
                 y=filtered_df["Alum Dosage (ppm)"],
+
                 name="Alum Dosage",
+
                 marker_color="blue",
+
                 opacity=0.8
+
             )
         )
-    
-        # RED LINE FOR TURBIDITY
+
         fig1.add_trace(
+
             go.Scatter(
+
                 x=filtered_df["Date"],
+
                 y=filtered_df["Turbidity (NTU)"],
+
                 mode="lines+markers",
+
                 name="Raw Turbidity",
-                line=dict(color="red", width=3)
+
+                line=dict(
+                    color="red",
+                    width=3
+                )
+
             )
         )
-    
+
         fig1.update_layout(
+
             height=450,
+
             hovermode="x unified",
+
             xaxis_title="Date",
+
             yaxis_title="Value",
-            barmode="group",
+
+            template="plotly_white",
+
             legend=dict(
+
                 orientation="h",
+
                 yanchor="bottom",
+
                 y=1.02,
+
                 xanchor="right",
+
                 x=1
+
             )
         )
-    
-        st.plotly_chart(fig1, use_container_width=True)
-        # ==========================================
+
+        st.plotly_chart(
+            fig1,
+            use_container_width=True
+        )
+
+    # ======================================
     # GRAPH 2
-    # ==========================================
+    # ======================================
 
     with col2:
 
@@ -425,36 +787,65 @@ try:
 
         fig2 = go.Figure()
 
-        # RED LINE
         fig2.add_trace(
+
             go.Scatter(
+
                 x=filtered_df["Date"],
+
                 y=filtered_df["Turbidity (NTU)"],
+
                 mode="lines+markers",
+
                 name="Inlet Turbidity",
-                line=dict(color="red", width=3)
+
+                line=dict(
+                    color="red",
+                    width=3
+                )
+
             )
         )
 
-        # BLUE LINE
         fig2.add_trace(
+
             go.Scatter(
+
                 x=filtered_df["Date"],
+
                 y=filtered_df["Outlet Turbidity (NTU)"],
+
                 mode="lines+markers",
+
                 name="Outlet Turbidity",
-                line=dict(color="blue", width=3)
+
+                line=dict(
+                    color="blue",
+                    width=3
+                )
+
             )
         )
 
         fig2.update_layout(
+
             height=450,
+
             hovermode="x unified",
+
             xaxis_title="Date",
-            yaxis_title="Turbidity (NTU)"
+
+            yaxis_title="Turbidity (NTU)",
+
+            template="plotly_white"
+
         )
 
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(
+            fig2,
+            use_container_width=True
+        )
+
 
 except FileNotFoundError:
 
