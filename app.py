@@ -370,7 +370,7 @@ else:
 
     c1.metric(
         "Time",
-        current_time
+        current_time.strftime("%H:%M:%S")
     )
 
     c2.metric(
