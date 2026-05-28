@@ -1932,7 +1932,7 @@ st.subheader(" Intelligent Alum Dosing Decision System")
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
-turbidity = float(raw_turbidity)
+turbidity = float(current_turbidity)
 
 ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
 
