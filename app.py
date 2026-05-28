@@ -1623,29 +1623,29 @@ else:
 
 
 
-        # ====================================================
-        # TREND ANALYSIS
-        # ====================================================
+    # ====================================================
+    # TREND ANALYSIS
+    # ====================================================
 
-        st.markdown("Historical Analysis")
+    st.markdown("Historical Analysis")
 
-        if current_turbidity <= 0.5:
+    if current_turbidity <= 0.5:
 
-            st.success(
-                f"{selected_unit} operating with excellent water quality."
-            )
+        st.success(
+            f"{selected_unit} operating with excellent water quality."
+        )
 
-        elif current_turbidity <= 1:
+    elif current_turbidity <= 1:
 
-            st.warning(
-                f"{selected_unit} performance acceptable."
-            )
+        st.warning(
+            f"{selected_unit} performance acceptable."
+        )
 
-        else:
+    else:
 
-            st.error(
-                f"{selected_unit} turbidity rising. Maintenance or backwash recommended."
-            )
+        st.error(
+            f"{selected_unit} turbidity rising. Maintenance or backwash recommended."
+        )
 # ===============================
 # STREAMLIT UI
 # ===============================
