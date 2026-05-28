@@ -12,6 +12,61 @@ from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=19000, key="scada_refresh")
 st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 
+# ==========================================
+# DATA SOURCE SWITCH
+# ==========================================
+
+mode = st.sidebar.radio(
+    "Select Data Source",
+    ["📁 Manual Data", "🟢 Real-Time Data"]
+)
+
+# ==========================================
+# LOAD FILES BASED ON MODE
+# ==========================================
+
+if mode == "📁 Manual Data":
+
+    # ======================================
+    # MANUAL EXCEL FILES
+    # ======================================
+
+    history_df = pd.read_excel(
+        "plant_raw_water_history.xlsx"
+    )
+
+    df = pd.read_excel(
+        "Inlet_outlet_turbidity_dosing_ details.xlsx",
+        sheet_name="RawWater"
+    )
+
+    trend_df = pd.read_excel(
+        "Moharda_WTP_2026_Realistic_Adjusted.xlsx"
+    )
+
+    st.sidebar.success("Manual Data Mode Active")
+
+else:
+
+    # ======================================
+    # REAL-TIME GENERATED DATA
+    # ======================================
+
+    history_df = pd.read_csv(
+        "live_raw_water_data.csv"
+    )
+
+    df = pd.read_csv(
+        "live_turbidity_data.csv"
+    )
+
+    trend_df = pd.read_csv(
+        "live_filterbed_data.csv"
+    )
+
+    st.sidebar.success("Real-Time Data Mode Active")
+```
+
 # ===============================
 # TITLE
 # ===============================
@@ -40,9 +95,6 @@ colp[2].metric("Flow (LPS)", f"{production_lps:.0f}")
 # ============================================================
 
 st.subheader("📅 Raw Water Quality Selector")
-
-# Load Excel
-history_df = pd.read_excel("plant_raw_water_history.xlsx")
 
 # Convert date safely
 history_df["Date"] = pd.to_datetime(history_df["Date"], dayfirst=True)
