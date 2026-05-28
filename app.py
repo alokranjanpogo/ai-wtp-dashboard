@@ -711,7 +711,37 @@ else:
             fig_small,
             use_container_width=True
         )
+    # ==========================================
+# FILTER BED ALARM SYSTEM
+# ==========================================
 
+alarm_triggered = False
+
+for item in filter_summary:
+
+    if item["Outlet Turbidity"] > 1:
+
+        alarm_triggered = True
+
+        st.error(
+            f"⚠ {item['Filter Bed']} Outlet Turbidity High "
+            f"({item['Outlet Turbidity']} NTU)"
+        )
+
+# ==========================================
+# PLAY ALARM SOUND
+# ==========================================
+
+if alarm_triggered:
+
+    audio_file = open(
+        "mixkit-sport-start-bleeps-918.wav",
+        "rb"
+    )
+
+    audio_bytes = audio_file.read()
+
+    st.audio(audio_bytes, format="audio/wav")
     # ========================================================
     # FILTER SUMMARY
     # ========================================================
