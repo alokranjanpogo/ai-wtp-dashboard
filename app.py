@@ -1932,7 +1932,25 @@ st.subheader(" Intelligent Alum Dosing Decision System")
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
-turbidity = float(current_turbidity)
+# ============================================================
+# GET LIVE TURBIDITY VALUE
+# ============================================================
+
+try:
+    turbidity = float(raw_turbidity)
+
+except:
+    try:
+        turbidity = float(inlet_turbidity)
+
+    except:
+        try:
+            turbidity = float(current_turbidity)
+
+        except:
+            turbidity = 87.25
+
+
 
 ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
 
