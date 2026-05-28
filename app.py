@@ -1932,14 +1932,7 @@ st.subheader(" Intelligent Alum Dosing Decision System")
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
 
-# REAL TIME TURBIDITY
-if "live_turbidity" not in st.session_state:
-    st.session_state["live_turbidity"] = intake_turb
-
-# update every refresh
-st.session_state["live_turbidity"] = intake_turb
-
-turbidity = float(st.session_state["live_turbidity"])
+turbidity = st.session_state.get("live_turbidity",50)
 
 ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
 
