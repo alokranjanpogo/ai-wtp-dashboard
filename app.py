@@ -347,7 +347,7 @@ if mode == "📁 Manual Data":
         "Date",
         selected_time.strftime("%d-%b-%Y")
     )
-     st.session_state["live_turbidity"] = intake_turb
+    st.session_state["live_turbidity"] = intake_turb
     c2.metric(
         "Raw Turbidity",
         f"{intake_turb:.2f} NTU"
