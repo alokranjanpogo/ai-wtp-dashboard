@@ -352,7 +352,7 @@ if mode == "📁 Manual Data":
         "Raw Turbidity",
         f"{intake_turb:.2f} NTU"
     )
-
+    st.session_state["live_turbidity"] = intake_turb
     c3.metric(
         "Conductivity",
         f"{conductivity_today:.0f} µS/cm"
