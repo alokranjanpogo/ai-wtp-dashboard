@@ -49,166 +49,166 @@ if mode == "📁 Manual Data":
 
 else:
 
+        # ======================================
+    # LIVE REAL-TIME DATA ENGINE
     # ======================================
-# LIVE REAL-TIME DATA ENGINE
-# ======================================
-
-ist = pytz.timezone("Asia/Kolkata")
-
-now = datetime.now(ist)
-
-current_date = now.strftime("%d-%m-%Y")
-
-current_time = now.strftime("%H:%M:%S")
-
-# ======================================
-# DYNAMIC FLOW
-# ======================================
-
-flow_m3hr = round(
-    random.uniform(1088, 1112),
-    2
-)
-
-flow_lps = round(
-    flow_m3hr * 1000 / 3600,
-    2
-)
-
-# ======================================
-# RAW WATER
-# ======================================
-
-intake_turbidity = round(
-    random.uniform(35, 120),
-    2
-)
-
-aerator_turbidity = round(
-    intake_turbidity * random.uniform(0.90, 0.97),
-    2
-)
-
-conductivity = round(
-    random.uniform(280, 420),
-    2
-)
-
-# ======================================
-# CLARIFIER LOGIC
-# ======================================
-
-clarifier_p1 = round(aerator_turbidity * 0.78, 2)
-
-clarifier_p2 = round(clarifier_p1 * 0.72, 2)
-
-clarifier_p3 = round(clarifier_p2 * 0.65, 2)
-
-clarifier_p4 = round(clarifier_p3 * 0.50, 2)
-
-clarifier_outlet = round(
-    max(clarifier_p4 * 0.40, 0.8),
-    2
-)
-
-# ======================================
-# ALUM DOSING
-# ======================================
-
-alum_dose = round(
-    intake_turbidity * 0.38,
-    2
-)
-
-# ======================================
-# HISTORY DATA
-# ======================================
-
-history_df = pd.DataFrame({
-
-    "Date": [current_date],
-
-    "Time": [current_time],
-
-    "Turbidity (NTU)": [intake_turbidity],
-
-    "Conductivity (µS/cm)": [conductivity]
-
-})
-
-# ======================================
-# TURBIDITY DATA
-# ======================================
-
-df = pd.DataFrame({
-
-    "Date": [current_date],
-
-    "Turbidity (NTU)": [intake_turbidity],
-
-    "Outlet Turbidity (NTU)": [clarifier_outlet],
-
-    "Alum Dosage (ppm)": [alum_dose]
-
-})
-
-# ======================================
-# TREND DATA
-# ======================================
-
-trend_rows = []
-
-# Clarifier points
-
-clarifier_units = [
-
-    ("Clarifier Point 1", aerator_turbidity, clarifier_p1),
-
-    ("Clarifier Point 2", clarifier_p1, clarifier_p2),
-
-    ("Clarifier Point 3", clarifier_p2, clarifier_p3),
-
-    ("Clarifier Point 4", clarifier_p3, clarifier_p4),
-
-    ("Clarifier", aerator_turbidity, clarifier_outlet)
-
-]
-
-for unit, inlet, outlet in clarifier_units:
-
-    trend_rows.append({
-
-        "Date": current_date,
-
-        "Unit": unit,
-
-        "Inlet Turbidity": inlet,
-
-        "Outlet Turbidity": outlet,
-
-        "Conductivity (µS/cm)": conductivity
-
-    })
-
-# Filter beds
-
-for i in range(1,7):
-
-    outlet = round(
-        random.uniform(0.08, 1.4),
+    
+    ist = pytz.timezone("Asia/Kolkata")
+    
+    now = datetime.now(ist)
+    
+    current_date = now.strftime("%d-%m-%Y")
+    
+    current_time = now.strftime("%H:%M:%S")
+    
+    # ======================================
+    # DYNAMIC FLOW
+    # ======================================
+    
+    flow_m3hr = round(
+        random.uniform(1088, 1112),
         2
     )
-
-    trend_rows.append({
-
-        "Date": current_date,
-
-        "Unit": f"Filter Bed {i}",
-
-   
-
-    st.sidebar.success("Real-Time Data Mode Active")
-
+    
+    flow_lps = round(
+        flow_m3hr * 1000 / 3600,
+        2
+    )
+    
+    # ======================================
+    # RAW WATER
+    # ======================================
+    
+    intake_turbidity = round(
+        random.uniform(35, 120),
+        2
+    )
+    
+    aerator_turbidity = round(
+        intake_turbidity * random.uniform(0.90, 0.97),
+        2
+    )
+    
+    conductivity = round(
+        random.uniform(280, 420),
+        2
+    )
+    
+    # ======================================
+    # CLARIFIER LOGIC
+    # ======================================
+    
+    clarifier_p1 = round(aerator_turbidity * 0.78, 2)
+    
+    clarifier_p2 = round(clarifier_p1 * 0.72, 2)
+    
+    clarifier_p3 = round(clarifier_p2 * 0.65, 2)
+    
+    clarifier_p4 = round(clarifier_p3 * 0.50, 2)
+    
+    clarifier_outlet = round(
+        max(clarifier_p4 * 0.40, 0.8),
+        2
+    )
+    
+    # ======================================
+    # ALUM DOSING
+    # ======================================
+    
+    alum_dose = round(
+        intake_turbidity * 0.38,
+        2
+    )
+    
+    # ======================================
+    # HISTORY DATA
+    # ======================================
+    
+    history_df = pd.DataFrame({
+    
+        "Date": [current_date],
+    
+        "Time": [current_time],
+    
+        "Turbidity (NTU)": [intake_turbidity],
+    
+        "Conductivity (µS/cm)": [conductivity]
+    
+    })
+    
+    # ======================================
+    # TURBIDITY DATA
+    # ======================================
+    
+    df = pd.DataFrame({
+    
+        "Date": [current_date],
+    
+        "Turbidity (NTU)": [intake_turbidity],
+    
+        "Outlet Turbidity (NTU)": [clarifier_outlet],
+    
+        "Alum Dosage (ppm)": [alum_dose]
+    
+    })
+    
+    # ======================================
+    # TREND DATA
+    # ======================================
+    
+    trend_rows = []
+    
+    # Clarifier points
+    
+    clarifier_units = [
+    
+        ("Clarifier Point 1", aerator_turbidity, clarifier_p1),
+    
+        ("Clarifier Point 2", clarifier_p1, clarifier_p2),
+    
+        ("Clarifier Point 3", clarifier_p2, clarifier_p3),
+    
+        ("Clarifier Point 4", clarifier_p3, clarifier_p4),
+    
+        ("Clarifier", aerator_turbidity, clarifier_outlet)
+    
+    ]
+    
+    for unit, inlet, outlet in clarifier_units:
+    
+        trend_rows.append({
+    
+            "Date": current_date,
+    
+            "Unit": unit,
+    
+            "Inlet Turbidity": inlet,
+    
+            "Outlet Turbidity": outlet,
+    
+            "Conductivity (µS/cm)": conductivity
+    
+        })
+    
+    # Filter beds
+    
+    for i in range(1,7):
+    
+        outlet = round(
+            random.uniform(0.08, 1.4),
+            2
+        )
+    
+        trend_rows.append({
+    
+            "Date": current_date,
+    
+            "Unit": f"Filter Bed {i}",
+    
+       
+    
+        st.sidebar.success("Real-Time Data Mode Active")
+    
 
 # ===============================
 # TITLE
