@@ -403,22 +403,22 @@ file_name = "Inlet_outlet_turbidity_dosing_ details.xlsx"
 
 
 
-    df = pd.read_excel(file_name, sheet_name="RawWater")
+df = pd.read_excel(file_name, sheet_name="RawWater")
 
-    # Clean column names
-    df.columns = [str(c).strip() for c in df.columns]
+# Clean column names
+df.columns = [str(c).strip() for c in df.columns]
 
-    # Convert Date column properly
-    df["Date"] = pd.to_datetime(
-        df["Date"],
-        dayfirst=True,
-        errors="coerce"
-    )
+# Convert Date column properly
+df["Date"] = pd.to_datetime(
+    df["Date"],
+    dayfirst=True,
+    errors="coerce"
+)
 
-    # Remove invalid dates if any
-    df = df.dropna(subset=["Date"])
+# Remove invalid dates if any
+df = df.dropna(subset=["Date"])
 
-    
+
 
     
      # ==========================================
