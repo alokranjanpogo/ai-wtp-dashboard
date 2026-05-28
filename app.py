@@ -1931,7 +1931,7 @@ st.subheader(" Intelligent Alum Dosing Decision System")
 
 flow_mld = 18
 flow_m3_day = flow_mld * 1000
-
+intake_turb = st.session_state.get("live_turbidity", 87.2)
 turbidity = float(
 
     st.session_state.get(
