@@ -1807,17 +1807,45 @@ st.info(f"""
 
 st.subheader("Raw Water Turbidity Trend (Last 4 Days)")
 
-# ensure date column is datetime
-history_df["Date"] = pd.to_datetime(history_df["Date"], dayfirst=True)
 
-# selected date from slicer
-selected_date = pd.to_datetime(selected_date).normalize()
+# ============================================================
+# ENSURE DATE COLUMN IS DATETIME
+# ============================================================
 
-# filter last 4 days including today
+history_df["Date"] = pd.to_datetime(
+
+    history_df["Date"],
+
+    dayfirst=True,
+
+    errors="coerce"
+
+)
+
+# ============================================================
+# USE SELECTED DATE
+# ============================================================
+
+selected_date = pd.to_datetime(selected_date)
+
+# ============================================================
+# FILTER LAST 4 DAYS
+# ============================================================
+
 trend_df = history_df[
+
     (history_df["Date"] <= selected_date) &
-    (history_df["Date"] >= selected_date - pd.Timedelta(days=4))
+
+    (
+
+        history_df["Date"] >=
+        selected_date - pd.Timedelta(days=4)
+
+    )
+
 ]
+
+
 
 # ------------------------------------------------------------
 # GRAPH
