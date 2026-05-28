@@ -1821,6 +1821,43 @@ history_df["Date"] = pd.to_datetime(
     errors="coerce"
 
 )
+# ============================================================
+# ENSURE DATE COLUMN IS DATETIME
+# ============================================================
+
+history_df["Date"] = pd.to_datetime(
+
+    history_df["Date"],
+
+    dayfirst=True,
+
+    errors="coerce"
+
+)
+
+# ============================================================
+# USE SELECTED DATE
+# ============================================================
+
+selected_date = pd.to_datetime(selected_date)
+
+# ============================================================
+# FILTER LAST 4 DAYS
+# ============================================================
+
+trend_df = history_df[
+
+    (history_df["Date"] <= selected_date) &
+
+    (
+
+        history_df["Date"] >=
+        selected_date - pd.Timedelta(days=4)
+
+    )
+
+]
+
 
 # ============================================================
 # USE SELECTED DATE
