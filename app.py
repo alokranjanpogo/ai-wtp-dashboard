@@ -257,54 +257,132 @@ colp[1].metric("Flow (m³/hr)", f"{production_m3_hr:.0f}")
 colp[2].metric("Flow (LPS)", f"{production_lps:.0f}")
 
 # ============================================================
-# RAW WATER QUALITY SLICER (ERROR SAFE)
+# RAW WATER QUALITY SECTION
 # ============================================================
 
-st.subheader("📅 Raw Water Quality Selector")
+if mode == "📁 Manual Data":
 
-# Convert date safely
-history_df["Date"] = pd.to_datetime(history_df["Date"], dayfirst=True)
+    st.subheader("📅 Raw Water Quality Selector")
 
-# If time column exists combine it
-if "Time" in history_df.columns:
-
-    history_df["DateTime"] = pd.to_datetime(
-        history_df["Date"].astype(str) + " " + history_df["Time"].astype(str),
+    # SAFE DATE CONVERSION
+    history_df["Date"] = pd.to_datetime(
+        history_df["Date"],
+        dayfirst=True,
         errors="coerce"
     )
 
+    # CREATE DATETIME
+    if "Time" in history_df.columns:
+
+        history_df["DateTime"] = pd.to_datetime(
+
+            history_df["Date"].astype(str)
+
+            + " "
+
+            + history_df["Time"].astype(str),
+
+            errors="coerce"
+
+        )
+
+    else:
+
+        history_df["DateTime"] = history_df["Date"]
+
+    # REMOVE INVALID
+    history_df = history_df.dropna(
+        subset=["DateTime"]
+    )
+
+    history_df = history_df.sort_values(
+        "DateTime"
+    )
+
+    # ========================================
+    # SAFE SLICER
+    # ========================================
+
+    if len(history_df) > 1:
+
+        selected_time = st.select_slider(
+
+            "Select Date",
+
+            options=history_df["DateTime"],
+
+            value=history_df["DateTime"].iloc[-1]
+
+        )
+
+    else:
+
+        selected_time = history_df[
+            "DateTime"
+        ].iloc[0]
+
+    # ========================================
+    # FILTER ROW
+    # ========================================
+
+    row = history_df[
+        history_df["DateTime"] == selected_time
+    ]
+
+    intake_turb = float(
+        row["Turbidity (NTU)"].values[0]
+    )
+
+    conductivity_today = float(
+        row["Conductivity (µS/cm)"].values[0]
+    )
+
+    # ========================================
+    # METRICS
+    # ========================================
+
+    c1, c2, c3 = st.columns(3)
+
+    c1.metric(
+        "Date",
+        selected_time.strftime("%d-%b-%Y")
+    )
+
+    c2.metric(
+        "Raw Turbidity",
+        f"{intake_turb:.2f} NTU"
+    )
+
+    c3.metric(
+        "Conductivity",
+        f"{conductivity_today:.0f} µS/cm"
+    )
+
+# ============================================================
+# REAL-TIME MODE
+# ============================================================
+
 else:
 
-    history_df["DateTime"] = history_df["Date"]
+    st.subheader("📡 Live Raw Water Monitoring")
 
-# Drop invalid rows
-history_df = history_df.dropna(subset=["DateTime"])
+    c1, c2, c3 = st.columns(3)
 
-# Sort
-history_df = history_df.sort_values("DateTime")
+    c1.metric(
+        "Time",
+        current_time
+    )
 
-# ------------------------------------------------------------
-# SLICER
-# ------------------------------------------------------------
+    c2.metric(
+        "Raw Turbidity",
+        f"{intake_turbidity:.2f} NTU"
+    )
 
-selected_time = st.select_slider(
-    "Select Date",
-    options=history_df["DateTime"],
-    value=history_df["DateTime"].iloc[-1]
-)
+    c3.metric(
+        "Conductivity",
+        f"{conductivity:.0f} µS/cm"
+    )
 
-# Extract row
-row = history_df[history_df["DateTime"] == selected_time]
-
-intake_turb = float(row["Turbidity (NTU)"].values[0])
-conductivity_today = float(row["Conductivity (µS/cm)"].values[0])
-
-# Display
-c1,c2,c3 = st.columns(3)
-
-c1.metric("Date", selected_time.strftime("%d-%b-%Y"))
-c2.metric("Raw Turbidity", f"{intake_turb:.2f} NTU")
-c3.metric("Conductivity", f"{conductivity_today:.0f} µS/cm")
 
 import plotly.graph_objects as go
 # ==========================================
@@ -323,7 +401,7 @@ st.set_page_config(
 
 file_name = "Inlet_outlet_turbidity_dosing_ details.xlsx"
 
-try:
+
 
     df = pd.read_excel(file_name, sheet_name="RawWater")
 
