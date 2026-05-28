@@ -65,7 +65,7 @@ else:
     )
 
     st.sidebar.success("Real-Time Data Mode Active")
-```
+
 
 # ===============================
 # TITLE
