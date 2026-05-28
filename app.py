@@ -925,17 +925,7 @@ else:
         )
 
 
-except FileNotFoundError:
 
-    st.error(
-        "Excel file not found. "
-        "Make sure 'Inlet_outlet_turbidity_dosing_details.xlsx' "
-        "is uploaded in your GitHub repository."
-    )
-
-except Exception as e:
-
-    st.error(f"Error: {e}")
 # ===============================
 # GAUGE FUNCTION WITH ZONES
 # ===============================
