@@ -11,6 +11,17 @@ from datetime import datetime
 # ===============================
 # AUTO REFRESH
 # ===============================
+
+st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
+
+# ==========================================
+# DATA SOURCE SWITCH
+# ==========================================
+
+mode = st.sidebar.radio(
+    "Select Data Source",
+    ["📁 Manual Data", "🟢 Real-Time Data"]
+)
 if mode == "🟢 Real-Time Data":
 
     refresh_placeholder = st.empty()
@@ -25,17 +36,6 @@ if mode == "🟢 Real-Time Data":
         """,
         unsafe_allow_html=True
     )
-st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
-
-# ==========================================
-# DATA SOURCE SWITCH
-# ==========================================
-
-mode = st.sidebar.radio(
-    "Select Data Source",
-    ["📁 Manual Data", "🟢 Real-Time Data"]
-)
-
 # ==========================================
 # LOAD FILES BASED ON MODE
 # ==========================================
