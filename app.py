@@ -1822,18 +1822,17 @@ history_df["Date"] = pd.to_datetime(
 
 )
 # ============================================================
-# ENSURE DATE COLUMN IS DATETIME
+# DATE SLICER
 # ============================================================
 
-history_df["Date"] = pd.to_datetime(
+selected_date = st.date_input(
 
-    history_df["Date"],
+    "Select Date",
 
-    dayfirst=True,
-
-    errors="coerce"
+    value=history_df["Date"].max()
 
 )
+
 
 # ============================================================
 # USE SELECTED DATE
