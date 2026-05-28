@@ -1811,7 +1811,7 @@ st.subheader("Raw Water Turbidity Trend (Last 4 Days)")
 history_df["Date"] = pd.to_datetime(history_df["Date"], dayfirst=True)
 
 # selected date from slicer
-selected_date = selected_time.normalize()
+selected_date = pd.to_datetime(selected_date).normalize()
 
 # filter last 4 days including today
 trend_df = history_df[
