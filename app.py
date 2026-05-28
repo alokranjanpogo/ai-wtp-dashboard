@@ -63,7 +63,7 @@ if mode == "📁 Manual Data":
 
 else:
 
-        # ======================================
+    # ======================================
     # LIVE REAL-TIME DATA ENGINE
     # ======================================
     
@@ -328,7 +328,7 @@ if mode == "📁 Manual Data":
     row = history_df[
         history_df["DateTime"] == selected_time
     ]
-
+    st.session_state["live_turbidity"] = intake_turb
     intake_turb = float(
         row["Turbidity (NTU)"].values[0]
     )
@@ -347,12 +347,12 @@ if mode == "📁 Manual Data":
         "Date",
         selected_time.strftime("%d-%b-%Y")
     )
-
+     st.session_state["live_turbidity"] = intake_turb
     c2.metric(
         "Raw Turbidity",
         f"{intake_turb:.2f} NTU"
     )
-    st.session_state["live_turbidity"] = intake_turb
+   
     c3.metric(
         "Conductivity",
         f"{conductivity_today:.0f} µS/cm"
