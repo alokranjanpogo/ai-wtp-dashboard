@@ -1811,111 +1811,212 @@ st.info(f"""
 
 
 # ============================================================
-# PREVIOUS 4 DAYS TURBIDITY TREND
+# MANUAL DATA MODE → LAST 4 DAYS TREND
 # ============================================================
 
-st.subheader("Raw Water Turbidity Trend (Last 4 Days)")
+if mode == "📁 Manual Data":
 
+    st.subheader("Raw Water Turbidity Trend (Last 4 Days)")
 
-# ============================================================
-# ENSURE DATE COLUMN IS DATETIME
-# ============================================================
-
-history_df["Date"] = pd.to_datetime(
-
-    history_df["Date"],
-
-    dayfirst=True,
-
-    errors="coerce"
-
-)
-# ============================================================
-# DATE SLICER
-# ============================================================
-
-selected_date = st.date_input(
-
-    "Select Date",
-
-    value=history_df["Date"].max()
-
-)
-
-
-# ============================================================
-# USE SELECTED DATE
-# ============================================================
-
-selected_date = pd.to_datetime(selected_date)
-
-# ============================================================
-# FILTER LAST 4 DAYS
-# ============================================================
-
-trend_df = history_df[
-
-    (history_df["Date"] <= selected_date) &
-
-    (
-
-        history_df["Date"] >=
-        selected_date - pd.Timedelta(days=4)
-
+    history_df["Date"] = pd.to_datetime(
+        history_df["Date"],
+        dayfirst=True,
+        errors="coerce"
     )
 
-]
-
-
-# ============================================================
-# USE SELECTED DATE
-# ============================================================
-
-selected_date = pd.to_datetime(selected_date)
-
-# ============================================================
-# FILTER LAST 4 DAYS
-# ============================================================
-
-trend_df = history_df[
-
-    (history_df["Date"] <= selected_date) &
-
-    (
-
-        history_df["Date"] >=
-        selected_date - pd.Timedelta(days=4)
-
+    selected_date = st.date_input(
+        "Select Date",
+        value=history_df["Date"].max()
     )
 
-]
+    selected_date = pd.to_datetime(selected_date)
 
+    trend_df = history_df[
+        (history_df["Date"] <= selected_date)
+        &
+        (
+            history_df["Date"] >=
+            selected_date - pd.Timedelta(days=4)
+        )
+    ]
 
+    fig_turb = go.Figure()
 
-# ------------------------------------------------------------
-# GRAPH
-# ------------------------------------------------------------
+    fig_turb.add_trace(
+        go.Scatter(
+            x=trend_df["Date"],
+            y=trend_df["Turbidity (NTU)"],
+            mode="lines+markers",
+            line=dict(color="cyan", width=3),
+            marker=dict(size=8),
+            name="Raw Turbidity (Intake)"
+        )
+    )
 
-fig_turb = go.Figure()
+    fig_turb.update_layout(
+        template="plotly_dark",
+        title="Intake Turbidity Trend (Last 4 Days)",
+        xaxis_title="Date",
+        yaxis_title="Turbidity (NTU)",
+        height=400
+    )
 
-fig_turb.add_trace(go.Scatter(
-    x=trend_df["Date"],
-    y=trend_df["Turbidity (NTU)"],
-    mode="lines+markers",
-    line=dict(color="cyan", width=3),
-    marker=dict(size=8),
-    name="Raw Turbidity (Intake)"
-))
+    st.plotly_chart(
+        fig_turb,
+        use_container_width=True
+    )
 
-fig_turb.update_layout(
-    template="plotly_dark",
-    title="Intake Turbidity Trend (Last 4 Days)",
-    xaxis_title="Date",
-    yaxis_title="Turbidity (NTU)",
-    height=400
-)
+# ============================================================
+# REAL-TIME MODE → PLANT HEALTH GAUGE
+# ============================================================
 
-st.plotly_chart(fig_turb, use_container_width=True)
+else:
+
+    st.subheader("🏭 Real-Time Plant Health Monitor")
+
+    # Latest outlet turbidity from live graph data
+    plant_outlet_turbidity = float(
+        live_df["Outlet"].iloc[-1]
+    )
+
+    # --------------------------------------------------------
+    # HEALTH SCORE CALCULATION
+    # --------------------------------------------------------
+
+    if plant_outlet_turbidity <= 0.30:
+
+        health_score = 95
+        status = "🟢 Excellent"
+
+    elif plant_outlet_turbidity <= 0.50:
+
+        health_score = 75
+        status = "🟡 Good"
+
+    elif plant_outlet_turbidity <= 1.00:
+
+        health_score = 45
+        status = "🟠 Warning"
+
+    else:
+
+        health_score = 15
+        status = "🔴 Critical"
+
+    # --------------------------------------------------------
+    # SPEEDOMETER GAUGE
+    # --------------------------------------------------------
+
+    fig_health = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+
+            value=health_score,
+
+            number={
+                "suffix": "%",
+                "font": {"size": 40}
+            },
+
+            title={
+                "text": "🏭 Plant Health Index"
+            },
+
+            gauge={
+
+                "axis": {
+                    "range": [0, 100]
+                },
+
+                "bar": {
+                    "thickness": 0.35
+                },
+
+                "steps": [
+
+                    {
+                        "range": [0, 30],
+                        "color": "#ff4b4b"
+                    },
+
+                    {
+                        "range": [30, 60],
+                        "color": "#ff9800"
+                    },
+
+                    {
+                        "range": [60, 85],
+                        "color": "#ffd54f"
+                    },
+
+                    {
+                        "range": [85, 100],
+                        "color": "#4caf50"
+                    }
+
+                ]
+            }
+        )
+    )
+
+    fig_health.update_layout(
+        template="plotly_white",
+        height=450
+    )
+
+    st.plotly_chart(
+        fig_health,
+        use_container_width=True
+    )
+
+    # --------------------------------------------------------
+    # KPI CARDS
+    # --------------------------------------------------------
+
+    c1, c2, c3 = st.columns(3)
+
+    c1.metric(
+        "Outlet Turbidity",
+        f"{plant_outlet_turbidity:.2f} NTU"
+    )
+
+    c2.metric(
+        "Plant Health",
+        f"{health_score}%"
+    )
+
+    c3.metric(
+        "Status",
+        status
+    )
+
+    # --------------------------------------------------------
+    # STATUS MESSAGE
+    # --------------------------------------------------------
+
+    if health_score >= 85:
+
+        st.success(
+            "🟢 Plant operating at excellent performance."
+        )
+
+    elif health_score >= 60:
+
+        st.info(
+            "🟡 Plant operating within normal limits."
+        )
+
+    elif health_score >= 30:
+
+        st.warning(
+            "🟠 Filtration efficiency reducing. Monitor closely."
+        )
+
+    else:
+
+        st.error(
+            "🔴 Immediate operator attention required."
+        )
 # ============================================================
 # IMPORTS (VERY IMPORTANT)
 # ============================================================
