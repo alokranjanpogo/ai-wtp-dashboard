@@ -452,11 +452,11 @@ if mode == "🟢 Real-Time Data":
     # ======================================
     # NEW LIVE VALUES
     # ======================================
-import pytz
-from datetime import datetime
-
-current_time_live = datetime.now(pytz.timezone("Asia/Kolkata")
-).strftime("%H:%M:%S")
+    import pytz
+    from datetime import datetime
+    
+    current_time_live = datetime.now(pytz.timezone("Asia/Kolkata")
+    ).strftime("%H:%M:%S")
 
     new_inlet = round(
         random.uniform(35, 120),
