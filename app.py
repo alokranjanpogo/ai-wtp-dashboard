@@ -328,11 +328,12 @@ if mode == "📁 Manual Data":
     row = history_df[
         history_df["DateTime"] == selected_time
     ]
-    st.session_state["live_turbidity"] = intake_turb
+    
     intake_turb = float(
         row["Turbidity (NTU)"].values[0]
     )
-
+    st.session_state["live_turbidity"] = intake_turb
+    
     conductivity_today = float(
         row["Conductivity (µS/cm)"].values[0]
     )
@@ -372,7 +373,7 @@ else:
         "Time",
         current_time.strftime("%H:%M:%S")
     )
-
+    st.session_state["live_turbidity"] = float(intake_turbidity)
     c2.metric(
         "Raw Turbidity",
         f"{intake_turbidity:.2f} NTU"
