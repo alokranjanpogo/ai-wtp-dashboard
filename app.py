@@ -3141,6 +3141,8 @@ if submit:
     # =====================================================
 
     df = pd.concat([df, new_data], ignore_index=True)
+    if len(df) > 1000:
+        df = df.tail(1000).reset_index(drop=True)
 
     # =====================================================
     # SAVE CSV
