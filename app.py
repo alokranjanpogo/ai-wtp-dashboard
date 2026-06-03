@@ -5514,7 +5514,7 @@ with t1:
 
             line=dict(
                 color="#EF4444",
-                width=2
+                width=2,
                 shape="spline"
             ),
 
@@ -5571,7 +5571,7 @@ with t2:
 
             line=dict(
                 color="#00B4D8",
-                width=2
+                width=2,
                 shape="spline"
             ),
 
@@ -5634,7 +5634,7 @@ with t3:
 
             line=dict(
                 color="#22C55E",
-                width=2
+                width=2,
                 shape="spline"
             ),
 
@@ -5697,7 +5697,7 @@ with t4:
 
             line=dict(
                 color="#F59E0B",
-                width=2
+                width=2,
                 shape="spline"
             ),
 
