@@ -5506,7 +5506,7 @@ with t1:
 
             y=trend_df["Turbidity"],
 
-            mode="markers",
+            mode="lines+markers",
 
             marker=dict(
                 size=8
@@ -5514,7 +5514,8 @@ with t1:
 
             line=dict(
                 color="#EF4444",
-                width=3
+                width=2
+                shape="spline"
             ),
 
             customdata=trend_df["created_da"],
@@ -5562,7 +5563,7 @@ with t2:
 
             y=trend_df["FRC_PPM"],
 
-            mode="markers",
+            mode="lines+markers",
 
             marker=dict(
                 size=8
@@ -5570,7 +5571,8 @@ with t2:
 
             line=dict(
                 color="#00B4D8",
-                width=3
+                width=2
+                shape="spline"
             ),
 
             customdata=trend_df["created_da"],
@@ -5624,7 +5626,7 @@ with t3:
 
             y=trend_df["PH"],
 
-            mode="markers",
+            mode="lines+markers",
 
             marker=dict(
                 size=8
@@ -5632,7 +5634,8 @@ with t3:
 
             line=dict(
                 color="#22C55E",
-                width=3
+                width=2
+                shape="spline"
             ),
 
             customdata=trend_df["created_da"],
@@ -5686,7 +5689,7 @@ with t4:
 
             y=trend_df["Rating"],
 
-            mode="markers",
+            mode="lines+markers",
 
             marker=dict(
                 size=8
@@ -5694,7 +5697,8 @@ with t4:
 
             line=dict(
                 color="#F59E0B",
-                width=3
+                width=2
+                shape="spline"
             ),
 
             customdata=trend_df["created_da"],
