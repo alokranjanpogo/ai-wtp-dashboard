@@ -4483,11 +4483,6 @@ try:
             errors="coerce"
         )
 
-        gis["PH"] = pd.to_numeric(
-            gis["PH"],
-            errors="coerce"
-        )
-
         # Remove invalid coordinates
         gis = gis.dropna(
             subset=["Latitude", "Longitude"]
@@ -4500,8 +4495,7 @@ try:
 
             turb = row["Turbidity"]
             frc = row["FRC_PPM"]
-            ph = row["PH"]
-
+            
             # ==========================
             # RED : BACTERIA PRESENT
             # ==========================
@@ -4541,14 +4535,7 @@ try:
                 if frc < 0.1 or frc > 1.2:
                     return "Critical"
 
-            # ==========================
-            # RED : pH
-            # ==========================
-            if pd.notnull(ph):
-
-                if ph < 6.0 or ph > 9.0:
-                    return "Critical"
-
+            
             # ==========================
             # YELLOW : TURBIDITY
             # ==========================
@@ -4569,19 +4556,6 @@ try:
                 ):
                     return "Slight Deviation"
 
-            # ==========================
-            # YELLOW : pH
-            # ==========================
-            if pd.notnull(ph):
-
-                if (
-                    6.0 <= ph < 6.5
-                    or
-                    8.5 < ph <= 9.0
-                ):
-                    return "Slight Deviation"
-
-            return "Safe"
 
         gis["Status"] = gis.apply(
             classify,
@@ -4597,7 +4571,6 @@ try:
             lon="Longitude",
             hover_name="Cust_Name_",
             hover_data={
-                "PH": True,
                 "Turbidity": True,
                 "FRC_PPM": True,
                 "Total_Coli": True,
