@@ -4772,7 +4772,9 @@ wq["Status"] = wq.apply(classify, axis=1)
 # ==========================================================
 
 total_samples = len(wq)
-
+if total_samples == 0:
+    st.warning("⚠ No data available for the selected month.")
+    st.stop()
 safe_samples = len(
     wq[wq["Status"] == "Safe"]
 )
