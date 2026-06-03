@@ -5506,7 +5506,7 @@ with t1:
 
             y=trend_df["Turbidity"],
 
-            mode="lines+markers",
+            mode="markers",
 
             marker=dict(
                 size=8
@@ -5562,7 +5562,7 @@ with t2:
 
             y=trend_df["FRC_PPM"],
 
-            mode="lines+markers",
+            mode="markers",
 
             marker=dict(
                 size=8
@@ -5624,7 +5624,7 @@ with t3:
 
             y=trend_df["PH"],
 
-            mode="lines+markers",
+            mode="markers",
 
             marker=dict(
                 size=8
@@ -5686,7 +5686,7 @@ with t4:
 
             y=trend_df["Rating"],
 
-            mode="lines+markers",
+            mode="markers",
 
             marker=dict(
                 size=8
