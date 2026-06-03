@@ -4443,158 +4443,228 @@ else:
     )
 
 # ===============================
-# CUSTOMER END GIS MAP (FIXED)
+# CUSTOMER END GIS MAP
 # ===============================
 
 st.subheader("📍 Customer End GIS Map")
 
-# Read GIS Sheet
-gis = pd.read_excel("mohardawaterQuality.xlsx")
-
-if gis.empty:
-    st.warning("No GIS data found.")
-
-else:
+try:
 
     # ===============================
-    # COLUMN DETECTION
+    # READ GIS DATA
     # ===============================
-    lat_col = next((c for c in gis.columns if "lat" in c.lower()), None)
+    gis = pd.read_excel("Moharda_GIS_Map_Columns.xlsx")
 
-    lon_col = next(
-        (c for c in gis.columns
-         if "lon" in c.lower() or "lng" in c.lower()),
-        None
-    )
+    if gis.empty:
+        st.warning("No GIS data found.")
 
-    name_col = next(
-        (c for c in gis.columns
-         if "name" in c.lower()
-         or "cust" in c.lower()
-         or "consumer" in c.lower()),
-        None
-    )
+    else:
 
-    turb_col = next((c for c in gis.columns if "turb" in c.lower()), None)
+        # ===============================
+        # DATA CLEANING
+        # ===============================
+        gis["Latitude"] = pd.to_numeric(
+            gis["Latitude"],
+            errors="coerce"
+        )
 
-    frc_col = next(
-        (c for c in gis.columns
-         if "frc" in c.lower()
-         or "chlor" in c.lower()),
-        None
-    )
+        gis["Longitude"] = pd.to_numeric(
+            gis["Longitude"],
+            errors="coerce"
+        )
 
-    total_col = next(
-        (c for c in gis.columns
-         if "total" in c.lower() and "coli" in c.lower()),
-        None
-    )
+        gis["Turbidity"] = pd.to_numeric(
+            gis["Turbidity"],
+            errors="coerce"
+        )
 
-    ecoli_col = next(
-        (c for c in gis.columns
-         if "ecoli" in c.lower()
-         or "e coli" in c.lower()),
-        None
-    )
+        gis["FRC_PPM"] = pd.to_numeric(
+            gis["FRC_PPM"],
+            errors="coerce"
+        )
 
-    # ===============================
-    # SAFE NUMERIC CONVERSION
-    # ===============================
-    if lat_col:
-        gis[lat_col] = pd.to_numeric(gis[lat_col], errors="coerce")
+        gis["PH"] = pd.to_numeric(
+            gis["PH"],
+            errors="coerce"
+        )
 
-    if lon_col:
-        gis[lon_col] = pd.to_numeric(gis[lon_col], errors="coerce")
+        # Remove invalid coordinates
+        gis = gis.dropna(
+            subset=["Latitude", "Longitude"]
+        )
 
-    if turb_col:
-        gis[turb_col] = pd.to_numeric(gis[turb_col], errors="coerce")
+        # ===============================
+        # STATUS CLASSIFICATION
+        # ===============================
+        def classify(row):
 
-    if frc_col:
-        gis[frc_col] = pd.to_numeric(gis[frc_col], errors="coerce")
+            turb = row["Turbidity"]
+            frc = row["FRC_PPM"]
+            ph = row["PH"]
 
-    # Remove rows with missing coordinates
-    gis = gis.dropna(subset=[lat_col, lon_col])
+            # ==========================
+            # RED : BACTERIA PRESENT
+            # ==========================
+            if pd.notnull(row["Total_Coli"]):
 
-    # ===============================
-    # STATUS CLASSIFICATION
-    # ===============================
-    def classify(row):
+                if str(row["Total_Coli"]).strip().lower() not in [
+                    "0",
+                    "absent",
+                    "",
+                    "nan"
+                ]:
+                    return "Critical"
 
-        # RED → Bacteria Present
-        if total_col:
-            val = str(row[total_col]).strip().lower()
+            if pd.notnull(row["Faecal_Col"]):
 
-            if val in ["present", "yes", "1", "positive"]:
-                return "Bacteria Present"
+                if str(row["Faecal_Col"]).strip().lower() not in [
+                    "0",
+                    "absent",
+                    "",
+                    "nan"
+                ]:
+                    return "Critical"
 
-        if ecoli_col:
-            val = str(row[ecoli_col]).strip().lower()
+            # ==========================
+            # RED : TURBIDITY
+            # ==========================
+            if pd.notnull(turb):
 
-            if val in ["present", "yes", "1", "positive"]:
-                return "Bacteria Present"
+                if turb > 5:
+                    return "Critical"
 
-        # YELLOW → High Turbidity
-        if turb_col and pd.notnull(row[turb_col]):
+            # ==========================
+            # RED : FRC
+            # ==========================
+            if pd.notnull(frc):
 
-            if row[turb_col] > 1.5:
-                return "High Turbidity"
+                if frc < 0.1 or frc > 1.2:
+                    return "Critical"
 
-        # ORANGE → Chlorine Deviation
-        if frc_col and pd.notnull(row[frc_col]):
+            # ==========================
+            # RED : pH
+            # ==========================
+            if pd.notnull(ph):
 
-            if row[frc_col] < 0.2 or row[frc_col] > 1.0:
-                return "Chlorine Deviation"
+                if ph < 6.0 or ph > 9.0:
+                    return "Critical"
 
-        # GREEN → Safe
-        return "Safe"
+            # ==========================
+            # YELLOW : TURBIDITY
+            # ==========================
+            if pd.notnull(turb):
 
-    gis["Status"] = gis.apply(classify, axis=1)
+                if turb > 1:
+                    return "Slight Deviation"
 
-    # ===============================
-    # MAP
-    # ===============================
-    if lat_col and lon_col:
+            # ==========================
+            # YELLOW : FRC
+            # ==========================
+            if pd.notnull(frc):
 
-        hover_dict = {}
+                if (
+                    0.1 <= frc < 0.2
+                    or
+                    1.0 < frc <= 1.2
+                ):
+                    return "Slight Deviation"
 
-        if turb_col:
-            hover_dict[turb_col] = True
+            # ==========================
+            # YELLOW : pH
+            # ==========================
+            if pd.notnull(ph):
 
-        if frc_col:
-            hover_dict[frc_col] = True
+                if (
+                    6.0 <= ph < 6.5
+                    or
+                    8.5 < ph <= 9.0
+                ):
+                    return "Slight Deviation"
 
-        if total_col:
-            hover_dict[total_col] = True
+            return "Safe"
 
-        if ecoli_col:
-            hover_dict[ecoli_col] = True
+        gis["Status"] = gis.apply(
+            classify,
+            axis=1
+        )
 
+        # ===============================
+        # GIS MAP
+        # ===============================
         fig_map = px.scatter_mapbox(
             gis,
-            lat=lat_col,
-            lon=lon_col,
-            hover_name=name_col,
-            hover_data=hover_dict,
+            lat="Latitude",
+            lon="Longitude",
+            hover_name="Cust_Name_",
+            hover_data={
+                "PH": True,
+                "Turbidity": True,
+                "FRC_PPM": True,
+                "Total_Coli": True,
+                "Faecal_Col": True,
+                "Latitude": False,
+                "Longitude": False,
+                "Status": True
+            },
             color="Status",
             color_discrete_map={
                 "Safe": "green",
-                "High Turbidity": "yellow",
-                "Chlorine Deviation": "orange",
-                "Bacteria Present": "red"
+                "Slight Deviation": "yellow",
+                "Critical": "red"
             },
-            zoom=11,
+            zoom=12,
             height=650
         )
 
         fig_map.update_layout(
             mapbox_style="open-street-map",
-            margin={"r": 0, "t": 0, "l": 0, "b": 0}
+            margin={
+                "r": 0,
+                "t": 0,
+                "l": 0,
+                "b": 0
+            },
+            legend=dict(
+                title="Water Quality Status",
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5
+            )
         )
 
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(
+            fig_map,
+            use_container_width=True
+        )
 
-    else:
-        st.error("Latitude or Longitude column not found.")
+        # ===============================
+        # STATUS SUMMARY
+        # ===============================
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.success(
+                f"🟢 Safe Locations : "
+                f"{len(gis[gis['Status']=='Safe'])}"
+            )
+
+        with col2:
+            st.warning(
+                f"🟡 Slight Deviation : "
+                f"{len(gis[gis['Status']=='Slight Deviation'])}"
+            )
+
+        with col3:
+            st.error(
+                f"🔴 Critical Locations : "
+                f"{len(gis[gis['Status']=='Critical'])}"
+            )
+
+except Exception as e:
+
+    st.error(f"GIS Error : {e}")
 
 import pandas as pd
 import plotly.express as px
