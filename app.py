@@ -4480,63 +4480,65 @@ try:
     )
 
     # ======================================================
-    # REMOVE INVALID COORDINATES
+    # STATUS FILTER
     # ======================================================
-    gis = gis.dropna(
-        subset=["Latitude", "Longitude"]
+    selected_status = st.multiselect(
+        "Select Water Quality Status",
+        [
+            "Safe",
+            "Slight Deviation",
+            "Critical"
+        ],
+        default=[
+            "Safe",
+            "Slight Deviation",
+            "Critical"
+        ]
     )
 
-    if len(gis) == 0:
+    gis_filtered = gis[
+        gis["Status"].isin(selected_status)
+    ]
 
-        st.error(
-            "No valid latitude/longitude data found."
+    if gis_filtered.empty:
+
+        st.warning(
+            "No locations found for selected status."
         )
 
     else:
 
         # ==================================================
-        # STATUS FILTER
+        # SUMMARY CARDS
         # ==================================================
-        selected_status = st.multiselect(
-            "Select Water Quality Status",
-            options=[
-                "Safe",
-                "Slight Deviation",
-                "Critical"
-            ],
-            default=[
-                "Safe",
-                "Slight Deviation",
-                "Critical"
-            ]
-        )
+        col1, col2, col3 = st.columns(3)
 
-        gis_filtered = gis[
-            gis["Status"].isin(selected_status)
-        ]
+        with col1:
 
-        # ==================================================
-        # SUMMARY
-        # ==================================================
-        c1, c2, c3 = st.columns(3)
-
-        with c1:
             st.success(
                 f"🟢 Safe Locations : "
                 f"{len(gis[gis['Status']=='Safe'])}"
             )
 
-        with c2:
+        with col2:
+
             st.warning(
                 f"🟡 Slight Deviation : "
                 f"{len(gis[gis['Status']=='Slight Deviation'])}"
             )
 
-        with c3:
+        with col3:
+
             st.error(
                 f"🔴 Critical Locations : "
                 f"{len(gis[gis['Status']=='Critical'])}"
             )
+
+        # ==================================================
+        # FIXED MAP CENTER
+        # ==================================================
+        center_lat = 22.804
+        center_lon = 86.230
 
         # ==================================================
         # MAP
@@ -4567,8 +4569,8 @@ try:
 
         fig_map.update_traces(
             marker=dict(
-                size=12,
-                opacity=0.9
+                size=13,
+                opacity=0.95
             )
         )
 
@@ -4576,12 +4578,17 @@ try:
             mapbox_style="open-street-map",
             mapbox=dict(
                 center=dict(
-                    lat=gis_filtered["Latitude"].mean(),
-                    lon=gis_filtered["Longitude"].mean()
+                    lat=center_lat,
+                    lon=center_lon
                 )
             ),
             legend=dict(
-                title="Water Quality Status"
+                title="Water Quality Status",
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5
             ),
             margin=dict(
                 l=0,
@@ -4596,12 +4603,39 @@ try:
             use_container_width=True
         )
 
+        # ==================================================
+        # STATUS DISTRIBUTION
+        # ==================================================
+        st.markdown("### 📊 Status Distribution")
+
+        status_count = (
+            gis["Status"]
+            .value_counts()
+            .reset_index()
+        )
+
+        status_count.columns = [
+            "Status",
+            "Count"
+        ]
+
+        fig_status = px.pie(
+            status_count,
+            names="Status",
+            values="Count",
+            hole=0.5
+        )
+
+        st.plotly_chart(
+            fig_status,
+            use_container_width=True
+        )
+
 except Exception as e:
 
     st.error(
         f"GIS Map Error : {e}"
     )
-
 import pandas as pd
 import plotly.express as px
 
