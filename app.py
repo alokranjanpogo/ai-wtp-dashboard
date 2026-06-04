@@ -2380,7 +2380,7 @@ with left:
 
 y_ai = np.clip(y_ai, 5, 150)
 
-    fig = go.Figure()
+fig = go.Figure()
 
     # ========================================================
     # OPTIMAL ZONE
@@ -2606,11 +2606,11 @@ st.markdown(f"""
 
 ### Expected Outcomes
 
-- Effective coagulation
-- Stable sludge blanket
+- Optimized coagulant utilization
+- Improved floc formation
+- Better sedimentation performance
 - Reduced filter loading
-- Improved settling efficiency
-- Better filtration stability
+- Enhanced treated water quality
 
 ### Chemical Requirement
 
@@ -2628,70 +2628,36 @@ st.markdown(f"""
 # ============================================================
 # ALERT SYSTEM
 # ============================================================
-
 st.markdown("---")
 st.markdown("### 🚨 Intelligent Alert System")
 
 if ai_dose > 80:
 
     st.error(
-        "🔴 Extremely high chemical demand detected. "
-        "Consider PAC optimization or pre-treatment."
+        "🔴 Very high coagulant demand detected. "
+        "Review raw water quality and consider pre-treatment."
     )
 
-elif turbidity > 300:
+elif conductivity > 1200:
 
     st.warning(
-        "🟠 Severe raw water turbidity detected. "
-        "Closely monitor sludge blanket and filter loading."
+        "🟠 High conductivity detected. "
+        "Possible industrial contamination influence."
     )
 
 elif jar_available and abs(ai_dose - jar_dose) > 5:
 
     st.warning(
-        "🟡 AI recommendation deviates from Jar Test. "
+        "🟡 Recommended dose differs from Jar Test. "
         "Verify coagulation conditions."
     )
 
 else:
 
     st.success(
-        "🟢 System operating within optimal dosing conditions."
+        "🟢 Dosing recommendation within expected operating range."
     )
 
-# ============================================================
-# ALERT SYSTEM
-# ============================================================
-
-st.markdown("---")
-st.markdown("### 🚨 Intelligent Alert System")
-
-if ai_dose > 80:
-
-    st.error(
-        "🔴 Extremely high chemical demand detected. "
-        "Consider PAC optimization or pre-treatment."
-    )
-
-elif turbidity > 300:
-
-    st.warning(
-        "🟠 Severe raw water turbidity detected. "
-        "Closely monitor sludge blanket and filter loading."
-    )
-
-elif jar_available and abs(ai_dose - jar_dose) > 5:
-
-    st.warning(
-        "🟡 AI recommendation deviates from Jar Test. "
-        "Verify coagulation conditions."
-    )
-
-else:
-
-    st.success(
-        "🟢 System operating within optimal dosing conditions."
-    )
 # ============================================================
 # CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
 # ============================================================
