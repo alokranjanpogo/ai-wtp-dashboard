@@ -2394,85 +2394,85 @@ fig.add_hrect(
     line_width=0
 )
 
-    # ========================================================
-    # WARNING ZONE
-    # ========================================================
+# ========================================================
+# WARNING ZONE
+# ========================================================
 
-    fig.add_hrect(
-        y0=30,
-        y1=60,
-        fillcolor="yellow",
-        opacity=0.10,
-        line_width=0
-    )
+fig.add_hrect(
+    y0=30,
+    y1=60,
+    fillcolor="yellow",
+    opacity=0.10,
+    line_width=0
+)
 
-    # ========================================================
-    # CRITICAL ZONE
-    # ========================================================
+# ========================================================
+# CRITICAL ZONE
+# ========================================================
 
-    fig.add_hrect(
-        y0=60,
-        y1=120,
-        fillcolor="red",
-        opacity=0.08,
-        line_width=0
-    )
+fig.add_hrect(
+    y0=60,
+    y1=120,
+    fillcolor="red",
+    opacity=0.08,
+    line_width=0
+)
 
-    # ========================================================
-    # AI CURVE
-    # ========================================================
+# ========================================================
+# AI CURVE
+# ========================================================
 
-    fig.add_trace(go.Scatter(
-        x=x,
-        y=y_ai,
-        line=dict(
-            color="cyan",
-            width=4
-        ),
-        name="Regression Model"
-    ))
+fig.add_trace(go.Scatter(
+    x=x,
+    y=y_ai,
+    line=dict(
+        color="cyan",
+        width=4
+    ),
+    name="Regression Model"
+))
 
-    # ========================================================
-    # OPERATING POINT
-    # ========================================================
+# ========================================================
+# OPERATING POINT
+# ========================================================
 
-    fig.add_trace(go.Scatter(
-        x=[turbidity],
-        y=[ai_dose],
-        mode="markers+text",
-        marker=dict(
-            size=14,
-            color="yellow"
-        ),
-        text=["Operating"],
-        textposition="top center"
-    ))
+fig.add_trace(go.Scatter(
+    x=[turbidity],
+    y=[ai_dose],
+    mode="markers+text",
+    marker=dict(
+        size=14,
+        color="yellow"
+    ),
+    text=["Operating"],
+    textposition="top center"
+))
 
-    # ========================================================
-    # GRAPH LAYOUT
-    # ========================================================
+# ========================================================
+# GRAPH LAYOUT
+# ========================================================
 
-    fig.update_layout(
-        template="plotly_white",
-        height=350,
+fig.update_layout(
+    template="plotly_white",
+    height=350,
 
-        margin=dict(
-            l=10,
-            r=10,
-            t=35,
-            b=10
-        ),
+    margin=dict(
+        l=10,
+        r=10,
+        t=35,
+        b=10
+    ),
 
-        xaxis_title="Turbidity (NTU)",
-        yaxis_title="Alum Dose (mg/L)",
-        showlegend=False
-    )
+    xaxis_title="Turbidity (NTU)",
+    yaxis_title="Alum Dose (mg/L)",
+    showlegend=False
+)
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={"displayModeBar": False}
-    )
+st.plotly_chart(
+    fig,
+    use_container_width=True,
+    config={"displayModeBar": False}
+)
 
     # ========================================================
     # KPI CARDS
