@@ -2570,9 +2570,6 @@ st.markdown(f"""
 
 ## {predicted_dose:.1f} mg/L
 """)
-| pH Factor | **{ph_factor:.2f}** |
-| Risk Adjustment | **{risk_adjustment:.1f} mg/L** |
-| Regression Prediction | **{predicted_dose:.1f} mg/L** |
 
 
     # ========================================================
@@ -2601,9 +2598,9 @@ st.markdown(f"""
 ## {ai_dose:.1f} mg/L Alum Dose
 
 ### Applied Corrections
-
-
-
+| pH Factor | **{ph_factor:.2f}** |
+| Risk Adjustment | **{risk_adjustment:.1f} mg/L** |
+| Regression Prediction | **{predicted_dose:.1f} mg
 ### Expected Outcomes
 
 - Optimized coagulant utilization
