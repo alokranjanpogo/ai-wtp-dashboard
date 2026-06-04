@@ -2186,21 +2186,29 @@ else:
     jar_dose = None
 
 # ============================================================
-# STANDARD MODELS
+# ALKALINITY INPUT
 # ============================================================
 
-def cpheeo_model(t):
-    return 0.35 * t + 5
+alkalinity = st.slider(
+    "Alkalinity (mg/L as CaCO3)",
+    20,
+    250,
+    100
+)
 
-def awwa_model(t):
-    return 0.40 * t + 8
+# ============================================================
+# MULTIVARIABLE REGRESSION MODEL
+# ============================================================
 
-def bis_model(t):
-    return 0.30 * t + 6
+predicted_dose = (
+    -1.88
+    + 0.219 * turbidity
+    + 1.269 * ph
+    + 0.00593 * conductivity
+    - 0.0301 * alkalinity
+)
 
-cpheeo = cpheeo_model(turbidity)
-awwa = awwa_model(turbidity)
-bis = bis_model(turbidity)
+predicted_dose = max(predicted_dose, 5)
 
 # ============================================================
 # pH EFFECT ON COAGULATION
@@ -2222,27 +2230,27 @@ else:
     ph_factor = 1.18
 
 # ============================================================
-# INDUSTRIAL IMPACT ENGINEERING LOGIC
+# INDUSTRIAL RISK ADJUSTMENT
 # ============================================================
 
-industrial_factor = 1.0
+risk_adjustment = 0
 
-if industrial:
+if conductivity > 1200:
+    risk_adjustment += 5
 
-    if industrial_type == "Textile/Dye":
-        industrial_factor = 1.10 + (0.05 * discharge_level)
+elif conductivity > 800:
+    risk_adjustment += 3
 
-    elif industrial_type == "Steel/Metal":
-        industrial_factor = 1.08 + (0.04 * discharge_level)
+if odor_detected:
+    risk_adjustment += 3
 
-    elif industrial_type == "Organic/Food":
-        industrial_factor = 1.05 + (0.03 * discharge_level)
+if water_color == "Highly Colored":
+    risk_adjustment += 5
 
-    elif industrial_type == "Chemical":
-        industrial_factor = 1.12 + (0.06 * discharge_level)
+elif water_color == "Slightly Colored":
+    risk_adjustment += 2
 
-    elif industrial_type == "Mixed Effluent":
-        industrial_factor = 1.15 + (0.05 * discharge_level)
+predicted_dose += risk_adjustment
 
 # ============================================================
 # TURBIDITY BOOST FACTOR
@@ -2261,36 +2269,31 @@ else:
 # AI DOSING LOGIC
 # ============================================================
 
+# ============================================================
+# JAR TEST + REGRESSION HYBRID
+# ============================================================
+
 if jar_available:
 
-    deviation = abs(jar_dose - cpheeo)
+    ai_dose = (
+        0.80 * jar_dose
+        + 0.20 * predicted_dose
+    )
 
-    if deviation > 25:
+    if abs(jar_dose - predicted_dose) > 20:
 
         st.warning(
-            "⚠️ Jar Test significantly differs from theoretical estimate"
+            "⚠️ Significant deviation between Jar Test and Model Prediction"
         )
-
-    ai_dose = (
-        0.75 * jar_dose +
-        0.15 * cpheeo +
-        0.05 * awwa +
-        0.05 * bis
-    )
 
 else:
 
-    ai_dose = (
-        0.40 * cpheeo +
-        0.35 * awwa +
-        0.25 * bis
-    )
-
+    ai_dose = predicted_dose
 # ============================================================
 # FINAL CORRECTIONS
 # ============================================================
 
-ai_dose = ai_dose * ph_factor * industrial_factor * turb_factor
+ai_dose = ai_dose * ph_factor 
 
 ai_dose = float(np.clip(ai_dose, 5, 150))
 
@@ -2363,15 +2366,19 @@ left, right = st.columns([1.05, 1.2], gap="large")
 
 with left:
 
-    st.markdown("### 📊 Dosing Decision Curve")
+    st.markdown("### 📊 Multivariable Alum Dosing Curve")
 
     x = np.linspace(0, 400, 150)
 
     y_ai = (
-        8 +
-        0.22 * x +
-        12 * np.log1p(x / 40)
-    )
+    -1.88
+    + 0.219 * x
+    + 1.269 * ph
+    + 0.00593 * conductivity
+    - 0.0301 * alkalinity
+)
+
+y_ai = np.clip(y_ai, 5, 150)
 
     fig = go.Figure()
 
@@ -2422,7 +2429,7 @@ with left:
             color="cyan",
             width=4
         ),
-        name="Curve"
+        name="Regression Model"
     ))
 
     # ========================================================
@@ -2549,20 +2556,24 @@ pH Level
 | Severity | **{severity_label} ({discharge_level}/5)** |
 | Industrial Factor | **{industrial_factor:.2f}** |
 """)
+st.markdown(f"""
+### 📐 Multivariable Regression Prediction
 
-    # ========================================================
-    # ENGINEERING ESTIMATES
-    # ========================================================
-
-    st.markdown(f"""
-### 📐 Engineering Model Estimates
-
-| Model | Dose |
+| Parameter | Value |
 |---|---|
-| CPHEEO | **{cpheeo:.1f} mg/L** |
-| AWWA | **{awwa:.1f} mg/L** |
-| BIS | **{bis:.1f} mg/L** |
+| Turbidity | **{turbidity:.1f} NTU** |
+| pH | **{ph:.2f}** |
+| Conductivity | **{conductivity:.0f} µS/cm** |
+| Alkalinity | **{alkalinity:.0f} mg/L** |
+
+### Predicted Dose
+
+## {predicted_dose:.1f} mg/L
 """)
+ | pH Factor | **{ph_factor:.2f}** |
+| Risk Adjustment | **{risk_adjustment:.1f} mg/L** |
+| Regression Prediction | **{predicted_dose:.1f} mg/L** |
+
 
     # ========================================================
     # JAR TEST STATUS
@@ -2577,7 +2588,7 @@ pH Level
     else:
 
         st.warning(
-            "⚠️ Jar Test not used — relying on theoretical models"
+            "⚠️ Jar Test not used — relying on regression prediction"
         )
 
     # ========================================================
@@ -2591,11 +2602,7 @@ pH Level
 
 ### Applied Corrections
 
-| Factor | Value |
-|---|---|
-| pH Factor | **{ph_factor:.2f}** |
-| Industrial Factor | **{industrial_factor:.2f}** |
-| Turbidity Factor | **{turb_factor:.2f}** |
+
 
 ### Expected Outcomes
 
