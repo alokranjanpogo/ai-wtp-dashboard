@@ -2554,7 +2554,7 @@ pH Level
 | Water Appearance | **{water_color}** |
 | Odor Detected | **{"Yes" if odor_detected else "No"}** |
 | Severity | **{severity_label} ({discharge_level}/5)** |
-| Industrial Factor | **{industrial_factor:.2f}** |
+| Risk Adjustment | **{risk_adjustment:.1f} mg/L** |
 """)
 st.markdown(f"""
 ### 📐 Multivariable Regression Prediction
