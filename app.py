@@ -2474,37 +2474,37 @@ st.plotly_chart(
     config={"displayModeBar": False}
 )
 
-    # ========================================================
-    # KPI CARDS
-    # ========================================================
+# ========================================================
+# KPI CARDS
+# ========================================================
 
-    st.markdown("### 📌 Key Performance Indicators")
+st.markdown("### 📌 Key Performance Indicators")
 
-    m1, m2 = st.columns(2)
+m1, m2 = st.columns(2)
 
-    with m1:
+with m1:
 
-        st.metric(
-            "Recommended Alum Dose",
-            f"{ai_dose:.1f} mg/L"
-        )
+    st.metric(
+        "Recommended Alum Dose",
+        f"{ai_dose:.1f} mg/L"
+    )
 
-        st.metric(
-            "Raw Water Risk",
-            raw_risk
-        )
+    st.metric(
+        "Raw Water Risk",
+        raw_risk
+    )
 
-    with m2:
+with m2:
 
-        st.metric(
-            "Alum Required",
-            f"{alum_kg_day:,.0f} kg/day"
-        )
+    st.metric(
+        "Alum Required",
+        f"{alum_kg_day:,.0f} kg/day"
+    )
 
-        st.metric(
-            "Prediction Confidence",
-            f"{confidence}%"
-        )
+    st.metric(
+        "Prediction Confidence",
+        f"{confidence}%"
+    )
 
 # ============================================================
 # 📘 RIGHT → DECISION PANEL
