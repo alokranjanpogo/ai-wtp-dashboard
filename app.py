@@ -2572,25 +2572,25 @@ st.markdown(f"""
 """)
 
 
-    # ========================================================
-    # JAR TEST STATUS
-    # ========================================================
+# ========================================================
+# JAR TEST STATUS
+# ========================================================
 
-    if jar_available:
+if jar_available:
 
-        st.success(
-            f"🧪 Jar Test Integrated: {jar_dose:.1f} mg/L"
-        )
+    st.success(
+        f"🧪 Jar Test Integrated: {jar_dose:.1f} mg/L"
+    )
 
-    else:
+else:
 
-        st.warning(
-            "⚠️ Jar Test not used — relying on regression prediction"
-        )
+    st.warning(
+        "⚠️ Jar Test not used — relying on regression prediction"
+    )
 
-    # ========================================================
-    # FINAL RECOMMENDATION
-    # ========================================================
+# ========================================================
+# FINAL RECOMMENDATION
+# ========================================================
 
     st.markdown(f"""
 ### ✅ Final AI Recommendation
