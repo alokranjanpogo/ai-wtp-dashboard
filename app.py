@@ -2569,10 +2569,9 @@ st.markdown(f"""
 ### Predicted Dose
 
 ## {predicted_dose:.1f} mg/L
-""")
-    | pH Factor | **{ph_factor:.2f}** |
-    | Risk Adjustment | **{risk_adjustment:.1f} mg/L** |
-    | Regression Prediction | **{predicted_dose:.1f} mg/L** |
+""")| pH Factor | **{ph_factor:.2f}** |
+| Risk Adjustment | **{risk_adjustment:.1f} mg/L** |
+| Regression Prediction | **{predicted_dose:.1f} mg/L** |
 
 
     # ========================================================
