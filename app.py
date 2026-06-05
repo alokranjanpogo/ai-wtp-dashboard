@@ -1300,16 +1300,16 @@ for i in range(1,7):
     })
     if filter_outlet > 4.5 or status == "🔴 Backwash Needed":
 
-    st.error(f"🚨 FILTER ALARM : {filter_name}")
-
-    col1, col2 = st.columns([4,1])
-
-    with col2:
-        if st.button(
-            "🔕 Stop Filter Alarm",
-            key=f"stop_alarm_{filter_name}"
-        ):
-            st.session_state.filter_alarm_muted = True
+        st.error(f"🚨 FILTER ALARM : {filter_name}")
+    
+        col1, col2 = st.columns([4,1])
+    
+        with col2:
+            if st.button(
+                "🔕 Stop Filter Alarm",
+                key=f"stop_alarm_{filter_name}"
+            ):
+                st.session_state.filter_alarm_muted = True
 
     if not st.session_state.filter_alarm_muted:
 
