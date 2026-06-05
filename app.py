@@ -1252,8 +1252,7 @@ for i in range(1,7):
             random.uniform(0.08, 1.5),
             2
         )
-        if filter_outlet > 4.5 or status == "🔴 Backwash Needed":
-             st.session_state.filter_alarm_muted = False
+        
     else:
 
         filter_data = day_df[
@@ -1283,7 +1282,8 @@ for i in range(1,7):
     else:
 
         status = "🔴 Backwash Needed"
-
+    if status == "🔴 Backwash Needed":
+        st.session_state.filter_alarm_muted = False
         alarm_triggered = True
         st.session_state.alarm_active = True
     filter_summary.append({
