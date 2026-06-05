@@ -8,6 +8,9 @@ import pytz
 import random
 from streamlit_autorefresh import st_autorefresh
 from datetime import datetime
+
+if "filter_alarm_muted" not in st.session_state:
+    st.session_state.filter_alarm_muted = False
 # ===============================
 # AUTO REFRESH
 # ===============================
@@ -1249,7 +1252,8 @@ for i in range(1,7):
             random.uniform(0.08, 1.5),
             2
         )
-
+        if filter_outlet > 4.5 or status == "🔴 Backwash Needed":
+             st.session_state.filter_alarm_muted = False
     else:
 
         filter_data = day_df[
@@ -1281,7 +1285,7 @@ for i in range(1,7):
         status = "🔴 Backwash Needed"
 
         alarm_triggered = True
-
+        st.session_state.alarm_active = True
     filter_summary.append({
 
         "Filter Bed": filter_name,
@@ -1294,7 +1298,39 @@ for i in range(1,7):
         "Status": status
 
     })
+    if filter_outlet > 4.5 or status == "🔴 Backwash Needed":
 
+    st.error(f"🚨 FILTER ALARM : {filter_name}")
+
+    col1, col2 = st.columns([4,1])
+
+    with col2:
+        if st.button(
+            "🔕 Stop Filter Alarm",
+            key=f"stop_alarm_{filter_name}"
+        ):
+            st.session_state.filter_alarm_muted = True
+
+    if not st.session_state.filter_alarm_muted:
+
+        with open(
+            "mixkit-sport-start-bleeps-918.wav",
+            "rb"
+        ) as f:
+
+            audio_bytes = f.read()
+
+        b64 = base64.b64encode(audio_bytes).decode()
+
+        st.markdown(
+            f"""
+            <audio autoplay loop>
+                <source src="data:audio/wav;base64,{b64}"
+                        type="audio/wav">
+            </audio>
+            """,
+            unsafe_allow_html=True
+        )
     # ========================================================
     # SMALL SPEEDOMETER GAUGE
     # ========================================================
