@@ -1283,7 +1283,7 @@ for i in range(1,7):
 
         status = "🔴 Backwash Needed"
     if status == "🔴 Backwash Needed":
-        st.session_state.filter_alarm_muted = False
+        
         alarm_triggered = True
         st.session_state.alarm_active = True
     filter_summary.append({
