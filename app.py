@@ -2604,13 +2604,13 @@ with right:
 })
 
 st.table(summary_df)
-    # ========================================================
-    # INDUSTRIAL SUMMARY
-    # ========================================================
+# ========================================================
+# INDUSTRIAL SUMMARY
+# ========================================================
 
-    if industrial:
+if industrial:
 
-        st.markdown(f"""
+    st.markdown(f"""
 ### 🏭 Industrial Assessment
 
 | Parameter | Status |
