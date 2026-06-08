@@ -2394,15 +2394,48 @@ else:
 # LAYOUT
 # ============================================================
 
-left, right = st.columns([1.05, 1.2], gap="large")
+# ============================================================
+# EXECUTIVE KPI ROW
+# ============================================================
 
+k1, k2, k3, k4 = st.columns(4)
+
+with k1:
+    st.metric("Turbidity", f"{turbidity:.1f} NTU")
+
+with k2:
+    st.metric("pH", f"{ph:.1f}")
+
+with k3:
+    st.metric("Conductivity", f"{conductivity:.0f} µS/cm")
+
+with k4:
+    st.metric("Alkalinity", f"{alkalinity:.0f} mg/L")
+
+st.markdown("---")
+
+left, right = st.columns([1.3, 1], gap="large")
 # ============================================================
 # 📊 LEFT → GRAPH + METRICS
 # ============================================================
 
 with left:
 
-    st.markdown("### 📊 Multivariable Alum Dosing Curve")
+    st.markdown("""
+    <div style="
+    background-color:#0A2E6B;
+    padding:10px;
+    border-radius:8px;
+    text-align:center;
+    color:white;
+    font-size:20px;
+    font-weight:bold;">
+    ALUM DOSING PREDICTION MODEL
+    </div>
+    """,
+    unsafe_allow_html=True)
+    
+    st.markdown("")
 
     x = np.linspace(0, 400, 150)
 
@@ -2418,42 +2451,36 @@ y_ai = np.clip(y_ai, 5, 150)
 
 fig = go.Figure()
 
-# ========================================================
-# OPTIMAL ZONE
-# ========================================================
-
 fig.add_hrect(
-    y0=20,
-    y1=30,
+    y0=0,
+    y1=20,
     fillcolor="green",
-    opacity=0.15,
-    line_width=0
-)
-
-# ========================================================
-# WARNING ZONE
-# ========================================================
-
-fig.add_hrect(
-    y0=30,
-    y1=60,
-    fillcolor="yellow",
     opacity=0.10,
     line_width=0
 )
 
-# ========================================================
-# CRITICAL ZONE
-# ========================================================
-
 fig.add_hrect(
-    y0=60,
-    y1=120,
-    fillcolor="red",
+    y0=20,
+    y1=40,
+    fillcolor="yellow",
     opacity=0.08,
     line_width=0
 )
 
+fig.add_hrect(
+    y0=40,
+    y1=80,
+    fillcolor="orange",
+    opacity=0.08,
+    line_width=0
+)
+
+fig.add_hrect(
+    y0=80,
+    y1=150,
+    fillcolor="red",
+    opacity=0.06,
+    line_width=0
 # ========================================================
 # AI CURVE
 # ========================================================
@@ -2462,8 +2489,8 @@ fig.add_trace(go.Scatter(
     x=x,
     y=y_ai,
     line=dict(
-        color="cyan",
-        width=4
+        color="#0A66C2",
+        width=5
     ),
     name="Regression Model"
 ))
@@ -2490,7 +2517,7 @@ fig.add_trace(go.Scatter(
 
 fig.update_layout(
     template="plotly_white",
-    height=350,
+    height=500,
 
     margin=dict(
         l=10,
@@ -2510,36 +2537,32 @@ st.plotly_chart(
     config={"displayModeBar": False}
 )
 
-# ========================================================
-# KPI CARDS
-# ========================================================
+st.markdown("### 📌 Decision Indicators")
 
-st.markdown("### 📌 Key Performance Indicators")
+d1,d2,d3,d4 = st.columns(4)
 
-m1, m2 = st.columns(2)
-
-with m1:
-
+with d1:
     st.metric(
-        "Recommended Alum Dose",
+        "Recommended Dose",
         f"{ai_dose:.1f} mg/L"
     )
 
-    st.metric(
-        "Raw Water Risk",
-        raw_risk
-    )
-
-with m2:
-
+with d2:
     st.metric(
         "Alum Required",
         f"{alum_kg_day:,.0f} kg/day"
     )
 
+with d3:
     st.metric(
-        "Prediction Confidence",
+        "Confidence",
         f"{confidence}%"
+    )
+
+with d4:
+    st.metric(
+        "Risk Level",
+        raw_risk
     )
 
 # ============================================================
@@ -2548,32 +2571,38 @@ with m2:
 
 with right:
 
-    st.markdown("### 📘 AI Recommendation Summary")
-
-    # ========================================================
-    # SUMMARY CARDS
-    # ========================================================
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.info(
-            f"""
-Turbidity  
-### {turbidity:.1f} NTU
-"""
-        )
-
-    with c2:
-        st.info(
-            f"""
-pH Level  
-### {ph:.1f}
-"""
-        )
-
+    st.markdown("""
+    <div style="
+    background-color:#0A2E6B;
+    padding:10px;
+    border-radius:8px;
+    text-align:center;
+    color:white;
+    font-size:18px;
+    font-weight:bold;">
+    AI DECISION PANEL
+    </div>
+    """,
+    unsafe_allow_html=True)
+    
     st.markdown("")
 
+    summary_df = pd.DataFrame({
+    "Parameter":[
+        "Turbidity",
+        "pH",
+        "Conductivity",
+        "Alkalinity"
+    ],
+    "Value":[
+        f"{turbidity:.1f} NTU",
+        f"{ph:.1f}",
+        f"{conductivity:.0f} µS/cm",
+        f"{alkalinity:.0f} mg/L"
+    ]
+})
+
+st.table(summary_df)
     # ========================================================
     # INDUSTRIAL SUMMARY
     # ========================================================
