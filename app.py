@@ -2214,7 +2214,7 @@ if jar_available:
         "Enter Jar Test Dose (mg/L)",
         min_value=1.0,
         max_value=200.0,
-        value=25.0,
+        value=5.0,
         step=1.0
     )
 
@@ -2385,7 +2385,7 @@ if ai_dose > 80:
 elif ai_dose > 40:
 
     st.warning("🟡 Moderate Condition")
-
+    
 else:
 
     st.success("🟢 Normal Operation")
