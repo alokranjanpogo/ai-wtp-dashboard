@@ -4136,7 +4136,7 @@ risk_score = max(0, min(risk_score, 100))
 
 with left:
 
-    st.markdown("## 📈 Weather-Adjusted Hypochlorite Requirement")
+    st.subheader("## 📈 Weather-Adjusted Hypochlorite Requirement")
 
     fig = go.Figure()
 
@@ -4215,6 +4215,9 @@ with left:
 
         xaxis=dict(
             tickformat="%H:%M"
+            tickmode="linear"
+            dtick=10800000
+            tickangle=-45
         )
 
     )
@@ -4276,7 +4279,7 @@ with right:
         use_container_width=True
     )
 
-st.markdown("## ✅ Smart Decision Summary")
+st.subheader("## ✅ Smart Decision Summary")
 
 c1, c2, c3 = st.columns(3)
 
