@@ -2566,28 +2566,6 @@ with d4:
         raw_risk
     )
 
-# ============================================================
-# 📘 RIGHT → DECISION PANEL
-# ============================================================
-
-with right:
-
-    st.markdown("""
-    <div style="
-    background-color:#0A2E6B;
-    padding:10px;
-    border-radius:8px;
-    text-align:center;
-    color:white;
-    font-size:18px;
-    font-weight:bold;">
-    AI DECISION PANEL
-    </div>
-    """,
-    unsafe_allow_html=True)
-    
-    st.markdown("")
-
     summary_df = pd.DataFrame({
     "Parameter":[
         "Turbidity",
