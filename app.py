@@ -4024,7 +4024,7 @@ from datetime import datetime
 # SAFETY CHECKS
 # ========================================================
 
-required_columns = ["Rain", "Humidity", "Temperature"]
+required_columns = ["Rain", "Humidity", "Temp"]
 
 for col in required_columns:
 
@@ -4058,140 +4058,54 @@ weather_df["DateTime"] = pd.date_range(
 )
 
 # ========================================================
-# PREDICTED TURBIDITY MODEL
+# SCIENTIFIC HYPOCHLORITE FORECAST
 # ========================================================
 
-weather_df["Predicted Turbidity"] = (
+# Baseline dose from Dynamic Hypochlorite Dosing System
 
-    raw_turbidity
+current_hypo_dose = dose_selected
 
-    +
+# Current live temperature from weather panel
 
-    (weather_df["Rain"] * 1.5)
+current_temp = temperature
 
-    +
+# Temperature coefficient for chlorine decay
 
-    (weather_df["Humidity"] * 0.08)
-
-)
+theta = 1.04
 
 # ========================================================
-# LIMIT TURBIDITY RANGE
-# ========================================================
-
-weather_df["Predicted Turbidity"] = weather_df[
-    "Predicted Turbidity"
-].clip(
-    lower=5,
-    upper=500
-)
-
-# ========================================================
-# TURBIDITY CHANGE RATE
-# ========================================================
-
-weather_df["Turbidity Rise"] = (
-
-    weather_df["Predicted Turbidity"]
-
-    -
-
-    weather_df["Predicted Turbidity"].shift(1)
-
-).fillna(0)
-
-# ========================================================
-# WEATHER INSTABILITY INDEX
-# ========================================================
-
-weather_df["Weather Instability"] = (
-
-    (weather_df["Rain"] * 0.4)
-
-    +
-
-    (weather_df["Humidity"] * 0.2)
-
-    +
-
-    (weather_df["Temperature"] * 0.15)
-
-)
-
-# ========================================================
-# ADVANCED ALUM PREDICTION
-# ========================================================
-
-weather_df["Pred Alum"] = (
-
-    (weather_df["Predicted Turbidity"] * 0.11)
-
-    +
-
-    (weather_df["Rain"] * 0.07)
-
-    +
-
-    (weather_df["Turbidity Rise"] * 0.20)
-
-    +
-
-    (weather_df["Weather Instability"] * 0.03)
-
-    +
-
-    8
-
-)
-
-# ========================================================
-# LIMIT ALUM RANGE
-# ========================================================
-
-weather_df["Pred Alum"] = weather_df[
-    "Pred Alum"
-].clip(
-    lower=10,
-    upper=80
-)
-
-# ========================================================
-# ADVANCED CHLORINE PREDICTION
+# FUTURE HYP OCHLORITE REQUIREMENT
 # ========================================================
 
 weather_df["Pred Chlorine"] = (
 
-    (weather_df["Predicted Turbidity"] * 0.012)
+    current_hypo_dose *
 
-    +
+    (
 
-    (weather_df["Temperature"] * 0.025)
+        theta ** (
 
-    +
+            weather_df["Temp"] - current_temp
 
-    (weather_df["Humidity"] * 0.003)
+        )
 
-    +
-
-    (weather_df["Rain"] * 0.015)
-
-    +
-
-    0.45
+    )
 
 )
 
 # ========================================================
-# LIMIT CHLORINE RANGE
+# LIMIT EXTREME VALUES
 # ========================================================
 
 weather_df["Pred Chlorine"] = weather_df[
     "Pred Chlorine"
 ].clip(
-    lower=0.5,
-    upper=5
-)
 
+    lower=current_hypo_dose * 0.70,
+
+    upper=current_hypo_dose * 1.50
+
+)
 # ========================================================
 # WEATHER RISK SCORE
 # ========================================================
@@ -4208,7 +4122,7 @@ risk_score = int(
 
         +
 
-        weather_df["Temperature"].mean() * 0.8
+        weather_df["Temp"].mean() * 0.8
 
     )
 
@@ -4222,50 +4136,36 @@ risk_score = max(0, min(risk_score, 100))
 
 with left:
 
-    st.markdown("## 📈 Future Dosing Trend")
+    st.markdown("## 📈 Weather-Adjusted Hypochlorite Requirement")
 
     fig = go.Figure()
 
-    # ====================================================
-    # ALUM TREND
-    # ====================================================
-
-    fig.add_trace(go.Scatter(
-
-        x=weather_df["DateTime"],
-
-        y=weather_df["Pred Alum"],
-
-        mode='lines+markers',
-
-        name='Predicted Alum Dose',
-
-        line=dict(width=4),
-
-        marker=dict(size=8)
-
-    ))
-
+    
     # ====================================================
     # CHLORINE TREND
     # ====================================================
 
     fig.add_trace(go.Scatter(
 
-        x=weather_df["DateTime"],
+    x=weather_df["DateTime"],
 
-        y=weather_df["Pred Chlorine"],
+    y=weather_df["Pred Chlorine"],
 
-        mode='lines+markers',
+    mode='lines+markers',
 
-        name='Predicted Chlorine Dose',
+    name='Weather Adjusted Hypochlorite Requirement',
 
-        line=dict(width=4),
+    line=dict(
+        width=4,
+        color="red"
+    ),
 
-        marker=dict(size=8)
+    marker=dict(
+        size=8,
+        color="red"
+    )
 
-    ))
-
+))
     # ====================================================
     # RAINFALL OVERLAY
     # ====================================================
@@ -4376,34 +4276,30 @@ with right:
         use_container_width=True
     )
 
-# ========================================================
-# FINAL AI DECISION SUMMARY
-# ========================================================
-
 st.markdown("## ✅ Smart Decision Summary")
 
 c1, c2, c3 = st.columns(3)
 
 # ========================================================
-# PEAK ALUM
+# CURRENT DOSE
 # ========================================================
 
 with c1:
 
     st.metric(
-        "Peak Alum Dose",
-        f"{weather_df['Pred Alum'].max():.1f} mg/L"
+        "Current Hypochlorite Dose",
+        f"{dose_selected:.1f} kg/day"
     )
 
 # ========================================================
-# PEAK CHLORINE
+# PEAK FORECAST REQUIREMENT
 # ========================================================
 
 with c2:
 
     st.metric(
-        "Peak Chlorine Dose",
-        f"{weather_df['Pred Chlorine'].max():.1f} mg/L"
+        "Peak Forecast Requirement",
+        f"{weather_df['Pred Chlorine'].max():.1f} kg/day"
     )
 
 # ========================================================
