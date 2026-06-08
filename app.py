@@ -4136,7 +4136,7 @@ risk_score = max(0, min(risk_score, 100))
 
 with left:
 
-    st.subheader("## 📈 Weather-Adjusted Hypochlorite Requirement")
+    st.subheader("📈 Weather-Adjusted Hypochlorite Requirement")
 
     fig = go.Figure()
 
@@ -4279,7 +4279,7 @@ with right:
         use_container_width=True
     )
 
-st.subheader("## ✅ Smart Decision Summary")
+st.subheader("✅ Smart Decision Summary")
 
 c1, c2, c3 = st.columns(3)
 
