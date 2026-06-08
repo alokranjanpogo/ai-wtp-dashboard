@@ -4214,9 +4214,9 @@ with left:
         yaxis_title="Predicted Chemical Dose",
 
         xaxis=dict(
-            tickformat="%H:%M"
-            tickmode="linear"
-            dtick=10800000
+            tickformat="%H:%M",
+            tickmode="linear",
+            dtick=10800000,
             tickangle=-45
         )
 
