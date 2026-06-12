@@ -6895,16 +6895,93 @@ if uploaded_img:
         # ==========================
         # IMAGE OUTPUT
         # ==========================
-
-        st.subheader("📦 Detection Output")
-
+        # ==========================
+        # SMART PLASTIC HIGHLIGHTING
+        # ==========================
+        
+        st.subheader("📦 AI Plastic Highlighting")
+        
+        display_img = img_np.copy()
+        
+        highlight_pixels = 0
+        
         for r in results:
-
-            st.image(
-                r.plot(),
-                use_container_width=True
-            )
-# ==========================================
+        
+            if r.boxes is None:
+                continue
+        
+            for box in r.boxes:
+        
+                cls_id = int(box.cls[0])
+                label = r.names[cls_id]
+        
+                # Skip non-plastic
+                if label == "non-plastic":
+                    continue
+        
+                x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+        
+                x1 = max(0, x1)
+                y1 = max(0, y1)
+                x2 = min(display_img.shape[1], x2)
+                y2 = min(display_img.shape[0], y2)
+        
+                roi = display_img[y1:y2, x1:x2]
+        
+                if roi.size == 0:
+                    continue
+        
+                hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
+        
+                # Remove water pixels
+                lower_water = np.array([80, 30, 30])
+                upper_water = np.array([140, 255, 255])
+        
+                water_mask = cv2.inRange(
+                    hsv,
+                    lower_water,
+                    upper_water
+                )
+        
+                debris_mask = cv2.bitwise_not(water_mask)
+        
+                # Clean noise
+                kernel = np.ones((5,5), np.uint8)
+        
+                debris_mask = cv2.morphologyEx(
+                    debris_mask,
+                    cv2.MORPH_OPEN,
+                    kernel
+                )
+        
+                highlight_pixels += np.count_nonzero(
+                    debris_mask
+                )
+        
+                roi[debris_mask > 0] = [
+                    255,
+                    255,
+                    0
+                ]
+        
+                display_img[y1:y2, x1:x2] = roi
+        
+        plastic_occupancy = (
+            highlight_pixels /
+            (display_img.shape[0] * display_img.shape[1])
+        ) * 100
+        
+        st.image(
+            display_img,
+            caption="Plastic Highlighted in Yellow",
+            use_container_width=True
+        )
+        
+        st.metric(
+            "Visible Plastic Occupancy %",
+            f"{plastic_occupancy:.2f}"
+        )
+        
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
 # ==========================================
