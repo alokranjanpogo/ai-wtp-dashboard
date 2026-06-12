@@ -6812,7 +6812,18 @@ if uploaded_img:
                 None,
                 {input_name: input_tensor}
             )
-            st.write(outputs[0].shape)
+            st.write("Output Shape:", outputs[0].shape)
+
+            output = outputs[0][0]
+            
+            st.write("Detection 1")
+            st.write(output[:,0])
+            
+            st.write("Detection 2")
+            st.write(output[:,1])
+            
+            st.write("Detection 3")
+            st.write(output[:,2])
             # =========================
             # EXTRACT OUTPUT
             # =========================
