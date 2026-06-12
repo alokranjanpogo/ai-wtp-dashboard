@@ -6849,49 +6849,49 @@ if uploaded_img:
 # RECOMMENDED ACTION
 # =====================================
 
-if risk == "LOW":
-
-    action = "Normal operation"
-
-elif risk == "MODERATE":
-
-    action = "Increase intake inspection frequency"
-
-elif risk == "HIGH":
-
-    action = "Deploy debris removal team"
-
-else:
-
-    action = "Immediate intake cleaning required"
-
-
-st.info(
-    f"Recommended Action: {action}"
-)
-
-# =====================================
-# DETECTION SUMMARY
-# =====================================
-
-st.subheader("📦 Detected Materials")
-
-for item in detected:
-
-    if item == "non-plastic":
-
-        st.success(item)
-
+    if risk == "LOW":
+    
+        action = "Normal operation"
+    
+    elif risk == "MODERATE":
+    
+        action = "Increase intake inspection frequency"
+    
+    elif risk == "HIGH":
+    
+        action = "Deploy debris removal team"
+    
     else:
-
-        st.warning(item)
-        # ==========================
-        # IMAGE OUTPUT
-        # ==========================
-        st.subheader("📦 Detection Output")
-
-        for r in results:
-            st.image(r.plot(), use_container_width=True)
+    
+        action = "Immediate intake cleaning required"
+    
+    
+    st.info(
+        f"Recommended Action: {action}"
+    )
+    
+    # =====================================
+    # DETECTION SUMMARY
+    # =====================================
+    
+    st.subheader("📦 Detected Materials")
+    
+    for item in detected:
+    
+        if item == "non-plastic":
+    
+            st.success(item)
+    
+        else:
+    
+            st.warning(item)
+            # ==========================
+            # IMAGE OUTPUT
+            # ==========================
+            st.subheader("📦 Detection Output")
+    
+            for r in results:
+                st.image(r.plot(), use_container_width=True)
 # ==========================================
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
