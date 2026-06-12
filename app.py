@@ -6926,46 +6926,26 @@ if uploaded_img:
                 x2 = min(display_img.shape[1], x2)
                 y2 = min(display_img.shape[0], y2)
         
-                roi = display_img[y1:y2, x1:x2]
-        
-                if roi.size == 0:
-                    continue
-        
-                hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
-        
-                # Remove water pixels
-                lower_water = np.array([80, 30, 30])
-                upper_water = np.array([140, 255, 255])
-        
-                water_mask = cv2.inRange(
-                    hsv,
-                    lower_water,
-                    upper_water
+                overlay = display_img.copy()
+
+                cv2.rectangle(
+                    overlay,
+                    (x1, y1),
+                    (x2, y2),
+                    (255, 255, 0), # Yellow
+                    -1
                 )
-        
-                debris_mask = cv2.bitwise_not(water_mask)
-        
-                # Clean noise
-                kernel = np.ones((5,5), np.uint8)
-        
-                debris_mask = cv2.morphologyEx(
-                    debris_mask,
-                    cv2.MORPH_OPEN,
-                    kernel
-                )
-        
-                highlight_pixels += np.count_nonzero(
-                    debris_mask
-                )
-        
-                roi[debris_mask > 0] = [
-                    255,
-                    255,
+                
+                alpha = 0.35
+                
+                display_img = cv2.addWeighted(
+                    overlay,
+                    alpha,
+                    display_img,
+                    1 - alpha,
                     0
-                ]
-        
-                display_img[y1:y2, x1:x2] = roi
-        
+                )
+                        
         plastic_occupancy = (
             highlight_pixels /
             (display_img.shape[0] * display_img.shape[1])
