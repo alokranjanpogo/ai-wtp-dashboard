@@ -6731,17 +6731,30 @@ from PIL import Image
 MODEL_PATH = "best.onnx"
 
 CLASS_NAMES = [
-    "plastic",
-    "organic",
-    "wood",
-    "other"
+    "non-plastic",
+    "plastic-bag",
+    "plastic-bottle",
+    "plastic-others",
+    "plastic-wrapper-sachet"
+]
+
+PLASTIC_CLASSES = [
+    "plastic-bag",
+    "plastic-bottle",
+    "plastic-others",
+    "plastic-wrapper-sachet"
 ]
 
 BOX_COLORS = {
-    "plastic": (0, 255, 255), # Yellow
-    "organic": (0, 255, 0), # Green
-    "wood": (255, 0, 0),
-    "other": (0, 0, 255)
+    "non-plastic": (0,255,0),
+
+    "plastic-bag": (0,255,255),
+
+    "plastic-bottle": (0,255,255),
+
+    "plastic-others": (0,255,255),
+
+    "plastic-wrapper-sachet": (0,255,255)
 }
 
 CONF_THRESHOLD = 0.35
@@ -6804,15 +6817,13 @@ def postprocess(outputs, img_w, img_h):
 
         x, y, w, h = pred[:4]
 
-        objectness = pred[4]
+        class_scores = pred[4:]
 
-        class_scores = pred[5:]
+        confidence = float(np.max(class_scores))
 
-        class_id = np.argmax(class_scores)
+        class_id = int(np.argmax(class_scores))
 
-        confidence = objectness * class_scores[class_id]
-
-        if confidence < CONF_THRESHOLD:
+        if confidence < 0.15:
             continue
 
         x1 = int((x - w/2) * img_w / 640)
@@ -6822,14 +6833,16 @@ def postprocess(outputs, img_w, img_h):
         height = int(h * img_h / 640)
 
         boxes.append([x1, y1, width, height])
-        scores.append(float(confidence))
+
+        scores.append(confidence)
+
         class_ids.append(class_id)
 
     indices = cv2.dnn.NMSBoxes(
         boxes,
         scores,
-        CONF_THRESHOLD,
-        NMS_THRESHOLD
+        0.15,
+        0.45
     )
 
     detections = []
@@ -6845,7 +6858,6 @@ def postprocess(outputs, img_w, img_h):
             })
 
     return detections
-
 
 # =====================================================
 # ANALYTICS
@@ -6983,18 +6995,13 @@ if uploaded:
         None,
         {input_name: input_tensor}
     )
-    st.write("Output Shape:", outputs[0].shape)
-
-    sample = outputs[0][0, :, 0]
     
-    st.write("First Detection Values")
-    st.write(sample)
     detections = postprocess(
         outputs,
         img_w,
         img_h
     )
-
+    st.write("Detections Found:", len(detections))
     result_image = draw_boxes(
         image_bgr,
         detections
