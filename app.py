@@ -6732,15 +6732,24 @@ debris_model = load_model()
 st.markdown("---")
 st.header("🌊 AI Intake Monitoring System")
 
-uploaded_img = st.file_uploader("Upload Intake Image", type=["jpg","png","jpeg"], key="intake")
+uploaded_img = st.file_uploader(
+    "Upload Intake Image",
+    type=["jpg", "png", "jpeg"],
+    key="intake"
+)
 
 if uploaded_img:
+
     img = Image.open(uploaded_img)
-    st.image(img, caption="Intake Image", use_container_width=True)
+
+    st.image(
+        img,
+        caption="Intake Image",
+        use_container_width=True
+    )
 
     if st.button("🔍 Run AI Analysis"):
 
-        # Convert image to numpy (important for YOLO stability)
         img_np = np.array(img)
 
         results = debris_model(img_np)
@@ -6749,149 +6758,152 @@ if uploaded_img:
 
         plastic_area = 0.0
         non_plastic_area = 0.0
-    
+
         for r in results:
 
             if r.boxes is not None:
-        
+
                 for box in r.boxes:
-        
+
                     cls_id = int(box.cls[0])
-        
+
                     label = r.names[cls_id]
-        
+
                     detected.append(label)
-        
+
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
-        
+
                     area = (x2 - x1) * (y2 - y1)
-        
+
                     if label == "non-plastic":
-        
+
                         non_plastic_area += area
-        
+
                     else:
-        
+
                         plastic_area += area
-        
-        
-                        img_area = img.size[0] * img.size[1]
-                        
-                        plastic_load = (plastic_area / img_area) * 100
-                        
-                        non_plastic_load = (non_plastic_area / img_area) * 100
-                        
-                        debris_count = len(detected)
-                        
-        # =====================================
+
+        img_area = img.size[0] * img.size[1]
+
+        plastic_load = (plastic_area / img_area) * 100
+
+        non_plastic_load = (non_plastic_area / img_area) * 100
+
+        debris_count = len(detected)
+
+        # ==========================
         # LOAD ANALYSIS
-        # =====================================
-        
+        # ==========================
+
         st.subheader("📊 AI Intake Analysis")
-        
+
         c1, c2, c3 = st.columns(3)
-        
+
         with c1:
             st.metric(
                 "Plastic Load %",
                 f"{plastic_load:.2f}"
             )
-        
+
         with c2:
             st.metric(
                 "Non-Plastic Load %",
                 f"{non_plastic_load:.2f}"
             )
-        
+
         with c3:
             st.metric(
                 "Detected Objects",
                 debris_count
             )
-        
-        # =====================================
+
+        # ==========================
         # RISK INDEX
-        # =====================================
-        
+        # ==========================
+
         if plastic_load < 5:
-        
+
             risk = "LOW"
             risk_index = 20
-        
+
         elif plastic_load < 15:
-        
+
             risk = "MODERATE"
             risk_index = 50
-        
+
         elif plastic_load < 30:
-        
+
             risk = "HIGH"
             risk_index = 75
-        
+
         else:
-        
+
             risk = "CRITICAL"
             risk_index = 95
-        
-            
-            st.subheader("⚠️ Intake Risk Assessment")
-            
-            st.metric(
-                "Blockage Risk Index",
-                f"{risk_index}/100"
-            )
-            
-            st.write(
-                f"Risk Level: {risk}"
-            )
 
-# =====================================
-# RECOMMENDED ACTION
-# =====================================
+        st.subheader("⚠️ Intake Risk Assessment")
 
-    if risk == "LOW":
-    
-        action = "Normal operation"
-    
-    elif risk == "MODERATE":
-    
-        action = "Increase intake inspection frequency"
-    
-    elif risk == "HIGH":
-    
-        action = "Deploy debris removal team"
-    
-    else:
-    
-        action = "Immediate intake cleaning required"
-    
-    
-    st.info(
-        f"Recommended Action: {action}"
-    )
-    
-    # =====================================
-    # DETECTION SUMMARY
-    # =====================================
-    
-    st.subheader("📦 Detected Materials")
-    
-    for item in detected:
-    
-        if item == "non-plastic":
-    
-            st.success(item)
-    
+        st.metric(
+            "Blockage Risk Index",
+            f"{risk_index}/100"
+        )
+
+        st.write(
+            f"Risk Level: {risk}"
+        )
+
+        # ==========================
+        # RECOMMENDED ACTION
+        # ==========================
+
+        if risk == "LOW":
+
+            action = "Normal operation"
+
+        elif risk == "MODERATE":
+
+            action = "Increase intake inspection frequency"
+
+        elif risk == "HIGH":
+
+            action = "Deploy debris removal team"
+
         else:
-    
-            st.warning(item)
-            # ==========================
-            # IMAGE OUTPUT
-            # ==========================
-            st.subheader("📦 Detection Output")
-    
-            for r in results:
-                st.image(r.plot(), use_container_width=True)
+
+            action = "Immediate intake cleaning required"
+
+        st.info(
+            f"Recommended Action: {action}"
+        )
+
+        # ==========================
+        # DETECTED MATERIALS
+        # ==========================
+
+        st.subheader("📦 Detected Materials")
+
+        for item in detected:
+
+            if item == "non-plastic":
+
+                st.success(item)
+
+            else:
+
+                st.warning(item)
+
+        # ==========================
+        # IMAGE OUTPUT
+        # ==========================
+
+        st.subheader("📦 Detection Output")
+
+        for r in results:
+
+            st.image(
+                r.plot(),
+                use_container_width=True
+            )
 # ==========================================
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
