@@ -1517,9 +1517,6 @@ for item in filter_summary:
 # ============================================================
 # OUTPUT TURBIDITY TREND
 # ============================================================
-# ============================================================
-# OUTPUT TURBIDITY TREND
-# ============================================================
 
 st.markdown("---")
 st.subheader("📈 Output Turbidity Trend")
@@ -1633,17 +1630,68 @@ if monitor_mode == "🟢 Dynamic Live Monitoring":
 
 else:
 
+    # Ensure Date column is datetime
+    trend_df["Date"] = pd.to_datetime(trend_df["Date"])
+
+    # -------------------------
+    # Date Range Selection
+    # -------------------------
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        from_date = st.date_input(
+            "From Date",
+            value=pd.Timestamp("2026-01-01").date(),
+            min_value=pd.Timestamp("2026-01-01").date(),
+            max_value=pd.Timestamp("2035-12-31").date(),
+            key="from_date"
+        )
+
+    with col2:
+        to_date = st.date_input(
+            "To Date",
+            value=trend_df["Date"].max().date(),
+            min_value=pd.Timestamp("2026-01-01").date(),
+            max_value=pd.Timestamp("2035-12-31").date(),
+            key="to_date"
+        )
+
+    # -------------------------
+    # Unit Selection
+    # -------------------------
+
     selected_unit = st.selectbox(
         "Select Unit",
-        units,
+        [
+            "Clarifier",
+            "Filter Bed 1",
+            "Filter Bed 2",
+            "Filter Bed 3",
+            "Filter Bed 4",
+            "Filter Bed 5",
+            "Filter Bed 6"
+        ],
         key="output_trend_unit"
     )
 
+    # -------------------------
+    # Apply Filters
+    # -------------------------
+
     unit_df = trend_df[
-        trend_df["Unit"] == selected_unit
+        (trend_df["Unit"] == selected_unit)
+        &
+        (trend_df["Date"] >= pd.Timestamp(from_date))
+        &
+        (trend_df["Date"] <= pd.Timestamp(to_date))
     ].copy()
 
     unit_df = unit_df.sort_values("Date")
+
+    # -------------------------
+    # Graph
+    # -------------------------
 
     fig_hist = go.Figure()
 
@@ -1672,10 +1720,6 @@ else:
         fig_hist,
         use_container_width=True
     )
-
-
-    
-
 # ===============================
 # STREAMLIT UI
 # ===============================
