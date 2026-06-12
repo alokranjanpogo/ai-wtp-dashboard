@@ -6746,83 +6746,145 @@ if uploaded_img:
         results = debris_model(img_np)
 
         detected = []
-        total_area = 0.0 # ensure float
 
-        for r in results:
-            if r.boxes is not None:
-                for box in r.boxes:
+    plastic_area = 0.0
+    non_plastic_area = 0.0
+    
+    for r in results:
+    
+        if r.boxes is not None:
+    
+            for box in r.boxes:
+    
+                cls_id = int(box.cls[0])
+    
+                label = r.names[cls_id]
+    
+                detected.append(label)
+    
+                x1, y1, x2, y2 = box.xyxy[0].tolist()
+    
+                area = (x2 - x1) * (y2 - y1)
+    
+                if label == "non-plastic":
+    
+                    non_plastic_area += area
+    
+                else:
+    
+                    plastic_area += area
+    
+    
+    img_area = img.size[0] * img.size[1]
+    
+    plastic_load = (plastic_area / img_area) * 100
+    
+    non_plastic_load = (non_plastic_area / img_area) * 100
+    
+    debris_count = len(detected)
+    
+    # =====================================
+    # LOAD ANALYSIS
+    # =====================================
+    
+    st.subheader("📊 AI Intake Analysis")
+    
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        st.metric(
+            "Plastic Load %",
+            f"{plastic_load:.2f}"
+        )
+    
+    with c2:
+        st.metric(
+            "Non-Plastic Load %",
+            f"{non_plastic_load:.2f}"
+        )
+    
+    with c3:
+        st.metric(
+            "Detected Objects",
+            debris_count
+        )
+    
+    # =====================================
+    # RISK INDEX
+    # =====================================
+    
+    if plastic_load < 5:
+    
+        risk = "LOW"
+        risk_index = 20
+    
+    elif plastic_load < 15:
+    
+        risk = "MODERATE"
+        risk_index = 50
+    
+    elif plastic_load < 30:
+    
+        risk = "HIGH"
+        risk_index = 75
+    
+    else:
+    
+        risk = "CRITICAL"
+        risk_index = 95
 
-                    label = r.names[int(box.cls[0])]
-                    detected.append(label)
 
-                    # Convert tensor → float
-                    x1, y1, x2, y2 = box.xyxy[0].tolist()
+st.subheader("⚠️ Intake Risk Assessment")
 
-                    area = (x2 - x1) * (y2 - y1)
-                    total_area += float(area)
+st.metric(
+    "Blockage Risk Index",
+    f"{risk_index}/100"
+)
 
-        # ==========================
-        # 📊 INTELLIGENT ANALYSIS
-        # ==========================
-        st.subheader("📊 AI Detection Summary")
-        st.write("Detected Objects:", detected)
+st.write(
+    f"Risk Level: {risk}"
+)
 
-        debris_count = len(detected)
+# =====================================
+# RECOMMENDED ACTION
+# =====================================
 
-        # Avoid division by zero
-        img_area = img.size[0] * img.size[1]
+if risk == "LOW":
 
-        if img_area > 0:
-            density = total_area / img_area
-        else:
-            density = 0
+    action = "Normal operation"
 
-        st.write(f"Debris Density: {round(float(density),3)}")
+elif risk == "MODERATE":
 
-        # ==========================
-        #  AI DECISION ENGINE
-        # ==========================
-        st.subheader("⚠️ AI Identified Issues")
+    action = "Increase intake inspection frequency"
 
-        issues = []
-        actions = []
+elif risk == "HIGH":
 
-        # --- Plastic detection ---
-        if any(x in detected for x in ["plastic", "bottle", "bag"]):
-            issues.append("Plastic accumulation → Intake blockage risk")
-            actions.append("Install / clean trash racks immediately")
+    action = "Deploy debris removal team"
 
-        # --- Organic load ---
-        if any(x in detected for x in ["leaf", "plant"]):
-            issues.append("High organic load → Increased coagulant demand")
-            actions.append("Increase alum/PAC dosing temporarily")
+else:
 
-        # --- High density ---
-        if density > 0.15:
-            issues.append("High debris density → Clarifier overload risk")
-            actions.append("Reduce intake flow rate")
+    action = "Immediate intake cleaning required"
 
-        # --- Extreme condition ---
-        if density > 0.25 or debris_count > 8:
-            issues.append("Extreme debris condition → Filter choking risk")
-            actions.append("Prepare for frequent backwashing")
 
-        # --- No detection ---
-        if debris_count == 0:
-            issues.append("No visible debris → System stable")
-            actions.append("Maintain normal operation")
+st.info(
+    f"Recommended Action: {action}"
+)
 
-        # ==========================
-        # OUTPUT
-        # ==========================
-        for i in issues:
-            st.write("•", i)
+# =====================================
+# DETECTION SUMMARY
+# =====================================
 
-        st.subheader("🛠 Recommended Actions")
+st.subheader("📦 Detected Materials")
 
-        for a in actions:
-            st.write("•", a)
+for item in detected:
 
+    if item == "non-plastic":
+
+        st.success(item)
+
+    else:
+
+        st.warning(item)
         # ==========================
         # IMAGE OUTPUT
         # ==========================
