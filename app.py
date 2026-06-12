@@ -1520,27 +1520,7 @@ for item in filter_summary:
 
 st.markdown("---")
 st.subheader("📈 Output Turbidity Trend")
-# Date Range Selection
 
-col1, col2 = st.columns(2)
-
-with col1:
-    from_date = st.date_input(
-        "From Date",
-        value=pd.Timestamp("2026-01-01").date(),
-        min_value=pd.Timestamp("2026-01-01").date(),
-        max_value=pd.Timestamp("2035-12-31").date(),
-        key="from_date"
-    )
-
-with col2:
-    to_date = st.date_input(
-        "To Date",
-        value=pd.Timestamp("2035-12-31").date(),
-        min_value=pd.Timestamp("2026-01-01").date(),
-        max_value=pd.Timestamp("2035-12-31").date(),
-        key="to_date"
-    )
 units = [
     "Clarifier",
     "Filter Bed 1",
