@@ -6718,361 +6718,118 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # 🌊 INTAKE DEBRIS MODULE
 # ==============================
 
-import streamlit as st
-import cv2
-import numpy as np
-import onnxruntime as ort
+from ultralytics import YOLO
 from PIL import Image
-
-# =====================================================
-# CONFIG
-# =====================================================
-
-MODEL_PATH = "best.onnx"
-
-CLASS_NAMES = [
-    "non-plastic",
-    "plastic-bag",
-    "plastic-bottle",
-    "plastic-others",
-    "plastic-wrapper-sachet"
-]
-
-PLASTIC_CLASSES = [
-    "plastic-bag",
-    "plastic-bottle",
-    "plastic-others",
-    "plastic-wrapper-sachet"
-]
-
-BOX_COLORS = {
-    "non-plastic": (0,255,0),
-
-    "plastic-bag": (0,255,255),
-
-    "plastic-bottle": (0,255,255),
-
-    "plastic-others": (0,255,255),
-
-    "plastic-wrapper-sachet": (0,255,255)
-}
-
-CONF_THRESHOLD = 0.35
-NMS_THRESHOLD = 0.45
-
-# =====================================================
-# LOAD MODEL
-# =====================================================
+import numpy as np
+import streamlit as st
 
 @st.cache_resource
 def load_model():
-    session = ort.InferenceSession(
-        MODEL_PATH,
-        providers=["CPUExecutionProvider"]
-    )
-    return session
+    return YOLO("best.pt")
 
-session = load_model()
+debris_model = load_model()
 
-input_name = session.get_inputs()[0].name
+st.markdown("---")
+st.header("🌊 AI Intake Monitoring System")
 
-# =====================================================
-# PREPROCESS
-# =====================================================
+uploaded_img = st.file_uploader("Upload Intake Image", type=["jpg","png","jpeg"], key="intake")
 
-def preprocess(image):
+if uploaded_img:
+    img = Image.open(uploaded_img)
+    st.image(img, caption="Intake Image", use_container_width=True)
 
-    img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    if st.button("🔍 Run AI Analysis"):
 
-    h0, w0 = img.shape[:2]
+        # Convert image to numpy (important for YOLO stability)
+        img_np = np.array(img)
 
-    img_resized = cv2.resize(img, (640, 640))
+        results = debris_model(img_np)
 
-    img_resized = img_resized.astype(np.float32) / 255.0
+        detected = []
+        total_area = 0.0 # ensure float
 
-    img_resized = np.transpose(img_resized, (2, 0, 1))
+        for r in results:
+            if r.boxes is not None:
+                for box in r.boxes:
 
-    img_resized = np.expand_dims(img_resized, axis=0)
+                    label = r.names[int(box.cls[0])]
+                    detected.append(label)
 
-    return img_resized, w0, h0
+                    # Convert tensor → float
+                    x1, y1, x2, y2 = box.xyxy[0].tolist()
 
+                    area = (x2 - x1) * (y2 - y1)
+                    total_area += float(area)
 
-# =====================================================
-# POST PROCESS
-# =====================================================
+        # ==========================
+        # 📊 INTELLIGENT ANALYSIS
+        # ==========================
+        st.subheader("📊 AI Detection Summary")
+        st.write("Detected Objects:", detected)
 
-def postprocess(outputs, img_w, img_h):
+        debris_count = len(detected)
 
-    predictions = outputs[0]
+        # Avoid division by zero
+        img_area = img.size[0] * img.size[1]
 
-    predictions = np.squeeze(predictions)
+        if img_area > 0:
+            density = total_area / img_area
+        else:
+            density = 0
 
-    predictions = predictions.T
+        st.write(f"Debris Density: {round(float(density),3)}")
 
-    boxes = []
-    scores = []
-    class_ids = []
+        # ==========================
+        #  AI DECISION ENGINE
+        # ==========================
+        st.subheader("⚠️ AI Identified Issues")
 
-    for pred in predictions:
+        issues = []
+        actions = []
 
-        x, y, w, h = pred[:4]
+        # --- Plastic detection ---
+        if any(x in detected for x in ["plastic", "bottle", "bag"]):
+            issues.append("Plastic accumulation → Intake blockage risk")
+            actions.append("Install / clean trash racks immediately")
 
-        class_scores = pred[4:]
+        # --- Organic load ---
+        if any(x in detected for x in ["leaf", "plant"]):
+            issues.append("High organic load → Increased coagulant demand")
+            actions.append("Increase alum/PAC dosing temporarily")
 
-        confidence = float(np.max(class_scores))
+        # --- High density ---
+        if density > 0.15:
+            issues.append("High debris density → Clarifier overload risk")
+            actions.append("Reduce intake flow rate")
 
-        class_id = int(np.argmax(class_scores))
+        # --- Extreme condition ---
+        if density > 0.25 or debris_count > 8:
+            issues.append("Extreme debris condition → Filter choking risk")
+            actions.append("Prepare for frequent backwashing")
 
-        if confidence < 0.15:
-            continue
+        # --- No detection ---
+        if debris_count == 0:
+            issues.append("No visible debris → System stable")
+            actions.append("Maintain normal operation")
 
-        x1 = int((x - w/2) * img_w / 640)
-        y1 = int((y - h/2) * img_h / 640)
+        # ==========================
+        # OUTPUT
+        # ==========================
+        for i in issues:
+            st.write("•", i)
 
-        width = int(w * img_w / 640)
-        height = int(h * img_h / 640)
+        st.subheader("🛠 Recommended Actions")
 
-        boxes.append([x1, y1, width, height])
+        for a in actions:
+            st.write("•", a)
 
-        scores.append(confidence)
-
-        class_ids.append(class_id)
-
-    indices = cv2.dnn.NMSBoxes(
-        boxes,
-        scores,
-        0.15,
-        0.45
-    )
-
-    detections = []
-
-    if len(indices) > 0:
-
-        for i in indices.flatten():
-
-            detections.append({
-                "box": boxes[i],
-                "score": scores[i],
-                "class_id": class_ids[i]
-            })
-
-    return detections
-
-# =====================================================
-# ANALYTICS
-# =====================================================
-
-def calculate_loads(detections, image_area):
-
-    plastic_area = 0
-    organic_area = 0
-
-    for det in detections:
-
-        x, y, w, h = det["box"]
-
-        area = w * h
-
-        cls = CLASS_NAMES[det["class_id"]]
-
-        if cls == "plastic":
-            plastic_area += area
-
-        elif cls == "organic":
-            organic_area += area
-
-    plastic_load = (plastic_area / image_area) * 100
-    organic_load = (organic_area / image_area) * 100
-
-    total_load = plastic_load + organic_load
-
-    return plastic_load, organic_load, total_load
-
-
-# =====================================================
-# BLOCKAGE RISK
-# =====================================================
-
-def blockage_risk(total_load):
-
-    if total_load < 5:
-        return "LOW", 20
-
-    elif total_load < 15:
-        return "MODERATE", 50
-
-    elif total_load < 30:
-        return "HIGH", 75
-
-    else:
-        return "CRITICAL", 95
-
-
-# =====================================================
-# ACTION RECOMMENDATION
-# =====================================================
-
-def recommend_action(risk):
-
-    if risk == "LOW":
-        return "Normal intake operation."
-
-    elif risk == "MODERATE":
-        return "Increase intake surveillance."
-
-    elif risk == "HIGH":
-        return "Deploy debris removal team."
-
-    else:
-        return "Immediate intake cleaning required."
-
-
-# =====================================================
-# DRAW BOXES
-# =====================================================
-
-def draw_boxes(image, detections):
-
-    output = image.copy()
-
-    for det in detections:
-
-        x, y, w, h = det["box"]
-
-        score = det["score"]
-
-        cls = CLASS_NAMES[det["class_id"]]
-
-        color = BOX_COLORS[cls]
-
-        cv2.rectangle(
-            output,
-            (x, y),
-            (x+w, y+h),
-            color,
-            3
-        )
-
-        label = f"{cls} {score:.2f}"
-
-        cv2.putText(
-            output,
-            label,
-            (x, y-10),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            color,
-            2
-        )
-
-    return output
-
-
-# =====================================================
-# STREAMLIT UI
-# =====================================================
-
-st.title("Tata Steel UISL Intake Monitoring Dashboard")
-
-uploaded = st.file_uploader(
-    "Upload Intake Image",
-    type=["jpg", "jpeg", "png"]
-)
-
-if uploaded:
-
-    image = np.array(Image.open(uploaded))
-
-    image_bgr = cv2.cvtColor(
-        image,
-        cv2.COLOR_RGB2BGR
-    )
-
-    input_tensor, img_w, img_h = preprocess(image_bgr)
-
-    outputs = session.run(
-        None,
-        {input_name: input_tensor}
-    )
-    
-    detections = postprocess(
-        outputs,
-        img_w,
-        img_h
-    )
-    st.write("Detections Found:", len(detections))
-    result_image = draw_boxes(
-        image_bgr,
-        detections
-    )
-
-    image_area = img_w * img_h
-
-    plastic_load, organic_load, total_load = calculate_loads(
-        detections,
-        image_area
-    )
-
-    risk_text, risk_index = blockage_risk(total_load)
-
-    recommendation = recommend_action(risk_text)
-
-    result_rgb = cv2.cvtColor(
-        result_image,
-        cv2.COLOR_BGR2RGB
-    )
-
-    st.image(
-        result_rgb,
-        caption="Detected Debris"
-    )
-
-    st.subheader("Load Analysis")
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric(
-        "Plastic Load %",
-        f"{plastic_load:.2f}"
-    )
-
-    col2.metric(
-        "Organic Load %",
-        f"{organic_load:.2f}"
-    )
-
-    col3.metric(
-        "Total Load %",
-        f"{total_load:.2f}"
-    )
-
-    st.subheader("Intake Risk Assessment")
-
-    st.metric(
-        "Blockage Risk Index",
-        f"{risk_index}/100"
-    )
-
-    st.write(
-        f"### Risk Level : {risk_text}"
-    )
-
-    st.write(
-        f"### Recommended Action : {recommendation}"
-    )
-
-    st.subheader("Detection Summary")
-
-    for det in detections:
-
-        cls = CLASS_NAMES[
-            det["class_id"]
-        ]
-
-        st.write(
-            f"{cls} : {det['score']:.2f}"
-        )
+        # ==========================
+        # IMAGE OUTPUT
+        # ==========================
+        st.subheader("📦 Detection Output")
+
+        for r in results:
+            st.image(r.plot(), use_container_width=True)
 # ==========================================
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
