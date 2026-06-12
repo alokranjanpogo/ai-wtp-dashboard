@@ -6833,17 +6833,17 @@ if uploaded_img:
         risk = "CRITICAL"
         risk_index = 95
 
-
-st.subheader("⚠️ Intake Risk Assessment")
-
-st.metric(
-    "Blockage Risk Index",
-    f"{risk_index}/100"
-)
-
-st.write(
-    f"Risk Level: {risk}"
-)
+        
+        st.subheader("⚠️ Intake Risk Assessment")
+        
+        st.metric(
+            "Blockage Risk Index",
+            f"{risk_index}/100"
+        )
+        
+        st.write(
+            f"Risk Level: {risk}"
+        )
 
 # =====================================
 # RECOMMENDED ACTION
