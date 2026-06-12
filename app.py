@@ -6750,7 +6750,7 @@ if uploaded_img:
     plastic_area = 0.0
     non_plastic_area = 0.0
     
-    for r in results:
+        for r in results:
         
         if r.boxes is not None:
     
