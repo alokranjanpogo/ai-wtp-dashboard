@@ -6847,7 +6847,7 @@ def postprocess(outputs, img_w, img_h):
     return detections
 
 
- =====================================================
+# =====================================================
 # ANALYTICS
 # =====================================================
 
@@ -6855,7 +6855,7 @@ def calculate_loads(detections, image_area):
 
     plastic_area = 0
     organic_area = 0
-#
+
     for det in detections:
 
         x, y, w, h = det["box"]
