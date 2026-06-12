@@ -6812,18 +6812,17 @@ if uploaded_img:
                 None,
                 {input_name: input_tensor}
             )
-            st.write("Output Shape:", outputs[0].shape)
+            st.write("Model Output Shape:", outputs[0].shape)
 
             output = outputs[0][0]
             
-            st.write("Detection 1")
-            st.write(output[:,0])
+            st.write("Maximum Class Scores")
             
-            st.write("Detection 2")
-            st.write(output[:,1])
-            
-            st.write("Detection 3")
-            st.write(output[:,2])
+            for i in range(5):
+                st.write(
+                    f"Class {i}",
+                    float(np.max(output[4+i]))
+                 )
             # =========================
             # EXTRACT OUTPUT
             # =========================
