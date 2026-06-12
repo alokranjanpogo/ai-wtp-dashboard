@@ -6812,7 +6812,7 @@ if uploaded_img:
                 None,
                 {input_name: input_tensor}
             )
-
+            st.write(outputs[0].shape)
             # =========================
             # EXTRACT OUTPUT
             # =========================
