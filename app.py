@@ -1645,7 +1645,7 @@ else:
             value=pd.Timestamp("2026-01-01").date(),
             min_value=pd.Timestamp("2026-01-01").date(),
             max_value=pd.Timestamp("2035-12-31").date(),
-            key="from_date"
+            key="output_trend_from_date"
         )
 
     with col2:
@@ -1654,7 +1654,7 @@ else:
             value=trend_df["Date"].max().date(),
             min_value=pd.Timestamp("2026-01-01").date(),
             max_value=pd.Timestamp("2035-12-31").date(),
-            key="to_date"
+            key="output_trend_to_date"
         )
 
     # -------------------------
