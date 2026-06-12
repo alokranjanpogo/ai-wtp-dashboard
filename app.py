@@ -1517,20 +1517,40 @@ for item in filter_summary:
 # ============================================================
 # OUTPUT TURBIDITY TREND
 # ============================================================
+# ============================================================
+# OUTPUT TURBIDITY TREND
+# ============================================================
 
 st.markdown("---")
 st.subheader("📈 Output Turbidity Trend")
 
+units = [
+    "Clarifier",
+    "Filter Bed 1",
+    "Filter Bed 2",
+    "Filter Bed 3",
+    "Filter Bed 4",
+    "Filter Bed 5",
+    "Filter Bed 6"
+]
+
+# ============================================================
+# DYNAMIC MODE
+# ============================================================
+
 if monitor_mode == "🟢 Dynamic Live Monitoring":
+
+    selected_unit = st.selectbox(
+        "Select Unit",
+        units,
+        key="dynamic_output_unit"
+    )
 
     if "hist_trend" not in st.session_state:
 
         st.session_state.hist_trend = pd.DataFrame({
-
             "Time": [],
-
             "Output": []
-
         })
 
     hist_df = st.session_state.hist_trend
@@ -1545,11 +1565,8 @@ if monitor_mode == "🟢 Dynamic Live Monitoring":
     )
 
     new_row = pd.DataFrame({
-
         "Time": [current_time],
-
         "Output": [new_output]
-
     })
 
     hist_df = pd.concat(
@@ -1564,41 +1581,25 @@ if monitor_mode == "🟢 Dynamic Live Monitoring":
     fig_hist = go.Figure()
 
     fig_hist.add_trace(
-
         go.Scatter(
-
             x=hist_df["Time"],
-
             y=hist_df["Output"],
-
-            mode="lines",
-
+            mode="lines+markers",
             line=dict(
                 color="#0077b6",
                 width=4
             ),
-
-            fill='tozeroy',
-
-            name="Output Turbidity"
-
+            fill="tozeroy",
+            name="Outlet Turbidity"
         )
     )
 
     fig_hist.update_layout(
-
         height=400,
-
         template="plotly_white",
-
         xaxis_title="Live Time",
-
         yaxis_title="Outlet Turbidity (NTU)",
-
-        transition_duration=700,
-
         uirevision="live_hist"
-
     )
 
     st.plotly_chart(
@@ -1606,64 +1607,45 @@ if monitor_mode == "🟢 Dynamic Live Monitoring":
         use_container_width=True
     )
 
+# ============================================================
+# STATIC MODE
+# ============================================================
+
 else:
-    
+
     selected_unit = st.selectbox(
-
         "Select Unit",
-         [
-            "Clarifier",
-            "Filter Bed 1",
-            "Filter Bed 2",
-            "Filter Bed 3",
-            "Filter Bed 4",
-            "Filter Bed 5",
-            "Filter Bed 6"
-         ],
+        units,
         key="output_trend_unit"
-
     )
 
     unit_df = trend_df[
-        (trend_df["Unit"] == selected_unit)
-        &
-        (pd.to_datetime(trend_df["Date"]).dt.date == selected_date)
-    ]
+        trend_df["Unit"] == selected_unit
+    ].copy()
+
+    unit_df = unit_df.sort_values("Date")
 
     fig_hist = go.Figure()
 
     fig_hist.add_trace(
-
         go.Scatter(
-
             x=unit_df["Date"],
-
             y=unit_df["Outlet Turbidity"],
-
             mode="lines+markers",
-
             line=dict(
                 color="#0077b6",
                 width=4
             ),
-
-            fill='tozeroy',
-
+            fill="tozeroy",
             name="Outlet Turbidity"
-
         )
     )
 
     fig_hist.update_layout(
-
         height=400,
-
         template="plotly_white",
-
         xaxis_title="Date",
-
         yaxis_title="Outlet Turbidity (NTU)"
-
     )
 
     st.plotly_chart(
@@ -1672,6 +1654,7 @@ else:
     )
 
 
+    
 
 # ===============================
 # STREAMLIT UI
