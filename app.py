@@ -6775,14 +6775,14 @@ for r in results:
                     plastic_area += area
     
     
-    img_area = img.size[0] * img.size[1]
-    
-    plastic_load = (plastic_area / img_area) * 100
-    
-    non_plastic_load = (non_plastic_area / img_area) * 100
-    
-    debris_count = len(detected)
-    
+                    img_area = img.size[0] * img.size[1]
+                    
+                    plastic_load = (plastic_area / img_area) * 100
+                    
+                    non_plastic_load = (non_plastic_area / img_area) * 100
+                    
+                    debris_count = len(detected)
+                    
     # =====================================
     # LOAD ANALYSIS
     # =====================================
