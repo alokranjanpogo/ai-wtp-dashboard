@@ -6752,37 +6752,37 @@ if uploaded_img:
     
         for r in results:
 
-        if r.boxes is not None:
-    
-            for box in r.boxes:
-    
-                cls_id = int(box.cls[0])
-    
-                label = r.names[cls_id]
-    
-                detected.append(label)
-    
-                x1, y1, x2, y2 = box.xyxy[0].tolist()
-    
-                area = (x2 - x1) * (y2 - y1)
-    
-                if label == "non-plastic":
-    
-                    non_plastic_area += area
-    
-                else:
-    
-                    plastic_area += area
-    
-    
-                    img_area = img.size[0] * img.size[1]
-                    
-                    plastic_load = (plastic_area / img_area) * 100
-                    
-                    non_plastic_load = (non_plastic_area / img_area) * 100
-                    
-                    debris_count = len(detected)
-                    
+            if r.boxes is not None:
+        
+                for box in r.boxes:
+        
+                    cls_id = int(box.cls[0])
+        
+                    label = r.names[cls_id]
+        
+                    detected.append(label)
+        
+                    x1, y1, x2, y2 = box.xyxy[0].tolist()
+        
+                    area = (x2 - x1) * (y2 - y1)
+        
+                    if label == "non-plastic":
+        
+                        non_plastic_area += area
+        
+                    else:
+        
+                        plastic_area += area
+        
+        
+                        img_area = img.size[0] * img.size[1]
+                        
+                        plastic_load = (plastic_area / img_area) * 100
+                        
+                        non_plastic_load = (non_plastic_area / img_area) * 100
+                        
+                        debris_count = len(detected)
+                        
 # =====================================
 # LOAD ANALYSIS
 # =====================================
