@@ -6719,342 +6719,348 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # ==============================
 
 import streamlit as st
-import onnxruntime as ort
+import cv2
 import numpy as np
+import onnxruntime as ort
 from PIL import Image
 
-# =========================
-# PAGE CONFIG
-# =========================
-st.set_page_config(
-    page_title="Intake Monitoring",
-    layout="wide"
-)
+# =====================================================
+# CONFIG
+# =====================================================
 
-st.header("🌊Intake Monitoring System")
+MODEL_PATH = "best.onnx"
 
-# =========================
-# CLASS NAMES
-# =========================
-# CHANGE ACCORDING TO YOUR TRAINED MODEL
 CLASS_NAMES = [
-    "Plastic",
-    "Bottle",
-    "Bag",
-    "Leaf",
-    "Plant",
-    "Wood"
+    "plastic",
+    "organic",
+    "wood",
+    "other"
 ]
 
-# =========================
-# LOAD ONNX MODEL
-# =========================
+BOX_COLORS = {
+    "plastic": (0, 255, 255), # Yellow
+    "organic": (0, 255, 0), # Green
+    "wood": (255, 0, 0),
+    "other": (0, 0, 255)
+}
+
+CONF_THRESHOLD = 0.35
+NMS_THRESHOLD = 0.45
+
+# =====================================================
+# LOAD MODEL
+# =====================================================
+
 @st.cache_resource
 def load_model():
-
-    session = ort.InferenceSession("best.onnx")
-
+    session = ort.InferenceSession(
+        MODEL_PATH,
+        providers=["CPUExecutionProvider"]
+    )
     return session
 
 session = load_model()
 
-# =========================
-# IMAGE UPLOAD
-# =========================
-uploaded_img = st.file_uploader(
-    "Upload Intake Image",
-    type=["jpg", "jpeg", "png"],
-    key="intake"
-)
+input_name = session.get_inputs()[0].name
 
-# =========================
-# IMAGE PREPROCESS
-# =========================
-def preprocess(img):
+# =====================================================
+# PREPROCESS
+# =====================================================
 
-    img = img.resize((640, 640))
+def preprocess(image):
 
-    img_np = np.array(img).astype(np.float32)
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    img_np = img_np / 255.0
+    h0, w0 = img.shape[:2]
 
-    img_np = np.transpose(img_np, (2, 0, 1))
+    img_resized = cv2.resize(img, (640, 640))
 
-    img_np = np.expand_dims(img_np, axis=0)
+    img_resized = img_resized.astype(np.float32) / 255.0
 
-    return img_np
+    img_resized = np.transpose(img_resized, (2, 0, 1))
 
-# =========================
-# RUN
-# =========================
-if uploaded_img:
+    img_resized = np.expand_dims(img_resized, axis=0)
 
-    img = Image.open(uploaded_img).convert("RGB")
+    return img_resized, w0, h0
 
-    st.image(
-        img,
-        caption="Uploaded Intake Image",
-        use_container_width=True
+
+# =====================================================
+# POST PROCESS
+# =====================================================
+
+def postprocess(outputs, img_w, img_h):
+
+    predictions = outputs[0]
+
+    predictions = np.squeeze(predictions)
+
+    predictions = predictions.T
+
+    boxes = []
+    scores = []
+    class_ids = []
+
+    for pred in predictions:
+
+        x, y, w, h = pred[:4]
+
+        objectness = pred[4]
+
+        class_scores = pred[5:]
+
+        class_id = np.argmax(class_scores)
+
+        confidence = objectness * class_scores[class_id]
+
+        if confidence < CONF_THRESHOLD:
+            continue
+
+        x1 = int((x - w/2) * img_w / 640)
+        y1 = int((y - h/2) * img_h / 640)
+
+        width = int(w * img_w / 640)
+        height = int(h * img_h / 640)
+
+        boxes.append([x1, y1, width, height])
+        scores.append(float(confidence))
+        class_ids.append(class_id)
+
+    indices = cv2.dnn.NMSBoxes(
+        boxes,
+        scores,
+        CONF_THRESHOLD,
+        NMS_THRESHOLD
     )
 
-    if st.button("🔍 Run Analysis"):
+    detections = []
 
-        try:
+    if len(indices) > 0:
 
-            # =========================
-            # MODEL INFERENCE
-            # =========================
-            input_tensor = preprocess(img)
+        for i in indices.flatten():
 
-            input_name = session.get_inputs()[0].name
+            detections.append({
+                "box": boxes[i],
+                "score": scores[i],
+                "class_id": class_ids[i]
+            })
 
-            outputs = session.run(
-                None,
-                {input_name: input_tensor}
-            )
-            st.write("Model Output Shape:", outputs[0].shape)
+    return detections
 
-            output = outputs[0][0]
-            
-            st.write("Maximum Class Scores")
-            
-            for i in range(5):
-                st.write(
-                    f"Class {i}",
-                    float(np.max(output[4+i]))
-                 )
-            # =========================
-            # EXTRACT OUTPUT
-            # =========================
-            output = outputs[0][0]
 
-            confidence_threshold = 0.40
+# =====================================================
+# ANALYTICS
+# =====================================================
 
-            detected = []
+def calculate_loads(detections, image_area):
 
-            plastic_count = 0
-            organic_count = 0
-            total_detection = 0
+    plastic_area = 0
+    organic_area = 0
 
-            # =========================
-            # DETECTION LOOP
-            # =========================
-            for detection in output.T:
+    for det in detections:
 
-                scores = detection[4:]
+        x, y, w, h = det["box"]
 
-                class_id = np.argmax(scores)
+        area = w * h
 
-                confidence = scores[class_id]
+        cls = CLASS_NAMES[det["class_id"]]
 
-                if confidence > confidence_threshold:
+        if cls == "plastic":
+            plastic_area += area
 
-                    total_detection += 1
+        elif cls == "organic":
+            organic_area += area
 
-                    if class_id < len(CLASS_NAMES):
+    plastic_load = (plastic_area / image_area) * 100
+    organic_load = (organic_area / image_area) * 100
 
-                        label = CLASS_NAMES[class_id]
+    total_load = plastic_load + organic_load
 
-                    else:
+    return plastic_load, organic_load, total_load
 
-                        label = f"Class {class_id}"
 
-                    detected.append(label)
+# =====================================================
+# BLOCKAGE RISK
+# =====================================================
 
-                    # =========================
-                    # PLASTIC LOAD
-                    # =========================
-                    if label in ["Plastic", "Bottle", "Bag"]:
+def blockage_risk(total_load):
 
-                        plastic_count += 1
+    if total_load < 5:
+        return "LOW", 20
 
-                    # =========================
-                    # ORGANIC LOAD
-                    # =========================
-                    if label in ["Leaf", "Plant", "Wood"]:
+    elif total_load < 15:
+        return "MODERATE", 50
 
-                        organic_count += 1
+    elif total_load < 30:
+        return "HIGH", 75
 
-            # =========================
-            # LOAD CALCULATION
-            # =========================
-            if total_detection > 0:
+    else:
+        return "CRITICAL", 95
 
-                plastic_load = round(
-                    (plastic_count / total_detection) * 100,
-                    1
-                )
 
-                organic_load = round(
-                    (organic_count / total_detection) * 100,
-                    1
-                )
+# =====================================================
+# ACTION RECOMMENDATION
+# =====================================================
 
-            else:
+def recommend_action(risk):
 
-                plastic_load = 0
-                organic_load = 0
+    if risk == "LOW":
+        return "Normal intake operation."
 
-            # =========================
-            # BLOCKAGE RISK
-            # =========================
-            if plastic_load > 60:
+    elif risk == "MODERATE":
+        return "Increase intake surveillance."
 
-                blockage_risk = "HIGH"
+    elif risk == "HIGH":
+        return "Deploy debris removal team."
 
-            elif plastic_load > 30:
+    else:
+        return "Immediate intake cleaning required."
 
-                blockage_risk = "MODERATE"
 
-            else:
+# =====================================================
+# DRAW BOXES
+# =====================================================
 
-                blockage_risk = "LOW"
+def draw_boxes(image, detections):
 
-            # =========================
-            # INTAKE HEALTH
-            # =========================
-            if total_detection == 0:
+    output = image.copy()
 
-                intake_health = "EXCELLENT"
+    for det in detections:
 
-            elif plastic_load > 60 or total_detection > 10:
+        x, y, w, h = det["box"]
 
-                intake_health = "CRITICAL"
+        score = det["score"]
 
-            elif plastic_load > 30:
+        cls = CLASS_NAMES[det["class_id"]]
 
-                intake_health = "WARNING"
+        color = BOX_COLORS[cls]
 
-            else:
+        cv2.rectangle(
+            output,
+            (x, y),
+            (x+w, y+h),
+            color,
+            3
+        )
 
-                intake_health = "NORMAL"
+        label = f"{cls} {score:.2f}"
 
-            # =========================
-            # DASHBOARD OUTPUT
-            # =========================
-            st.subheader("📊 Intake Monitoring Summary")
+        cv2.putText(
+            output,
+            label,
+            (x, y-10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            color,
+            2
+        )
 
-            col1, col2, col3 = st.columns(3)
+    return output
 
-            col1.metric(
-                "Plastic Load %",
-                plastic_load
-            )
 
-            col2.metric(
-                "Organic Load %",
-                organic_load
-            )
+# =====================================================
+# STREAMLIT UI
+# =====================================================
 
-            col3.metric(
-                "Total Debris Objects",
-                total_detection
-            )
+st.title("Tata Steel UISL Intake Monitoring Dashboard")
 
-            # =========================
-            # DETECTED MATERIALS
-            # =========================
-            st.subheader("🧾 Detected Materials")
+uploaded = st.file_uploader(
+    "Upload Intake Image",
+    type=["jpg", "jpeg", "png"]
+)
 
-            if len(detected) > 0:
+if uploaded:
 
-                unique_detected = list(set(detected))
+    image = np.array(Image.open(uploaded))
 
-                for item in unique_detected:
+    image_bgr = cv2.cvtColor(
+        image,
+        cv2.COLOR_RGB2BGR
+    )
 
-                    st.success(item)
+    input_tensor, img_w, img_h = preprocess(image_bgr)
 
-            else:
+    outputs = session.run(
+        None,
+        {input_name: input_tensor}
+    )
 
-                st.info("No significant debris detected")
+    detections = postprocess(
+        outputs,
+        img_w,
+        img_h
+    )
 
-            # =========================
-            # RISK ASSESSMENT
-            # =========================
-            st.subheader("⚠️ Intake Risk Assessment")
+    result_image = draw_boxes(
+        image_bgr,
+        detections
+    )
 
-            st.warning(
-                f"Trash Rack Blockage Risk: {blockage_risk}"
-            )
+    image_area = img_w * img_h
 
-            st.warning(
-                f"Overall Intake Health: {intake_health}"
-            )
+    plastic_load, organic_load, total_load = calculate_loads(
+        detections,
+        image_area
+    )
 
-            # =========================
-            # PROCESS IMPACT
-            # =========================
-            st.subheader("🏭 Process Impact Analysis")
+    risk_text, risk_index = blockage_risk(total_load)
 
-            if plastic_load > 50:
+    recommendation = recommend_action(risk_text)
 
-                st.error(
-                    "High plastic accumulation may choke intake screens and filters"
-                )
+    result_rgb = cv2.cvtColor(
+        result_image,
+        cv2.COLOR_BGR2RGB
+    )
 
-            if organic_load > 40:
+    st.image(
+        result_rgb,
+        caption="Detected Debris"
+    )
 
-                st.warning(
-                    "High organic load may increase alum/PAC dosing"
-                )
+    st.subheader("Load Analysis")
 
-            if total_detection > 10:
+    col1, col2, col3 = st.columns(3)
 
-                st.error(
-                    "Heavy debris condition may overload clarifier"
-                )
+    col1.metric(
+        "Plastic Load %",
+        f"{plastic_load:.2f}"
+    )
 
-            if total_detection == 0:
+    col2.metric(
+        "Organic Load %",
+        f"{organic_load:.2f}"
+    )
 
-                st.success(
-                    "Raw water intake condition stable"
-                )
+    col3.metric(
+        "Total Load %",
+        f"{total_load:.2f}"
+    )
 
-            # =========================
-            # RECOMMENDED ACTIONS
-            # =========================
-            st.subheader("🛠 Recommended Actions")
+    st.subheader("Intake Risk Assessment")
 
-            if blockage_risk == "HIGH":
+    st.metric(
+        "Blockage Risk Index",
+        f"{risk_index}/100"
+    )
 
-                st.error(
-                    "Immediate trash rack cleaning required"
-                )
+    st.write(
+        f"### Risk Level : {risk_text}"
+    )
 
-                st.error(
-                    "Reduce intake flow temporarily"
-                )
+    st.write(
+        f"### Recommended Action : {recommendation}"
+    )
 
-            elif blockage_risk == "MODERATE":
+    st.subheader("Detection Summary")
 
-                st.warning(
-                    "Schedule preventive intake cleaning"
-                )
+    for det in detections:
 
-            else:
+        cls = CLASS_NAMES[
+            det["class_id"]
+        ]
 
-                st.success(
-                    "Maintain normal operation"
-                )
-
-            if organic_load > 40:
-
-                st.warning(
-                    "Increase alum/PAC dosing temporarily"
-                )
-
-            # =========================
-            # AI STATUS
-            # =========================
-            st.subheader(" Monitoring Status")
-
-            st.success(
-                "Industrial Intake Monitoring Active"
-            )
-
-        except Exception as e:
-
-            st.error(f"Analysis Failed: {e}")
+        st.write(
+            f"{cls} : {det['score']:.2f}"
+        )
 # ==========================================
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
