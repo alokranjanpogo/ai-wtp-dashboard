@@ -6783,67 +6783,67 @@ if uploaded_img:
                         
                         debris_count = len(detected)
                         
-# =====================================
-# LOAD ANALYSIS
-# =====================================
-
-st.subheader("📊 AI Intake Analysis")
-
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    st.metric(
-        "Plastic Load %",
-        f"{plastic_load:.2f}"
-    )
-
-with c2:
-    st.metric(
-        "Non-Plastic Load %",
-        f"{non_plastic_load:.2f}"
-    )
-
-with c3:
-    st.metric(
-        "Detected Objects",
-        debris_count
-    )
-
-# =====================================
-# RISK INDEX
-# =====================================
-
-if plastic_load < 5:
-
-    risk = "LOW"
-    risk_index = 20
-
-elif plastic_load < 15:
-
-    risk = "MODERATE"
-    risk_index = 50
-
-elif plastic_load < 30:
-
-    risk = "HIGH"
-    risk_index = 75
-
-else:
-
-    risk = "CRITICAL"
-    risk_index = 95
-
-    
-    st.subheader("⚠️ Intake Risk Assessment")
-    
-    st.metric(
-        "Blockage Risk Index",
-        f"{risk_index}/100"
-    )
-    
-    st.write(
-        f"Risk Level: {risk}"
-    )
+        # =====================================
+        # LOAD ANALYSIS
+        # =====================================
+        
+        st.subheader("📊 AI Intake Analysis")
+        
+        c1, c2, c3 = st.columns(3)
+        
+        with c1:
+            st.metric(
+                "Plastic Load %",
+                f"{plastic_load:.2f}"
+            )
+        
+        with c2:
+            st.metric(
+                "Non-Plastic Load %",
+                f"{non_plastic_load:.2f}"
+            )
+        
+        with c3:
+            st.metric(
+                "Detected Objects",
+                debris_count
+            )
+        
+        # =====================================
+        # RISK INDEX
+        # =====================================
+        
+        if plastic_load < 5:
+        
+            risk = "LOW"
+            risk_index = 20
+        
+        elif plastic_load < 15:
+        
+            risk = "MODERATE"
+            risk_index = 50
+        
+        elif plastic_load < 30:
+        
+            risk = "HIGH"
+            risk_index = 75
+        
+        else:
+        
+            risk = "CRITICAL"
+            risk_index = 95
+        
+            
+            st.subheader("⚠️ Intake Risk Assessment")
+            
+            st.metric(
+                "Blockage Risk Index",
+                f"{risk_index}/100"
+            )
+            
+            st.write(
+                f"Risk Level: {risk}"
+            )
 
 # =====================================
 # RECOMMENDED ACTION
