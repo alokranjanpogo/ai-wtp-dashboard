@@ -13,4 +13,4 @@ streamlit-autorefresh
 edge-tts
 scikit-learn
 xlsxwriter
-opencv-python
+opencv-python-headless
