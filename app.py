@@ -6741,7 +6741,7 @@ uploaded_img = st.file_uploader(
 
 if uploaded_img:
 
-    img = Image.open(uploaded_img)
+    img = Image.open(uploaded_img).convert("RGB")
 
     st.image(
         img,
@@ -6753,47 +6753,95 @@ if uploaded_img:
 
         img_np = np.array(img)
 
-        results = debris_model(img_np)
+        # ==========================
+        # YOLO PREDICTION
+        # ==========================
 
-        detected = []
+        results = debris_model.predict(
+            img_np,
+            conf=0.60,
+            verbose=False
+        )
+
+        result = results[0]
+
+        detected_boxes = len(result.boxes)
+
+        annotated_img = result.plot()
+
+        st.subheader("🎯 AI Detection Result")
+
+        st.image(
+            annotated_img,
+            use_container_width=True
+        )
 
         # ==========================
-        # BOOM DEBRIS DENSITY
+        # DEBRIS LOAD ESTIMATION
         # ==========================
-        
+
         h, w = img_np.shape[:2]
-        
-        # Right side of image where boom exists
-        boom_zone = img_np[:, int(w * 0.65):]
-        
-        gray = cv2.cvtColor(
-            boom_zone,
-            cv2.COLOR_RGB2GRAY
-        )
-        
-        # Bright floating objects
-        _, debris_mask = cv2.threshold(
-            gray,
-            140,
-            255,
-            cv2.THRESH_BINARY
-        )
-        
-        debris_pixels = np.sum(debris_mask > 0)
-        
-        zone_pixels = debris_mask.shape[0] * debris_mask.shape[1]
-        
-        debris_density = (
-            debris_pixels /
-            zone_pixels
+
+        total_box_area = 0
+
+        for box in result.boxes:
+
+            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+
+            area = (x2 - x1) * (y2 - y1)
+
+            total_box_area += area
+
+        image_area = h * w
+
+        debris_percent = (
+            total_box_area /
+            image_area
         ) * 100
-        
-        plastic_load = debris_density
-        non_plastic_load = 0
-        debris_count = len(detected)
+
+        debris_percent = min(
+            debris_percent,
+            100
+        )
 
         # ==========================
-        # LOAD ANALYSIS
+        # LOAD CATEGORY
+        # ==========================
+
+        if debris_percent < 10:
+
+            debris_status = "LOW"
+
+            risk_index = 20
+
+            action = "Normal operation"
+
+        elif debris_percent < 25:
+
+            debris_status = "MODERATE"
+
+            risk_index = 50
+
+            action = "Increase intake inspection frequency"
+
+        elif debris_percent < 40:
+
+            debris_status = "HIGH"
+
+            risk_index = 75
+
+            action = "Deploy debris removal team"
+
+        else:
+
+            debris_status = "CRITICAL"
+
+            risk_index = 95
+
+            action = "Immediate intake cleaning required"
+
+        # ==========================
+        # DASHBOARD OUTPUT
         # ==========================
 
         st.subheader("📊 AI Intake Analysis")
@@ -6802,98 +6850,41 @@ if uploaded_img:
 
         with c1:
             st.metric(
-                "Plastic Load %",
-                f"{plastic_load:.2f}"
+                "Debris Load %",
+                f"{debris_percent:.2f}"
             )
 
         with c2:
             st.metric(
-                "Non-Plastic Load %",
-                f"{non_plastic_load:.2f}"
+                "Detected Debris Regions",
+                detected_boxes
             )
 
         with c3:
             st.metric(
-                "Detected Objects",
-                debris_count
+                "Risk Index",
+                f"{risk_index}/100"
             )
-
-        # ==========================
-        # RISK INDEX
-        # ==========================
-
-        if debris_density < 5:
-
-            risk = "LOW"
-            risk_index = 20
-
-        elif debris_density < 15:
-
-            risk = "MODERATE"
-            risk_index = 50
-
-        elif debris_density < 30:
-
-            risk = "HIGH"
-            risk_index = 75
-
-        else:
-
-            risk = "CRITICAL"
-            risk_index = 95
 
         st.subheader("⚠️ Intake Risk Assessment")
 
-        st.metric(
-            "Blockage Risk Index",
-            f"{risk_index}/100"
-        )
-
         st.write(
-            f"Risk Level: {risk}"
+            f"**Risk Level:** {debris_status}"
         )
-
-        # ==========================
-        # RECOMMENDED ACTION
-        # ==========================
-
-        if risk == "LOW":
-
-            action = "Normal operation"
-
-        elif risk == "MODERATE":
-
-            action = "Increase intake inspection frequency"
-
-        elif risk == "HIGH":
-
-            action = "Deploy debris removal team"
-
-        else:
-
-            action = "Immediate intake cleaning required"
 
         st.info(
-            f"Recommended Action: {action}"
+            f"**Recommended Action:** {action}"
         )
 
         # ==========================
-        # DETECTED MATERIALS
+        # MODEL RECOMMENDATION
         # ==========================
 
-        st.subheader("📦 Detected Materials")
+        st.subheader("📌 Model Recommendation")
 
-        for item in detected:
-
-            if item == "non-plastic":
-
-                st.success(item)
-
-            else:
-
-                st.warning(item)
-
-       
+        st.warning(
+            """
+Current model is trained using a limited dataset of  Moharda intake images.
         
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
