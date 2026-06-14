@@ -6884,7 +6884,7 @@ if uploaded_img:
 
         st.warning(
             """
-Current model is trained using a limited dataset of  Moharda intake images.
+Current model is trained using a limited dataset of  Moharda intake images.)"""
         
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
