@@ -6893,75 +6893,7 @@ if uploaded_img:
 
                 st.warning(item)
 
-        # ==========================
-        # IMAGE OUTPUT
-        # ==========================
-        # ==========================
-        # SMART PLASTIC HIGHLIGHTING
-        # ==========================
-        
-        st.subheader("📦 AI Plastic Highlighting")
-        
-        display_img = img_np.copy()
-        
-        highlight_pixels = 0
-        
-        for r in results:
-        
-            if r.boxes is None:
-                continue
-        
-            for box in r.boxes:
-        
-                cls_id = int(box.cls[0])
-                label = r.names[cls_id]
-        
-                # Skip non-plastic
-                if label == "non-plastic":
-                    continue
-        
-                x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-        
-                x1 = max(0, x1)
-                y1 = max(0, y1)
-                x2 = min(display_img.shape[1], x2)
-                y2 = min(display_img.shape[0], y2)
-        
-                overlay = display_img.copy()
-
-                cv2.rectangle(
-                    overlay,
-                    (x1, y1),
-                    (x2, y2),
-                    (255, 255, 0), # Yellow
-                    -1
-                )
-                
-                alpha = 0.35
-                
-                display_img = cv2.addWeighted(
-                    overlay,
-                    alpha,
-                    display_img,
-                    1 - alpha,
-                    0
-                )
-                        
-        plastic_occupancy = (
-            highlight_pixels /
-            (display_img.shape[0] * display_img.shape[1])
-        ) * 100
-        
-        st.image(
-            display_img,
-            caption="Plastic Highlighted in Yellow",
-            use_container_width=True
-        )
-        
-        st.metric(
-            "Visible Plastic Occupancy %",
-            f"{plastic_occupancy:.2f}"
-        )
+       
         
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
