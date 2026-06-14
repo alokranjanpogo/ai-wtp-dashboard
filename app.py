@@ -6757,39 +6757,39 @@ if uploaded_img:
 
         detected = []
 
-        plastic_area = 0.0
-        non_plastic_area = 0.0
-
-        for r in results:
-
-            if r.boxes is not None:
-
-                for box in r.boxes:
-
-                    cls_id = int(box.cls[0])
-
-                    label = r.names[cls_id]
-
-                    detected.append(label)
-
-                    x1, y1, x2, y2 = box.xyxy[0].tolist()
-
-                    area = (x2 - x1) * (y2 - y1)
-
-                    if label == "non-plastic":
-
-                        non_plastic_area += area
-
-                    else:
-
-                        plastic_area += area
-
-        img_area = img.size[0] * img.size[1]
-
-        plastic_load = (plastic_area / img_area) * 100
-
-        non_plastic_load = (non_plastic_area / img_area) * 100
-
+        # ==========================
+        # BOOM DEBRIS DENSITY
+        # ==========================
+        
+        h, w = img_np.shape[:2]
+        
+        # Right side of image where boom exists
+        boom_zone = img_np[:, int(w * 0.65):]
+        
+        gray = cv2.cvtColor(
+            boom_zone,
+            cv2.COLOR_RGB2GRAY
+        )
+        
+        # Bright floating objects
+        _, debris_mask = cv2.threshold(
+            gray,
+            140,
+            255,
+            cv2.THRESH_BINARY
+        )
+        
+        debris_pixels = np.sum(debris_mask > 0)
+        
+        zone_pixels = debris_mask.shape[0] * debris_mask.shape[1]
+        
+        debris_density = (
+            debris_pixels /
+            zone_pixels
+        ) * 100
+        
+        plastic_load = debris_density
+        non_plastic_load = 0
         debris_count = len(detected)
 
         # ==========================
@@ -6822,17 +6822,17 @@ if uploaded_img:
         # RISK INDEX
         # ==========================
 
-        if plastic_load < 5:
+        if debris_density < 5:
 
             risk = "LOW"
             risk_index = 20
 
-        elif plastic_load < 15:
+        elif debris_density < 15:
 
             risk = "MODERATE"
             risk_index = 50
 
-        elif plastic_load < 30:
+        elif debris_density < 30:
 
             risk = "HIGH"
             risk_index = 75
