@@ -6724,9 +6724,18 @@ import cv2
 import numpy as np
 from PIL import Image
 
-# =====================================
+# ==================================================
+# PAGE CONFIG
+# ==================================================
+
+st.set_page_config(
+    page_title="AI-Based Plastic Load Monitoring Dashboard",
+    layout="wide"
+)
+
+# ==================================================
 # LOAD MODEL
-# =====================================
+# ==================================================
 
 @st.cache_resource
 def load_model():
@@ -6734,9 +6743,9 @@ def load_model():
 
 model = load_model()
 
-# =====================================
-# CLEANING FREQUENCY LOGIC
-# =====================================
+# ==================================================
+# CLEANING RECOMMENDATION LOGIC
+# ==================================================
 
 def cleaning_frequency(load_percent):
 
@@ -6755,214 +6764,246 @@ def cleaning_frequency(load_percent):
     else:
         return "Immediate Cleaning Required", "Critical"
 
-# =====================================
-# STREAMLIT UI
-# =====================================
-
-st.set_page_config(
-    page_title="Plastic Load Monitoring Dashboard",
-    layout="wide"
-)
+# ==================================================
+# HEADER
+# ==================================================
 
 st.title("🌊 AI-Based Plastic Load Monitoring Dashboard")
 
-st.markdown(
-    """
-    Upload an intake image to estimate:
-    - Plastic Load (%)
-    - Risk Level
-    - Recommended Cleaning Frequency
-    """
+st.caption(
+    "AI-powered monitoring of floating plastic debris at Moharda Intake."
 )
+
+# ==================================================
+# IMAGE UPLOAD
+# ==================================================
 
 uploaded_file = st.file_uploader(
     "Upload Intake Image",
     type=["jpg", "jpeg", "png"]
 )
 
+# ==================================================
+# RUN DIAGNOSIS
+# ==================================================
+
 if uploaded_file:
 
     image = Image.open(uploaded_file)
 
-    frame = np.array(image)
-
-    if len(frame.shape) == 2:
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-
-    frame_bgr = cv2.cvtColor(
-        frame,
-        cv2.COLOR_RGB2BGR
-    )
-
-    h, w = frame_bgr.shape[:2]
-
-    # =====================================
-    # YOLO SEGMENTATION
-    # =====================================
-
-    results = model.predict(
-        frame_bgr,
-        conf=0.25,
-        verbose=False
-    )
-
-    overlay = frame_bgr.copy()
-
-    plastic_pixels = 0
-
-    total_pixels = h * w
-
-    for result in results:
-
-        if result.masks is not None:
-
-            masks = result.masks.data.cpu().numpy()
-
-            for mask in masks:
-
-                mask = cv2.resize(
-                    mask,
-                    (w, h)
-                )
-
-                binary_mask = (
-                    mask > 0.5
-                ).astype(np.uint8)
-
-                plastic_pixels += np.sum(
-                    binary_mask
-                )
-
-                # Blue segmentation overlay
-                blue_mask = np.zeros_like(
-                    frame_bgr
-                )
-
-                blue_mask[:, :, 0] = (
-                    binary_mask * 255
-                )
-
-                overlay = cv2.addWeighted(
-                    overlay,
-                    1.0,
-                    blue_mask,
-                    0.45,
-                    0
-                )
-
-    # =====================================
-    # LOAD CALCULATION
-    # =====================================
-
-    load_percent = (
-        plastic_pixels /
-        total_pixels
-    ) * 100
-
-    recommendation, risk = cleaning_frequency(
-        load_percent
-    )
-
-    # =====================================
-    # DISPLAY IMAGE
-    # =====================================
-
-    overlay_rgb = cv2.cvtColor(
-        overlay,
-        cv2.COLOR_BGR2RGB
-    )
-
     st.image(
-        overlay_rgb,
-        caption="Plastic Segmentation Result",
+        image,
+        caption="Uploaded Intake Image",
         use_container_width=True
     )
 
-    # =====================================
-    # METRICS
-    # =====================================
+    if st.button("🚀 Run Diagnosis"):
 
-    col1, col2, col3 = st.columns(3)
+        with st.spinner(
+            "AI Model Analyzing Plastic Accumulation..."
+        ):
 
-    with col1:
-        st.metric(
-            "Plastic Load (%)",
-            f"{load_percent:.2f}"
-        )
+            frame = np.array(image)
 
-    with col2:
-        st.metric(
-            "Risk Level",
-            risk
-        )
+            if len(frame.shape) == 2:
+                frame = cv2.cvtColor(
+                    frame,
+                    cv2.COLOR_GRAY2RGB
+                )
 
-    with col3:
-        st.metric(
-            "Plastic Pixels",
-            f"{plastic_pixels:,}"
-        )
+            frame_bgr = cv2.cvtColor(
+                frame,
+                cv2.COLOR_RGB2BGR
+            )
 
-    # =====================================
-    # CLEANING RECOMMENDATION
-    # =====================================
+            h, w = frame_bgr.shape[:2]
 
-    st.success(
-        f"Recommended Cleaning Frequency: {recommendation}"
-    )
+            # ==========================================
+            # YOLO SEGMENTATION
+            # ==========================================
 
-    # =====================================
-    # STATUS ALERTS
-    # =====================================
+            results = model.predict(
+                frame_bgr,
+                conf=0.25,
+                verbose=False
+            )
 
-    if load_percent > 50:
+            overlay = frame_bgr.copy()
 
-        st.error(
-            "🚨 Immediate Cleaning Required"
-        )
+            plastic_pixels = 0
 
-    elif load_percent > 30:
+            total_pixels = h * w
 
-        st.warning(
-            "⚠ High Plastic Accumulation"
-        )
+            detected = False
 
-    elif load_percent > 15:
+            for result in results:
 
-        st.info(
-            "🔍 Moderate Plastic Accumulation"
-        )
+                if result.masks is not None:
 
-    else:
+                    masks = result.masks.data.cpu().numpy()
+
+                    for mask in masks:
+
+                        detected = True
+
+                        mask = cv2.resize(
+                            mask,
+                            (w, h)
+                        )
+
+                        binary_mask = (
+                            mask > 0.5
+                        ).astype(np.uint8)
+
+                        plastic_pixels += np.sum(
+                            binary_mask
+                        )
+
+                        # Blue segmentation mask
+                        blue_mask = np.zeros_like(
+                            frame_bgr
+                        )
+
+                        blue_mask[:, :, 0] = (
+                            binary_mask * 255
+                        )
+
+                        overlay = cv2.addWeighted(
+                            overlay,
+                            1.0,
+                            blue_mask,
+                            0.45,
+                            0
+                        )
+
+            # ==========================================
+            # LOAD CALCULATION
+            # ==========================================
+
+            load_percent = (
+                plastic_pixels /
+                total_pixels
+            ) * 100
+
+            recommendation, risk = cleaning_frequency(
+                load_percent
+            )
+
+            overlay_rgb = cv2.cvtColor(
+                overlay,
+                cv2.COLOR_BGR2RGB
+            )
 
         st.success(
-            "✅ Plastic Load Within Acceptable Range"
+            "Diagnosis Completed Successfully"
         )
 
-    # =====================================
-    # DEBUG SECTION
-    # =====================================
+        # ==========================================
+        # DISPLAY RESULT IMAGE
+        # ==========================================
 
-    with st.expander("Model Information"):
-
-        st.write(
-            "Plastic Pixels:",
-            plastic_pixels
+        st.image(
+            overlay_rgb,
+            caption="AI Segmentation Result",
+            use_container_width=True
         )
 
-        st.write(
-            "Image Pixels:",
-            total_pixels
+        # ==========================================
+        # METRICS
+        # ==========================================
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric(
+                "Plastic Load (%)",
+                f"{load_percent:.2f}"
+            )
+
+        with col2:
+            st.metric(
+                "Risk Level",
+                risk
+            )
+
+        with col3:
+            st.metric(
+                "Detected Plastic Pixels",
+                f"{plastic_pixels:,}"
+            )
+
+        # ==========================================
+        # RECOMMENDATION
+        # ==========================================
+
+        st.subheader(
+            "🧹 Cleaning Recommendation"
         )
 
-        st.write(
-            "Load Percentage:",
-            round(load_percent, 2)
+        st.success(
+            f"Recommended Frequency: {recommendation}"
         )
 
-        st.write(
-            "Classes:",
-            model.names
-        )
+        # ==========================================
+        # ALERTS
+        # ==========================================
+
+        if load_percent > 50:
+
+            st.error(
+                "🚨 Critical Plastic Accumulation Detected. Immediate Cleaning Recommended."
+            )
+
+        elif load_percent > 30:
+
+            st.warning(
+                "⚠ High Plastic Accumulation Detected."
+            )
+
+        elif load_percent > 15:
+
+            st.info(
+                "🔍 Moderate Plastic Accumulation Detected."
+            )
+
+        else:
+
+            st.success(
+                "✅ Plastic Load Within Acceptable Range."
+            )
+
+        # ==========================================
+        # OPTIONAL DEBUG
+        # ==========================================
+
+        with st.expander(
+            "Technical Details"
+        ):
+
+            st.write(
+                "Image Resolution:",
+                f"{w} x {h}"
+            )
+
+            st.write(
+                "Plastic Pixels:",
+                plastic_pixels
+            )
+
+            st.write(
+                "Total Pixels:",
+                total_pixels
+            )
+
+            st.write(
+                "Load Percentage:",
+                round(load_percent, 2)
+            )
+
+            st.write(
+                "Model Classes:",
+                model.names
+            )
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
 # ==========================================
