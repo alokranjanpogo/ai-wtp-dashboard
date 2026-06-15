@@ -6718,173 +6718,193 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # 🌊 INTAKE DEBRIS MODULE
 # ==============================
 
-from ultralytics import YOLO
-from PIL import Image
-import numpy as np
 import streamlit as st
+from ultralytics import YOLO
 import cv2
+import numpy as np
+from PIL import Image
 
+# ----------------------------
+# Load YOLO Model
+# ----------------------------
 @st.cache_resource
 def load_model():
     return YOLO("best.pt")
 
-debris_model = load_model()
+model = load_model()
 
-st.markdown("---")
-st.header("🌊 AI Intake Monitoring System")
+# ----------------------------
+# Cleaning Recommendation
+# ----------------------------
+def cleaning_frequency(load_percent):
 
-uploaded_img = st.file_uploader(
+    if load_percent < 5:
+        return "Weekly Cleaning", "Low"
+
+    elif load_percent < 15:
+        return "Twice a Week", "Moderate"
+
+    elif load_percent < 30:
+        return "Every Alternate Day", "Medium"
+
+    elif load_percent < 50:
+        return "Daily Cleaning", "High"
+
+    else:
+        return "Immediate Cleaning Required", "Critical"
+
+
+# ----------------------------
+# Streamlit UI
+# ----------------------------
+st.title("🌊 Plastic Load Monitoring Dashboard")
+
+uploaded_file = st.file_uploader(
     "Upload Intake Image",
-    type=["jpg", "png", "jpeg"],
-    key="intake"
+    type=["jpg", "jpeg", "png"]
 )
 
-if uploaded_img:
+if uploaded_file:
 
-    img = Image.open(uploaded_img).convert("RGB")
+    image = Image.open(uploaded_file)
 
+    frame = np.array(image)
+
+    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+    h, w = frame.shape[:2]
+
+    # --------------------------------
+    # Define Boom ROI
+    # MODIFY THESE POINTS
+    # --------------------------------
+    boom_roi = np.array([
+        [int(0.10*w), int(0.20*h)],
+        [int(0.90*w), int(0.20*h)],
+        [int(0.90*w), int(0.90*h)],
+        [int(0.10*w), int(0.90*h)]
+    ], dtype=np.int32)
+
+    roi_mask = np.zeros((h, w), dtype=np.uint8)
+
+    cv2.fillPoly(
+        roi_mask,
+        [boom_roi],
+        255
+    )
+
+    roi_area = cv2.countNonZero(roi_mask)
+
+    # --------------------------------
+    # YOLO Prediction
+    # --------------------------------
+    results = model.predict(
+        frame,
+        conf=0.25
+    )
+
+    plastic_area = 0
+
+    for result in results:
+
+        if result.masks is not None:
+
+            masks = result.masks.data.cpu().numpy()
+
+            for mask in masks:
+
+                mask = cv2.resize(
+                    mask,
+                    (w, h)
+                )
+
+                mask = (mask > 0.5).astype(np.uint8)
+
+                inside_roi = cv2.bitwise_and(
+                    mask,
+                    mask,
+                    mask=roi_mask
+                )
+
+                plastic_area += np.sum(inside_roi)
+
+    # --------------------------------
+    # Plastic Load %
+    # --------------------------------
+    load_percent = (
+        plastic_area / roi_area
+    ) * 100
+
+    recommendation, risk = cleaning_frequency(
+        load_percent
+    )
+
+    # --------------------------------
+    # Draw ROI
+    # --------------------------------
+    cv2.polylines(
+        frame,
+        [boom_roi],
+        True,
+        (0, 255, 0),
+        3
+    )
+
+    cv2.putText(
+        frame,
+        f"Load: {load_percent:.2f}%",
+        (30, 50),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0, 0, 255),
+        2
+    )
+
+    frame_rgb = cv2.cvtColor(
+        frame,
+        cv2.COLOR_BGR2RGB
+    )
+
+    # --------------------------------
+    # Dashboard
+    # --------------------------------
     st.image(
-        img,
-        caption="Intake Image",
+        frame_rgb,
+        caption="Detection Result",
         use_container_width=True
     )
 
-    if st.button("🔍 Run AI Analysis"):
+    col1, col2 = st.columns(2)
 
-        img_np = np.array(img)
-
-        # ==========================
-        # YOLO PREDICTION
-        # ==========================
-
-        results = debris_model.predict(
-            img_np,
-            conf=0.60,
-            verbose=False
+    with col1:
+        st.metric(
+            "Plastic Load (%)",
+            f"{load_percent:.2f}"
         )
 
-        result = results[0]
-
-        detected_boxes = len(result.boxes)
-
-        annotated_img = result.plot()
-
-        st.subheader("🎯 AI Detection Result")
-
-        st.image(
-            annotated_img,
-            use_container_width=True
+    with col2:
+        st.metric(
+            "Risk Level",
+            risk
         )
 
-        # ==========================
-        # DEBRIS LOAD ESTIMATION
-        # ==========================
+    st.success(
+        f"Recommended Cleaning Frequency: {recommendation}"
+    )
 
-        h, w = img_np.shape[:2]
-
-        total_box_area = 0
-
-        for box in result.boxes:
-
-            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-
-            area = (x2 - x1) * (y2 - y1)
-
-            total_box_area += area
-
-        image_area = h * w
-
-        debris_percent = (
-            total_box_area /
-            image_area
-        ) * 100
-
-        debris_percent = min(
-            debris_percent,
-            100
+    if load_percent > 50:
+        st.error(
+            "Immediate Cleaning Required"
         )
 
-        # ==========================
-        # LOAD CATEGORY
-        # ==========================
-
-        if debris_percent < 10:
-
-            debris_status = "LOW"
-
-            risk_index = 20
-
-            action = "Normal operation"
-
-        elif debris_percent < 25:
-
-            debris_status = "MODERATE"
-
-            risk_index = 50
-
-            action = "Increase intake inspection frequency"
-
-        elif debris_percent < 40:
-
-            debris_status = "HIGH"
-
-            risk_index = 75
-
-            action = "Deploy debris removal team"
-
-        else:
-
-            debris_status = "CRITICAL"
-
-            risk_index = 95
-
-            action = "Immediate intake cleaning required"
-
-        # ==========================
-        # DASHBOARD OUTPUT
-        # ==========================
-
-        st.subheader("📊 AI Intake Analysis")
-
-        c1, c2, c3 = st.columns(3)
-
-        with c1:
-            st.metric(
-                "Debris Load %",
-                f"{debris_percent:.2f}"
-            )
-
-        with c2:
-            st.metric(
-                "Detected Debris Regions",
-                detected_boxes
-            )
-
-        with c3:
-            st.metric(
-                "Risk Index",
-                f"{risk_index}/100"
-            )
-
-        st.subheader("⚠️ Intake Risk Assessment")
-
-        st.write(
-            f"**Risk Level:** {debris_status}"
-        )
-
-        st.info(
-            f"**Recommended Action:** {action}"
-        )
-
-        # ==========================
-        # MODEL RECOMMENDATION
-        # ==========================
-
-        st.subheader("📌 Model Recommendation")
-
+    elif load_percent > 30:
         st.warning(
-            """
-Current model is trained using a limited dataset of  Moharda intake images."""
+            "High Plastic Accumulation"
+        )
+
+    else:
+        st.info(
+            "Plastic Load Within Acceptable Range"
         )
         
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
