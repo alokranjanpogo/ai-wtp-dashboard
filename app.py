@@ -6724,14 +6724,6 @@ import cv2
 import numpy as np
 from PIL import Image
 
-# ==================================================
-# PAGE CONFIG
-# ==================================================
-
-st.set_page_config(
-    page_header ="AI-Based Plastic Load Monitoring Dashboard",
-    layout="wide"
-)
 
 # ==================================================
 # LOAD MODEL
@@ -6768,7 +6760,7 @@ def cleaning_frequency(load_percent):
 # HEADER
 # ==================================================
 
-st.title("🌊 AI-Based Plastic Load Monitoring Dashboard")
+st.header("🌊 AI-Based Plastic Load Monitoring Dashboard")
 
 st.caption(
     "AI-powered monitoring of floating plastic debris at Moharda Intake."
