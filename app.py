@@ -1,3 +1,12 @@
+import subprocess
+import sys
+
+# Forces the app to clean up its OpenCV installation before loading Ultralytics
+try:
+    import cv2
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "opencv-python-headless", "--force-reinstall"])
+
 import streamlit as st
 import pandas as pd
 import numpy as np
