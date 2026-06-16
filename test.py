@@ -1,12 +1,23 @@
 import streamlit as st
-from ultralytics import YOLO
+import onnxruntime as ort
 
-st.title("YOLO Test")
+st.title("ONNX Test")
 
-st.write("Loading model...")
+@st.cache_resource
+def load_model():
+    return ort.InferenceSession(
+        "best.onnx",
+        providers=["CPUExecutionProvider"]
+    )
 
-model = YOLO("best.pt")
+session = load_model()
 
-st.success("✅ YOLO Loaded Successfully")
+st.success("✅ ONNX Model Loaded Successfully")
 
-st.write(model.names)
+st.write("Inputs:")
+for inp in session.get_inputs():
+    st.write(inp.name, inp.shape)
+
+st.write("Outputs:")
+for out in session.get_outputs():
+    st.write(out.name, out.shape)
