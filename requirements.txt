@@ -1,7 +1,7 @@
-streamlit>=1.35.0
-numpy==1.26.4
-opencv-python-headless==4.9.0.80
-ultralytics==8.2.0
+streamlit
+numpy
+opencv-python-headless
+ultralytics
 panda
 plotly
 pillow
