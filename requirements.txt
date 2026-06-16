@@ -1,9 +1,10 @@
+opencv-python-headless
+ultralytics
 streamlit
 panda
 numpy
 plotly
 pillow
-ultralytics
 onnxruntime
 scikit-learn
 openpyxl
