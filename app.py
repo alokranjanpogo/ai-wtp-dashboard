@@ -6718,22 +6718,6 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # 🌊 INTAKE DEBRIS MODULE
 # ==============================
 
-import streamlit as st
-from ultralytics import YOLO
-import cv2
-import numpy as np
-from PIL import Image
-
-
-# ==================================================
-# LOAD MODEL
-# ==================================================
-
-@st.cache_resource
-def load_model():
-    return YOLO("best.pt")
-
-model = load_model()
 
 # ==================================================
 # CLEANING RECOMMENDATION LOGIC
