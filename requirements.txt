@@ -9,5 +9,5 @@ scikit-learn
 openpyxl
 requests
 pytz
-streamlit-autofresh
+streamlit-autorefresh
 xlsxwriter
