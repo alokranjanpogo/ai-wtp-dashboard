@@ -1,13 +1,12 @@
 streamlit
-ultralytics
+ultralytics==8.3.0
 torch
 torchvision
 numpy==1.26.4
-opencv-python-headless
+opencv-python-headless==4.10.0.84
 pandas
 plotly
 pillow
-onnxruntime
 scikit-learn
 openpyxl
 requests
