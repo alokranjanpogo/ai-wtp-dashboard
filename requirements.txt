@@ -1,4 +1,7 @@
 streamlit
+ultralytics
+torch
+torchvision
 numpy
 opencv-python-headless
 pandas
