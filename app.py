@@ -8,6 +8,8 @@ import pytz
 import random
 from streamlit_autorefresh import st_autorefresh
 from datetime import datetime
+import ultralytics
+st.write("ultralytics imported")
 
 if "filter_alarm_muted" not in st.session_state:
     st.session_state.filter_alarm_muted = False
@@ -6717,50 +6719,285 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # ==============================
 # 🌊 INTAKE DEBRIS MODULE
 # ============================== 
-  import streamlit as st
-import onnxruntime as ort
+import streamlit as st
+from ultralytics import YOLO
+import cv2
+import numpy as np
+from PIL import Image
 
-st.set_page_config(
-    page_title="ONNX Test",
-    layout="wide"
-)
 
-st.header("🌊 ONNX Model Test")
+# ==================================================
+# LOAD MODEL
+# ==================================================
 
 @st.cache_resource
-def load_onnx_model():
-    return ort.InferenceSession(
-        "best.onnx",
-        providers=["CPUExecutionProvider"]
+def load_model():
+    return YOLO("best.pt")
+
+model = load_model()
+
+
+# ==================================================
+# CLEANING RECOMMENDATION LOGIC
+# ==================================================
+
+def cleaning_frequency(load_percent):
+
+    if load_percent < 5:
+        return "Weekly Cleaning", "Low"
+
+    elif load_percent < 15:
+        return "Twice a Week", "Moderate"
+
+    elif load_percent < 30:
+        return "Every Alternate Day", "Medium"
+
+    elif load_percent < 50:
+        return "Daily Cleaning", "High"
+
+    else:
+        return "Immediate Cleaning Required", "Critical"
+
+# ==================================================
+# HEADER
+# ==================================================
+
+st.header("🌊 AI-Based Plastic Load Monitoring Dashboard")
+
+st.caption(
+    "AI-powered monitoring of floating plastic debris at Moharda Intake."
+)
+
+# ==================================================
+# IMAGE UPLOAD
+# ==================================================
+
+uploaded_file = st.file_uploader(
+    "Upload Intake Image",
+    type=["jpg", "jpeg", "png"]
+)
+
+# ==================================================
+# RUN DIAGNOSIS
+# ==================================================
+
+if uploaded_file:
+
+    image = Image.open(uploaded_file)
+
+    st.image(
+        image,
+        caption="Uploaded Intake Image",
+        use_container_width=True
     )
 
-try:
+    if st.button("🚀 Run Diagnosis"):
 
-    session = load_onnx_model()
+        with st.spinner(
+            "AI Model Analyzing Plastic Accumulation..."
+        ):
 
-    st.success("✅ ONNX Model Loaded Successfully")
+            frame = np.array(image)
 
-    st.subheader("Model Information")
+            if len(frame.shape) == 2:
+                frame = cv2.cvtColor(
+                    frame,
+                    cv2.COLOR_GRAY2RGB
+                )
 
-    st.write("Input Details:")
+            frame_bgr = cv2.cvtColor(
+                frame,
+                cv2.COLOR_RGB2BGR
+            )
 
-    for inp in session.get_inputs():
-        st.write(
-            f"Name: {inp.name} | Shape: {inp.shape}"
+            h, w = frame_bgr.shape[:2]
+
+            # ==========================================
+            # YOLO SEGMENTATION
+            # ==========================================
+
+            results = model.predict(
+                frame_bgr,
+                conf=0.25,
+                verbose=False
+            )
+
+            overlay = frame_bgr.copy()
+
+            plastic_pixels = 0
+
+            total_pixels = h * w
+
+            detected = False
+
+            for result in results:
+
+                if result.masks is not None:
+
+                    masks = result.masks.data.cpu().numpy()
+
+                    for mask in masks:
+
+                        detected = True
+
+                        mask = cv2.resize(
+                            mask,
+                            (w, h)
+                        )
+
+                        binary_mask = (
+                            mask > 0.5
+                        ).astype(np.uint8)
+
+                        plastic_pixels += np.sum(
+                            binary_mask
+                        )
+
+                        # Blue segmentation mask
+                        blue_mask = np.zeros_like(
+                            frame_bgr
+                        )
+
+                        blue_mask[:, :, 0] = (
+                            binary_mask * 255
+                        )
+
+                        overlay = cv2.addWeighted(
+                            overlay,
+                            1.0,
+                            blue_mask,
+                            0.45,
+                            0
+                        )
+
+            # ==========================================
+            # LOAD CALCULATION
+            # ==========================================
+
+            load_percent = (
+                plastic_pixels /
+                total_pixels
+            ) * 100
+
+            recommendation, risk = cleaning_frequency(
+                load_percent
+            )
+
+            overlay_rgb = cv2.cvtColor(
+                overlay,
+                cv2.COLOR_BGR2RGB
+            )
+
+        st.success(
+            "Diagnosis Completed Successfully"
         )
 
-    st.write("Output Details:")
+        # ==========================================
+        # DISPLAY RESULT IMAGE
+        # ==========================================
 
-    for out in session.get_outputs():
-        st.write(
-            f"Name: {out.name} | Shape: {out.shape}"
+        st.image(
+            overlay_rgb,
+            caption="AI Segmentation Result",
+            use_container_width=True
         )
 
-except Exception as e:
+        # ==========================================
+        # METRICS
+        # ==========================================
 
-    st.error(
-        f"❌ ONNX Loading Failed: {e}"
-    )
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric(
+                "Plastic Load (%)",
+                f"{load_percent:.2f}"
+            )
+
+        with col2:
+            st.metric(
+                "Risk Level",
+                risk
+            )
+
+        with col3:
+            st.metric(
+                "Detected Plastic Pixels",
+                f"{plastic_pixels:,}"
+            )
+
+        # ==========================================
+        # RECOMMENDATION
+        # ==========================================
+
+        st.subheader(
+            "🧹 Cleaning Recommendation"
+        )
+
+        st.success(
+            f"Recommended Frequency: {recommendation}"
+        )
+
+        # ==========================================
+        # ALERTS
+        # ==========================================
+
+        if load_percent > 50:
+
+            st.error(
+                "🚨 Critical Plastic Accumulation Detected. Immediate Cleaning Recommended."
+            )
+
+        elif load_percent > 30:
+
+            st.warning(
+                "⚠ High Plastic Accumulation Detected."
+            )
+
+        elif load_percent > 15:
+
+            st.info(
+                "🔍 Moderate Plastic Accumulation Detected."
+            )
+
+        else:
+
+            st.success(
+                "✅ Plastic Load Within Acceptable Range."
+            )
+
+        # ==========================================
+        # OPTIONAL DEBUG
+        # ==========================================
+
+        with st.expander(
+            "Technical Details"
+        ):
+
+            st.write(
+                "Image Resolution:",
+                f"{w} x {h}"
+            )
+
+            st.write(
+                "Plastic Pixels:",
+                plastic_pixels
+            )
+
+            st.write(
+                "Total Pixels:",
+                total_pixels
+            )
+
+            st.write(
+                "Load Percentage:",
+                round(load_percent, 2)
+            )
+
+            st.write(
+                "Model Classes:",
+                model.names
+            )
                  
 # 🖥️ WATER QUALITY - ADVANCED PRACTICAL VERSION
 # Added: Pre-Chlorination + Oily Water Logic
