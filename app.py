@@ -8,8 +8,6 @@ import pytz
 import random
 from streamlit_autorefresh import st_autorefresh
 from datetime import datetime
-import ultralytics
-st.write("ultralytics imported")
 
 if "filter_alarm_muted" not in st.session_state:
     st.session_state.filter_alarm_muted = False
@@ -6720,6 +6718,8 @@ st.info("Design Residence Time: 1 Hour | Current Storage Based on 18 MLD Product
 # 🌊 INTAKE DEBRIS MODULE
 # ============================== 
 import streamlit as st
+import ultralytics
+st.write("ultralytics imported")
 from ultralytics import YOLO
 import cv2
 import numpy as np
