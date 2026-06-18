@@ -423,12 +423,23 @@ df = df.dropna(subset=["Date"])
 
 
     
-     # ==========================================
+# ==========================================
 # DASHBOARD HEADING
 # ==========================================
 
-st.subheader("Turbidity & Alum Dosing Monitoring")
-
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+Turbidity & Alum Dosing Monitoring
+</div>
+""", unsafe_allow_html=True)
+Turbidity & Alum Dosing Monitoring
 # ==========================================
 # REAL-TIME / MANUAL DATA HANDLING
 # ==========================================
@@ -974,7 +985,18 @@ import base64
 # ============================================================
 
 st.markdown("---")
-st.subheader("📊 Smart Clarifier & Filter Bed Monitoring")
+st.subheader("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+📊 Smart Clarifier & Filter Bed Monitoring
+</div>
+""", unsafe_allow_html=True)
 
 # ============================================================
 # MODE BUTTONS
@@ -1203,7 +1225,7 @@ m4.metric(
 # ANALYSIS
 # ============================================================
 
-st.markdown("### Analysis")
+st.markdown("###### Analysis")
 
 if clar_outlet <= 5:
 
@@ -1704,14 +1726,25 @@ else:
 
 st.set_page_config(page_title="Water Treatment Performance", layout="wide")
 
-st.header("💧 Water Treatment Performance Dashboard")
+st.subheader("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+💧 Water Treatment Performance Dashboard
+</div>
+""", unsafe_allow_html=True)
 
-st.subheader("🏭 Unit Selection")
+st.markdown("🏭 Unit Selection")
 
 unit_type = st.selectbox("Select Unit", ["Clarifier", "Filter Bed"])
 
 # Inputs
-st.subheader("📥 Input Parameters")
+st.markdown("📥 Input Parameters")
 
 col1, col2 = st.columns(2)
 
@@ -1815,7 +1848,7 @@ color = get_color(status, pi)
 # DISPLAY METRICS
 # ===============================
 
-st.subheader("📊 Performance Results")
+st.markdown("📊 Performance Results")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -1828,7 +1861,7 @@ col4.metric("Grade", grade)
 # VISUAL INDICATOR
 # ===============================
 
-st.subheader("Performance Indicator")
+st.markdown("###Performance Indicator")
 
 if color == "green":
     st.success("Excellent Performance ✅")
@@ -1841,7 +1874,7 @@ else:
 # INTERPRETATION BOX
 # ===============================
 
-st.subheader("Interpretation")
+st.markdown("######Interpretation")
 
 st.info(f"""
 - **Unit Selected:** {unit_type}  
@@ -2083,7 +2116,7 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-st.markdown("""
+st.("""subheader
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
