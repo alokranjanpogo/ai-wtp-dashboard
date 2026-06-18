@@ -6936,10 +6936,9 @@ font-size:48px;
 font-weight:700;
 color:#2C3E50;
 margin-bottom:5px;'>
-🖥️ Water Treatment Assistant
+Water Treatment Assistant
 </h1>
 """, unsafe_allow_html=True)
-
 st.caption("Complaint analysis and troubleshooting support")
 
 # ===============================
