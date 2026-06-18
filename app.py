@@ -2775,13 +2775,16 @@ Source: Regression Model
 - Reduced filter loading
 - Enhanced treated water quality
 
+st.markdown(f"""
 ### Chemical Requirement
 
 - Alum Requirement:
-  **{alum_kg_day:,.0f} kg/day**
+
+**{alum_kg_day:,.0f} kg/day**
 
 - PAC Equivalent Dose:
-  **{pac_dose:.1f} mg/L**
+
+**{pac_dose:.1f} mg/L**
 
 ### AI Confidence
 
