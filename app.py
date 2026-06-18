@@ -4284,18 +4284,7 @@ risk_score = max(0, min(risk_score, 100))
 
 with left:
 
-   st.markdown("""
-    <div style="
-    background:#F4F8FF;
-    border-left:8px solid #0A2E6B;
-    padding:15px;
-    border-radius:8px;
-    font-size:24px;
-    font-weight:bold;
-    color:#0A2E6B;">
-    📈 Weather-Adjusted Hypochlorite Requirement
-    </div>
-    """, unsafe_allow_html=True)
+   st.markdown("📈 Weather-Adjusted Hypochlorite Requirement")
     
 fig = go.Figure()
 
