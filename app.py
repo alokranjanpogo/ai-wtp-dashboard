@@ -7050,7 +7050,7 @@ st.caption("Complaint analysis and troubleshooting support")
 # ===============================
 # STEP 1: COMPLAINT
 # ===============================
-)
+
 complaint = st.text_input("Enter issue (muddy, smell, worms, yellow, green layer)")
 
 # ===============================
