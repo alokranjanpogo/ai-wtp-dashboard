@@ -6950,8 +6950,10 @@ st.caption("Complaint analysis and troubleshooting support")
 # ===============================
 # STEP 1: COMPLAINT
 # ===============================
-st.markdown("Step 1: Customer Complaint")
-
+st.markdown(
+    "<p style='font-size:28px; font-weight:bold; color:#2C3E50;'>Upload Intake Image</p>",
+    unsafe_allow_html=True
+)
 complaint = st.text_input("Enter issue (muddy, smell, worms, yellow, green layer)")
 
 # ===============================
