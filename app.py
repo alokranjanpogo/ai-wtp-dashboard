@@ -4284,7 +4284,7 @@ risk_score = max(0, min(risk_score, 100))
 
 with left:
 
-   st.markdown("📈 Weather-Adjusted Hypochlorite Requirement")
+   st.subheader("📈 Weather-Adjusted Hypochlorite Requirement")
     
 fig = go.Figure()
 
