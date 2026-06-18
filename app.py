@@ -831,7 +831,7 @@ else:
 
     with col1:
 
-        st.markdown("📊 Turbidity & Alum Dosing")
+        st.subheader("📊 Turbidity & Alum Dosing")
 
         fig1 = go.Figure()
 
@@ -910,7 +910,7 @@ else:
 
     with col2:
 
-        st.markdown("📈 Inlet vs Outlet Turbidity")
+        st.subheader("📈 Inlet vs Outlet Turbidity")
 
         fig2 = go.Figure()
 
@@ -1018,7 +1018,7 @@ import base64
 # ============================================================
 
 st.markdown("---")
-st.markdown("""
+st.subheader("""
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
@@ -1090,7 +1090,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.markdown("🌀 Clarifier Live Monitoring")
+st.subheader("🌀 Clarifier Live Monitoring")
 
 # ============================================================
 # VALUES
@@ -1283,7 +1283,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.markdown("🧪 Filter Bed Live Status")
+st.subheader("🧪 Filter Bed Live Status")
 
 cols = st.columns(6)
 
