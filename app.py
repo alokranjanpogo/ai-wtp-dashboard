@@ -15,7 +15,28 @@ if "filter_alarm_muted" not in st.session_state:
 # AUTO REFRESH
 # ===============================
 
-st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
+st.markdown("""
+<div style="
+background: linear-gradient(90deg, #0A2E6B, #1E5AA8);
+padding: 20px;
+border-radius: 12px;
+text-align: center;
+margin-bottom: 15px;">
+<h1 style="
+color: white;
+margin: 0;
+font-size: 42px;
+font-weight: 700;">
+🏭 WTP MOHARDA
+</h1>
+<p style="
+color: #E8F0FF;
+margin: 5px 0 0 0;
+font-size: 20px;">
+Live HMI Monitoring Dashboard
+</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # DATA SOURCE SWITCH
@@ -6721,7 +6742,17 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
+st.markdown("""
+<h1 style='
+font-size:48px;
+font-weight:700;
+color:#2C3E50;
+margin-bottom:5px;'>
+🌊 Intake Monitoring System
+</h1>
+""", unsafe_allow_html=True)
 
+st.caption("Real-time monitoring of floating debris and plastic load at Moharda Intake")
 model = YOLO("best.pt")
 def cleaning_frequency(load_percent):
 
@@ -6922,8 +6953,17 @@ if uploaded_file:
 # ==========================================
 
 import streamlit as st
+st.markdown("""
+<h1 style='
+font-size:48px;
+font-weight:700;
+color:#2C3E50;
+margin-bottom:5px;'>
+🖥️ Water Treatment Assistant
+</h1>
+""", unsafe_allow_html=True)
 
-st.header("🖥️ Water Treatment Assistant")
+st.caption("Complaint analysis and troubleshooting support")
 
 # ===============================
 # STEP 1: COMPLAINT
