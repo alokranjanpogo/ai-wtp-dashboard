@@ -252,7 +252,7 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:21px;
+font-size:24px;
 font-weight:bold;
 color:#0A2E6B;">
 🏭 Total Water Production
@@ -269,7 +269,7 @@ colp[1].metric("Flow (m³/hr)", f"{production_m3_hr:.0f}")
 colp[2].metric("Flow (LPS)", f"{production_lps:.0f}")
 
 # ============================================================
-# RAW WATER QUALITY SECTION
+# RAW WATER QUALITY SECTIOn
 # ============================================================
 
 if mode == "📁 Manual Data":
@@ -280,7 +280,7 @@ if mode == "📁 Manual Data":
     border-left:8px solid #0A2E6B;
     padding:15px;
     border-radius:8px;
-    font-size:21px;
+    font-size:24px;
     font-weight:bold;
     color:#0A2E6B;">
     📅 Raw Water Quality Selector
@@ -1763,9 +1763,9 @@ st.markdown("""
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
-padding:31px;
+padding:15px;
 border-radius:8px;
-font-size:px;
+font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
 💧 Water Treatment Performance Dashboard
@@ -2957,7 +2957,7 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:24px;
+font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
 Smart Feedback System
@@ -6757,8 +6757,18 @@ st.markdown(
 
 # SUMP LEVEL MONITORING
 # ===============================
-st.subheader("💧 Clear Water Sump Status")
-
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:28px;
+font-weight:bold;
+color:#0A2E6B;">
+💧 Clear Water Sump Status
+</div>
+""", unsafe_allow_html=True)
 # Given values
 sump_capacity = 1500000 # litres
 production_mld = 18
@@ -6815,7 +6825,7 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:24px;
+font-size:28px;
 font-weight:bold;
 color:#0A2E6B;">
 Intake Monitoring System
@@ -7040,9 +7050,6 @@ st.caption("Complaint analysis and troubleshooting support")
 # ===============================
 # STEP 1: COMPLAINT
 # ===============================
-st.markdown(
-    "<p style='font-size:28px; font-weight:bold; color:#2C3E50;'>Upload Intake Image</p>",
-    unsafe_allow_html=True
 )
 complaint = st.text_input("Enter issue (muddy, smell, worms, yellow, green layer)")
 
