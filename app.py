@@ -1572,7 +1572,7 @@ for item in filter_summary:
 # ============================================================
 
 st.markdown("---")
-st.markdown("📈 Output Turbidity Trend")
+st.subheader("📈 Output Turbidity Trend")
 
 units = [
     "Clarifier",
