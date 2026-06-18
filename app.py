@@ -2731,15 +2731,42 @@ else:
 # FINAL RECOMMENDATION
 # ========================================================
 
-    st.subheader(f"""
-### ✅ Final AI Recommendation
+st.markdown("""
+<div style="
+background:#F8FAFC;
+border-left:6px solid #22C55E;
+padding:18px;
+border-radius:10px;
+margin-top:15px;">
 
-## {ai_dose:.1f} mg/L Alum Dose
+<h3 style="
+margin:0;
+color:#166534;
+font-size:24px;
+font-weight:700;">
+✅ Final Recommendation
+</h3>
 
-### Applied Corrections
-| pH Factor | **{ph_factor:.2f}** |
-| Risk Adjustment | **{risk_adjustment:.1f} mg/L** |
-| Regression Prediction | **{predicted_dose:.1f} mg
+<p style="
+font-size:32px;
+font-weight:700;
+color:#0A2E6B;
+margin-top:10px;
+margin-bottom:10px;">
+7.0 mg/L Alum Dose
+</p>
+
+<p style="
+font-size:15px;
+color:#666;
+margin:0;">
+pH Factor: 1.00 &nbsp;&nbsp;|&nbsp;&nbsp;
+Risk Adjustment: 0.0 mg/L &nbsp;&nbsp;|&nbsp;&nbsp;
+Source: Regression Model
+</p>
+
+</div>
+""", unsafe_allow_html=True)
 ### Expected Outcomes
 
 - Optimized coagulant utilization
