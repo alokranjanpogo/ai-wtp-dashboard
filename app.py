@@ -571,7 +571,7 @@ if mode == "🟢 Real-Time Data":
 
     with col1:
 
-        st.markdown("📊 Live Alum & Turbidity")
+        st.subheader("📊 Live Alum & Turbidity")
 
         fig1 = go.Figure()
 
@@ -656,7 +656,7 @@ if mode == "🟢 Real-Time Data":
 
     with col2:
 
-        st.markdown("📈 Live Inlet vs Outlet Trend")
+        st.subheader("📈 Live Inlet vs Outlet Trend")
 
         fig2 = go.Figure()
 
@@ -1024,7 +1024,7 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:24px;
+font-size:30px;
 font-weight:bold;
 color:#0A2E6B;">
 📊 Smart Clarifier & Filter Bed Monitoring
