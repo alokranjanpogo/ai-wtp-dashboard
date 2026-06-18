@@ -6934,13 +6934,16 @@ if uploaded_file:
 
 import streamlit as st
 st.markdown("""
-<h1 style='
-font-size:48px;
-font-weight:700;
-color:#2C3E50;
-margin-bottom:5px;'>
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
 Water Treatment Assistant
-</h1>
+</div>
 """, unsafe_allow_html=True)
 st.caption("Complaint analysis and troubleshooting support")
 
