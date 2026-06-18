@@ -4054,11 +4054,11 @@ if response.status_code == 200:
 
     st.markdown("Operational Recommendations")
 
-        avg_temp = weather_df["Temp"].mean()
-        
-        avg_rain = weather_df["Rain"].sum()
-        
-        avg_humidity = weather_df["Humidity"].mean()
+    avg_temp = weather_df["Temp"].mean()
+    
+    avg_rain = weather_df["Rain"].sum()
+    
+    avg_humidity = weather_df["Humidity"].mean()
 
     # ========================================================
     # HIGH TEMPERATURE
@@ -4077,7 +4077,8 @@ if response.status_code == 200:
         ai_messages.append(
             "💨 Increase aeration rates to maintain dissolved oxygen stability."
         )
-
+        for msg in ai_messages:
+            st.info(msg)
     # ========================================================
     # HEAVY RAIN
     # ========================================================
