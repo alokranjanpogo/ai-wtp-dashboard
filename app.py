@@ -2767,6 +2767,7 @@ Source: Regression Model
 
 </div>
 """, unsafe_allow_html=True)
+st.markdown(f"""
 ### Expected Outcomes
 
 - Optimized coagulant utilization
@@ -2775,7 +2776,6 @@ Source: Regression Model
 - Reduced filter loading
 - Enhanced treated water quality
 
-st.markdown(f"""
 ### Chemical Requirement
 
 - Alum Requirement:
@@ -2789,9 +2789,8 @@ st.markdown(f"""
 ### AI Confidence
 
 🎯 **{confidence}%**
+
 """)
-
-
 # ============================================================
 # CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
 # ============================================================
