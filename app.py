@@ -1862,8 +1862,20 @@ st.info(f"""
 
 if mode == "📁 Manual Data":
 
-    st.subheader("Raw Water Turbidity Trend (Last 4 Days)")
-
+    st.markdown("""
+    <div style="
+    background:#F4F8FF;
+    border-left:8px solid #0A2E6B;
+    padding:15px;
+    border-radius:8px;
+    font-size:24px;
+    font-weight:bold;
+    color:#0A2E6B;">
+    Raw Water Turbidity Trend (Last 4 Days)
+    
+    </div>
+    """, unsafe_allow_html=True)
+    
     history_df["Date"] = pd.to_datetime(
         history_df["Date"],
         dayfirst=True,
@@ -2071,7 +2083,18 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-st.subheader(" Intelligent Alum Dosing Decision System")
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+Smart Alum Dosing Decision System
+</div>
+""", unsafe_allow_html=True)
 
 # ============================================================
 # INPUTS
@@ -2642,7 +2665,7 @@ else:
 # FINAL RECOMMENDATION
 # ========================================================
 
-    st.markdown(f"""
+    st.subheader(f"""
 ### ✅ Final AI Recommendation
 
 ## {ai_dose:.1f} mg/L Alum Dose
@@ -2672,44 +2695,23 @@ else:
 🎯 **{confidence}%**
 """)
 
-# ============================================================
-# ALERT SYSTEM
-# ============================================================
-st.markdown("---")
-st.markdown("### 🚨 Intelligent Alert System")
 
-if ai_dose > 80:
-
-    st.error(
-        "🔴 Very high coagulant demand detected. "
-        "Review raw water quality and consider pre-treatment."
-    )
-
-elif conductivity > 1200:
-
-    st.warning(
-        "🟠 High conductivity detected. "
-        "Possible industrial contamination influence."
-    )
-
-elif jar_available and abs(ai_dose - jar_dose) > 5:
-
-    st.warning(
-        "🟡 Recommended dose differs from Jar Test. "
-        "Verify coagulation conditions."
-    )
-
-else:
-
-    st.success(
-        "🟢 Dosing recommendation within expected operating range."
-    )
 # ============================================================
 # CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
 # ============================================================
 
-st.subheader("Dynamic Hypochlorite Dose vs Residual Chlorine")
-
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+Smart Dynamic Hypochlorite Dosing Model
+</div>
+""", unsafe_allow_html=True)
 import numpy as np
 import plotly.graph_objects as go
 
@@ -2883,7 +2885,18 @@ import pytz
 
 st.set_page_config(layout="wide")
 
-st.subheader("Smart Feedback System")
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+Smart Feedback System
+</div>
+""", unsafe_allow_html=True)
 
 left_col, right_col = st.columns([2,1])
 
@@ -3410,7 +3423,18 @@ if st.button("🛑 Stop Alarm"):
 
 st.markdown("---")
 
-st.subheader("📊 AI ANALYTICS DASHBOARD")
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+Analytics Dashboard
+</div>
+""", unsafe_allow_html=True)
 
 if len(df) > 0:
 
@@ -3474,7 +3498,7 @@ if len(df) > 0:
 # TREND CHART
 # =========================================================
 
-st.markdown("## 📈 Treatment Trend")
+st.subheader("## 📈 Treatment Trend")
 
 import plotly.graph_objects as go
 
