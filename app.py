@@ -246,7 +246,18 @@ st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
 # ===============================
 # PRODUCTION
 # ===============================
-st.subheader("🏭 TOTAL WATER PRODUCTION")
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+🏭 TOTAL WATER PRODUCTION
+</div>
+""", unsafe_allow_html=True)
 
 production_mld = 18 # value can vary between 18–23
 production_m3_hr = 1100
@@ -377,8 +388,19 @@ if mode == "📁 Manual Data":
 
 else:
 
-    st.subheader("📡 Live Raw Water Monitoring")
-
+    st.markdown("""
+    <div style="
+    background:#F4F8FF;
+    border-left:8px solid #0A2E6B;
+    padding:15px;
+    border-radius:8px;
+    font-size:24px;
+    font-weight:bold;
+    color:#0A2E6B;">
+    📡 Live Raw Water Monitoring 
+    </div>
+    """, unsafe_allow_html=True)
+    
     c1, c2, c3 = st.columns(3)
 
     c1.metric(
@@ -549,7 +571,7 @@ if mode == "🟢 Real-Time Data":
 
     with col1:
 
-        st.subheader("📊 Live Alum & Turbidity")
+        st.markdown("📊 Live Alum & Turbidity")
 
         fig1 = go.Figure()
 
@@ -634,7 +656,7 @@ if mode == "🟢 Real-Time Data":
 
     with col2:
 
-        st.subheader("📈 Live Inlet vs Outlet Trend")
+        st.markdown("📈 Live Inlet vs Outlet Trend")
 
         fig2 = go.Figure()
 
@@ -809,7 +831,7 @@ else:
 
     with col1:
 
-        st.subheader("📊 Turbidity & Alum Dosing")
+        st.markdown("📊 Turbidity & Alum Dosing")
 
         fig1 = go.Figure()
 
@@ -888,7 +910,7 @@ else:
 
     with col2:
 
-        st.subheader("📈 Inlet vs Outlet Turbidity")
+        st.markdown("📈 Inlet vs Outlet Turbidity")
 
         fig2 = go.Figure()
 
@@ -1068,7 +1090,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.subheader("🌀 Clarifier Live Monitoring")
+st.markdown("🌀 Clarifier Live Monitoring")
 
 # ============================================================
 # VALUES
@@ -1261,7 +1283,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.subheader("🧪 Filter Bed Live Status")
+st.markdown("🧪 Filter Bed Live Status")
 
 cols = st.columns(6)
 
@@ -1488,7 +1510,7 @@ if alarm_triggered:
 # ============================================================
 
 st.markdown("---")
-st.subheader("📋 Filter Bed Summary")
+st.markdown("📋 Filter Bed Summary")
 
 for item in filter_summary:
 
@@ -1550,7 +1572,7 @@ for item in filter_summary:
 # ============================================================
 
 st.markdown("---")
-st.subheader("📈 Output Turbidity Trend")
+st.markdown("📈 Output Turbidity Trend")
 
 units = [
     "Clarifier",
