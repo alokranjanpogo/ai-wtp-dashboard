@@ -1018,7 +1018,7 @@ import base64
 # ============================================================
 
 st.markdown("---")
-st.subheader("""
+st.markdown("""
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
