@@ -1759,7 +1759,7 @@ else:
 
 st.set_page_config(page_title="Water Treatment Performance", layout="wide")
 
-st.subheader("""
+st.markdown("""
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
