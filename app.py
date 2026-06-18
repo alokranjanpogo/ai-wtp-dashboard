@@ -252,10 +252,10 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:24px;
+font-size:21px;
 font-weight:bold;
 color:#0A2E6B;">
-🏭 TOTAL WATER PRODUCTION
+🏭 Total Water Production
 </div>
 """, unsafe_allow_html=True)
 
@@ -280,7 +280,7 @@ if mode == "📁 Manual Data":
     border-left:8px solid #0A2E6B;
     padding:15px;
     border-radius:8px;
-    font-size:24px;
+    font-size:21px;
     font-weight:bold;
     color:#0A2E6B;">
     📅 Raw Water Quality Selector
@@ -466,7 +466,7 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:24px;
+font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
 Turbidity & Alum Dosing Monitoring
@@ -1510,7 +1510,7 @@ if alarm_triggered:
 # ============================================================
 
 st.markdown("---")
-st.markdown("📋 Filter Bed Summary")
+st.subheader("📋 Filter Bed Summary")
 
 for item in filter_summary:
 
@@ -1763,9 +1763,9 @@ st.markdown("""
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
-padding:15px;
+padding:31px;
 border-radius:8px;
-font-size:24px;
+font-size:px;
 font-weight:bold;
 color:#0A2E6B;">
 💧 Water Treatment Performance Dashboard
@@ -1932,7 +1932,7 @@ if mode == "📁 Manual Data":
     <div style="
     background:#F4F8FF;
     border-left:8px solid #0A2E6B;
-    padding:15px;
+    padding:31px;
     border-radius:8px;
     font-size:24px;
     font-weight:bold;
@@ -2149,13 +2149,13 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-st.subheader("""
+st.markdown("""
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:24px;
+font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
 Smart Alum Dosing Decision System
@@ -2772,7 +2772,7 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:24px;
+font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
 Smart Dynamic Hypochlorite Dosing Model
