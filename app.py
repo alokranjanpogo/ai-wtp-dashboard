@@ -4297,7 +4297,7 @@ with left:
     </div>
     """, unsafe_allow_html=True)
     
-    fig = go.Figure()
+fig = go.Figure()
 
     
     # ====================================================
