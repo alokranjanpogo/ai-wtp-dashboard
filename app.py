@@ -2753,7 +2753,7 @@ font-weight:700;
 color:#0A2E6B;
 margin-top:10px;
 margin-bottom:10px;">
-7.0 mg/L Alum Dose
+{predicted_dose:.1f} mg/L Alum Dose
 </p>
 
 <p style="
