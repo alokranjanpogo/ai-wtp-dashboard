@@ -263,8 +263,19 @@ colp[2].metric("Flow (LPS)", f"{production_lps:.0f}")
 
 if mode == "📁 Manual Data":
 
-    st.subheader("📅 Raw Water Quality Selector")
-
+    st.markdown("""
+    <div style="
+    background:#F4F8FF;
+    border-left:8px solid #0A2E6B;
+    padding:15px;
+    border-radius:8px;
+    font-size:24px;
+    font-weight:bold;
+    color:#0A2E6B;">
+    📅 Raw Water Quality Selector
+    </div>
+    """, unsafe_allow_html=True)
+    
     # SAFE DATE CONVERSION
     history_df["Date"] = pd.to_datetime(
         history_df["Date"],
