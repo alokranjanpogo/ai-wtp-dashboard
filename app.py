@@ -4325,66 +4325,66 @@ fig.add_trace(go.Scatter(
     )
 
 ))
-    # ====================================================
-    # RAINFALL OVERLAY
-    # ====================================================
+# ====================================================
+# RAINFALL OVERLAY
+# ====================================================
 
-    fig.add_trace(go.Bar(
+fig.add_trace(go.Bar(
 
-        x=weather_df["DateTime"],
+    x=weather_df["DateTime"],
 
-        y=weather_df["Rain"],
+    y=weather_df["Rain"],
 
-        name='Rainfall',
+    name='Rainfall',
 
-        opacity=0.20
+    opacity=0.20
 
-    ))
+))
 
-    # ====================================================
-    # GRAPH SETTINGS
-    # ====================================================
+# ====================================================
+# GRAPH SETTINGS
+# ====================================================
 
-    fig.update_layout(
+fig.update_layout(
 
-        height=350,
+    height=350,
 
-        template="plotly_white",
+    template="plotly_white",
 
-        hovermode="x unified",
+    hovermode="x unified",
 
-        margin=dict(
-            l=5,
-            r=5,
-            t=40,
-            b=5
-        ),
+    margin=dict(
+        l=5,
+        r=5,
+        t=40,
+        b=5
+    ),
 
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        ),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1
+    ),
 
-        xaxis_title="Forecast Time",
+    xaxis_title="Forecast Time",
 
-        yaxis_title="Predicted Chemical Dose",
+    yaxis_title="Predicted Chemical Dose",
 
-        xaxis=dict(
-            tickformat="%H:%M",
-            tickmode="linear",
-            dtick=10800000,
-            tickangle=-45
-        )
-
+    xaxis=dict(
+        tickformat="%H:%M",
+        tickmode="linear",
+        dtick=10800000,
+        tickangle=-45
     )
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
 
 # ========================================================
 # WEATHER RISK GAUGE
