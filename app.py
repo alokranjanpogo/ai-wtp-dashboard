@@ -439,7 +439,7 @@ color:#0A2E6B;">
 Turbidity & Alum Dosing Monitoring
 </div>
 """, unsafe_allow_html=True)
-Turbidity & Alum Dosing Monitoring
+
 # ==========================================
 # REAL-TIME / MANUAL DATA HANDLING
 # ==========================================
