@@ -2526,7 +2526,7 @@ with left:
     font-size:24px;
     font-weight:bold;
     color:#0A2E6B;">
-    🧪 AI-Based Alum Dosing Recommendation System
+    🧪 Regression Model Based Alum Dosing Recommendation System
     </div>
     """, unsafe_allow_html=True)
         
@@ -2748,7 +2748,7 @@ font-weight:700;">
 </h3>
 
 <p style="
-font-size:24px;
+font-size:30px;
 font-weight:700;
 color:#0A2E6B;
 margin-top:10px;
