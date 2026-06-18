@@ -2929,7 +2929,19 @@ st.metric("Required Hypo Dose", f"{dose_selected:,.0f} kg/day")
 st.metric("Chlorine Demand", f"{chlorine_demand:.2f} mg/L")
 # WATER TOWERS
 # ===============================
-st.subheader("🗼 Distribution Water Towers")
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+🗼 Distribution Water Towers
+</div>
+""", unsafe_allow_html=True)
+
 names=["Moharda WT","Zone 9 WT","Zone 3 WT","Zone 1 GSR outlet","Bagunhatu WT","Bagunnagar WT"]
 tc=st.columns(3)
 for i in range(6):
