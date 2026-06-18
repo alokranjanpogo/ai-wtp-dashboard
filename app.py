@@ -1024,7 +1024,7 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:30px;
+font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
 📊 Smart Clarifier & Filter Bed Monitoring
