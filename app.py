@@ -2116,7 +2116,7 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-st.("""subheader
+st.subheader("""
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
