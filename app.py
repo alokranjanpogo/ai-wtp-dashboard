@@ -4054,11 +4054,11 @@ if response.status_code == 200:
 
     st.markdown("Operational Recommendations")
 
-    avg_temp = weather_df["Temp"].mean()
-
-    avg_rain = weather_df["Rain"].sum()
-
-    avg_humidity = weather_df["Humidity"].mean()
+        avg_temp = weather_df["Temp"].mean()
+        
+        avg_rain = weather_df["Rain"].sum()
+        
+        avg_humidity = weather_df["Humidity"].mean()
 
     # ========================================================
     # HIGH TEMPERATURE
@@ -4222,7 +4222,7 @@ current_temp = temperature
 theta = 1.04
 
 # ========================================================
-# FUTURE HYP OCHLORITE REQUIREMENT
+# FUTURE HYPOCHLORITE REQUIREMENT
 # ========================================================
 
 weather_df["Pred Chlorine"] = (
