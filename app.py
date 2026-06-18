@@ -2731,7 +2731,7 @@ else:
 # FINAL RECOMMENDATION
 # ========================================================
 
-st.markdown("""
+st.markdown(f"""
 <div style="
 background:#F8FAFC;
 border-left:6px solid #22C55E;
@@ -2748,7 +2748,7 @@ font-weight:700;">
 </h3>
 
 <p style="
-font-size:32px;
+font-size:24px;
 font-weight:700;
 color:#0A2E6B;
 margin-top:10px;
