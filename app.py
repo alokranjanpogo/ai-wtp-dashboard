@@ -14,30 +14,7 @@ if "filter_alarm_muted" not in st.session_state:
 # ===============================
 # AUTO REFRESH
 # ===============================
-
-st.markdown("""
-<div style="
-background: linear-gradient(90deg, #0A2E6B, #1E5AA8);
-padding: 20px;
-border-radius: 12px;
-text-align: center;
-margin-bottom: 15px;">
-<h1 style="
-color: white;
-margin: 0;
-font-size: 42px;
-font-weight: 700;">
-🏭 WTP MOHARDA
-</h1>
-<p style="
-color: #E8F0FF;
-margin: 5px 0 0 0;
-font-size: 20px;">
-Live HMI Monitoring Dashboard
-</p>
-</div>
-""", unsafe_allow_html=True)
-
+st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
 # ==========================================
 # DATA SOURCE SWITCH
 # ==========================================
