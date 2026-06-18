@@ -2432,18 +2432,17 @@ with left:
 
     st.markdown("""
     <div style="
-    background-color:#0A2E6B;
-    padding:10px;
+    background:#F4F8FF;
+    border-left:8px solid #0A2E6B;
+    padding:15px;
     border-radius:8px;
-    text-align:center;
-    color:white;
-    font-size:20px;
-    font-weight:bold;">
-    ALUM DOSING PREDICTION MODEL
+    font-size:24px;
+    font-weight:bold;
+    color:#0A2E6B;">
+    🧪 AI-Based Alum Dosing Recommendation System
     </div>
-    """,
-    unsafe_allow_html=True)
-    
+    """, unsafe_allow_html=True)
+        
     st.markdown("")
 
     x = np.linspace(0, 400, 150)
