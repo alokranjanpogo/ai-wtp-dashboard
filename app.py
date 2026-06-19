@@ -7297,6 +7297,9 @@ if complaint:
             st.success("Chlorine OK")
         else:
             st.error("Chlorine Out of Range")
+# ======================================================
+# WATER SAFETY PREDICTOR
+# ======================================================            
 import streamlit as st
 
 st.markdown("""
@@ -7305,87 +7308,95 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:28px;
+font-size:24px;
 font-weight:bold;
 color:#0A2E6B;">
-🛡️ Water Safety Risk Predictor
+🛡️ Water Safety Predictor
 </div>
 """, unsafe_allow_html=True)
 
-mode = st.radio(
-    "Select Monitoring Location",
-    ["Plant End", "Customer End"],
-    horizontal=True
+mode = st.selectbox(
+    "Monitoring Point",
+    [
+        "🏭 Treatment Plant",
+        "🏘️ Customer End"
+    ]
 )
 
 # ======================================================
-# PLANT END
+# TREATMENT PLANT
 # ======================================================
 
-if mode == "Plant End":
+if mode == "🏭 Treatment Plant":
 
-    col1, col2 = st.columns(2)
+    c1, c2 = st.columns(2)
 
-    with col1:
+    with c1:
+
         raw_turbidity = st.number_input(
             "Raw Water Turbidity (NTU)",
-            0.0, 500.0, 20.0
+            min_value=0.0,
+            value=25.0
         )
 
         filter_turbidity = st.number_input(
             "Filter Outlet Turbidity (NTU)",
-            0.0, 50.0, 0.5
+            min_value=0.0,
+            value=0.5
         )
 
         frc = st.number_input(
-            "FRC at Sump (ppm)",
-            0.0, 5.0, 0.5
+            "Free Residual Chlorine (ppm)",
+            min_value=0.0,
+            value=0.5
         )
 
-    with col2:
+    with c2:
 
         rainfall = st.number_input(
-            "Rainfall (mm/hr)",
-            0.0, 100.0, 0.0
+            "Rainfall (mm)",
+            min_value=0.0,
+            value=0.0
         )
 
-        temp = st.number_input(
+        temperature = st.number_input(
             "Water Temperature (°C)",
-            0.0, 50.0, 28.0
+            min_value=0.0,
+            value=28.0
         )
 
         ph = st.number_input(
             "pH",
-            4.0, 10.0, 7.2
+            min_value=4.0,
+            max_value=10.0,
+            value=7.2
         )
 
     risk = 0
 
-    # Filter Turbidity Risk
+    # Filter Turbidity
     if filter_turbidity > 5:
         risk += 40
     elif filter_turbidity > 1:
         risk += 20
 
-    # FRC Risk
+    # FRC
     if frc < 0.2:
         risk += 35
     elif frc < 0.5:
         risk += 15
 
-    # Rainfall Risk
-    if rainfall > 30:
+    # Raw Turbidity
+    if raw_turbidity > 100:
         risk += 15
-    elif rainfall > 10:
+    elif raw_turbidity > 50:
         risk += 8
 
-    # Raw Turbidity Risk
-    if raw_turbidity > 100:
+    # Rainfall
+    if rainfall > 30:
         risk += 10
-    elif raw_turbidity > 50:
+    elif rainfall > 10:
         risk += 5
-
-    risk = min(risk, 100)
 
 # ======================================================
 # CUSTOMER END
@@ -7393,34 +7404,38 @@ if mode == "Plant End":
 
 else:
 
-    col1, col2 = st.columns(2)
+    c1, c2 = st.columns(2)
 
-    with col1:
+    with c1:
 
         customer_turbidity = st.number_input(
             "Customer End Turbidity (NTU)",
-            0.0, 50.0, 0.5
+            min_value=0.0,
+            value=0.5
         )
 
         frc = st.number_input(
-            "Customer End FRC (ppm)",
-            0.0, 5.0, 0.3
+            "Free Residual Chlorine (ppm)",
+            min_value=0.0,
+            value=0.3
         )
 
         water_age = st.number_input(
-            "Estimated Water Age (hrs)",
-            0.0, 100.0, 12.0
+            "Water Age (Hours)",
+            min_value=0.0,
+            value=12.0
         )
 
-    with col2:
+    with c2:
 
         rainfall = st.number_input(
-            "Rainfall (mm/hr)",
-            0.0, 100.0, 0.0
+            "Rainfall (mm)",
+            min_value=0.0,
+            value=0.0
         )
 
         complaints = st.selectbox(
-            "Recent Complaints Received?",
+            "Recent Consumer Complaints",
             ["No", "Yes"]
         )
 
@@ -7454,50 +7469,93 @@ else:
     if complaints == "Yes":
         risk += 10
 
-    risk = min(risk, 100)
-
 # ======================================================
 # RESULTS
 # ======================================================
 
 st.markdown("---")
+st.subheader("🦠 Microbial Safety Assessment")
 
 if risk <= 30:
 
-    st.success(
-        f"🟢 LOW MICROBIAL RISK\n\nRisk Score: {risk}/100"
-    )
+    st.success("""
+### 🟢 LOW MICROBIAL RISK
 
-    probability = "< 5%"
+Water quality indicators are within acceptable limits.
+
+**Expected Condition**
+- Adequate disinfection
+- Low probability of microbial contamination
+- Water quality stable
+
+**Recommended Action**
+- Continue routine monitoring
+- Maintain current operating conditions
+""")
 
 elif risk <= 60:
 
-    st.warning(
-        f"🟡 MODERATE MICROBIAL RISK\n\nRisk Score: {risk}/100"
-    )
+    st.warning("""
+### 🟡 MODERATE MICROBIAL RISK
 
-    probability = "5 - 20%"
+One or more indicators require attention.
+
+**Expected Condition**
+- Elevated contamination susceptibility
+- Possible water quality deterioration
+
+**Recommended Action**
+- Increase monitoring frequency
+- Verify chlorine residual
+- Review treatment performance
+""")
 
 else:
 
-    st.error(
-        f"🔴 HIGH MICROBIAL RISK\n\nRisk Score: {risk}/100"
-    )
+    st.error("""
+### 🔴 HIGH MICROBIAL RISK
 
-    probability = "> 20%"
+Conditions may favor microbial contamination.
 
-st.metric(
-    "Estimated Probability of Microbial Contamination",
-    probability
-)
+**Expected Condition**
+- Increased probability of microbial presence
+- Potential deterioration in water safety
 
-st.info(
-    """
-    This prediction is based on operational
-    indicators such as turbidity, free residual
-    chlorine, rainfall and distribution conditions.
+**Recommended Action**
+- Verify chlorination immediately
+- Collect bacteriological samples
+- Inspect treatment and distribution system
+- Investigate contamination source
+""")
 
-    It is a microbial risk prediction tool and
-    not a direct E.coli measurement system.
-    """
-)
+# ======================================================
+# REFERENCE
+# ======================================================
+
+with st.expander("📖 Assessment Basis"):
+
+    st.info("""
+Assessment based on:
+
+• BIS IS 10500 Drinking Water Standards
+
+• WHO Drinking Water Quality Guidelines
+
+• CPHEEO Water Supply & Treatment Manual
+
+Key Indicators Considered:
+
+• Turbidity
+
+• Free Residual Chlorine (FRC)
+
+• Rainfall Influence
+
+• Water Age
+
+• Consumer Complaints
+
+This is a decision-support tool and does not replace
+laboratory testing for Total Coliform, Fecal Coliform,
+or E. coli.
+""")
