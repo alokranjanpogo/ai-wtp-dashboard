@@ -4487,8 +4487,18 @@ else:
 # CUSTOMER END GIS MAP
 # ==========================================================
 
-st.markdown("---")
-st.subheader("📍 Customer End GIS Map")
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:31px;
+font-weight:bold;
+color:#0A2E6B;">
+📍 Customer End GIS Map
+</div>
+""", unsafe_allow_html=True)
 
 try:
 
@@ -4680,7 +4690,19 @@ except Exception as e:
 import pandas as pd
 import plotly.express as px
 
-st.subheader("📍 Washout GIS Map")
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:31px;
+font-weight:bold;
+color:#0A2E6B;">
+📍 Washout GIS Map
+</div>
+""", unsafe_allow_html=True)
+
 washout = pd.read_excel("Wahout_points.xlsx")
 
 # Safe date conversion
