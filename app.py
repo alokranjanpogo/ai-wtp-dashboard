@@ -7468,7 +7468,21 @@ else:
     # Complaints
     if complaints == "Yes":
         risk += 10
+# ======================================================
+# RUN DIAGNOSIS BUTTON
+# ======================================================
 
+run_diagnosis = st.button(
+    "🩺 Run Diagnosis",
+    use_container_width=True,
+    type="primary"
+)
+
+if not run_diagnosis:
+    st.info(
+        "Enter water quality parameters and click 'Run Diagnosis' to generate the microbial safety assessment."
+    )
+    st.stop()
 # ======================================================
 # RESULTS
 # ======================================================
