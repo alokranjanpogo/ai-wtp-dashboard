@@ -4280,103 +4280,80 @@ risk_score = int(
 risk_score = max(0, min(risk_score, 100))
 
 # ========================================================
-# FUTURE DOSING TREND
+# FUTURE DOSING TREND + WEATHER RISK
 # ========================================================
 
+left, right = st.columns([3,1])
+
+# ========================================================
+# LEFT COLUMN
+# ========================================================
 with left:
 
-   st.subheader("📈 Weather-Adjusted Hypochlorite Requirement")
-    
-fig = go.Figure()
+    st.subheader("📈 Weather-Adjusted Hypochlorite Requirement")
 
-    
-    # ====================================================
-    # CHLORINE TREND
-    # ====================================================
+    fig = go.Figure()
 
-fig.add_trace(go.Scatter(
+    fig.add_trace(go.Scatter(
+        x=weather_df["DateTime"],
+        y=weather_df["Pred Chlorine"],
+        mode='lines+markers',
+        name='Weather Adjusted Hypochlorite Requirement',
+        line=dict(width=4, color="red"),
+        marker=dict(size=8, color="red")
+    ))
 
-    x=weather_df["DateTime"],
+    fig.add_trace(go.Bar(
+        x=weather_df["DateTime"],
+        y=weather_df["Rain"],
+        name='Rainfall',
+        opacity=0.20
+    ))
 
-    y=weather_df["Pred Chlorine"],
-
-    mode='lines+markers',
-
-    name='Weather Adjusted Hypochlorite Requirement',
-
-    line=dict(
-        width=4,
-        color="red"
-    ),
-
-    marker=dict(
-        size=8,
-        color="red"
+    fig.update_layout(
+        height=280, # reduced height
+        template="plotly_white",
+        hovermode="x unified",
+        margin=dict(l=5, r=5, t=20, b=5), # smaller top margin
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        xaxis_title="Forecast Time",
+        yaxis_title="Predicted Chemical Dose"
     )
 
-))
-# ====================================================
-# RAINFALL OVERLAY
-# ====================================================
+    st.plotly_chart(fig, use_container_width=True)
 
-fig.add_trace(go.Bar(
+# ========================================================
+# RIGHT COLUMN
+# ========================================================
+with right:
 
-    x=weather_df["DateTime"],
+    fig2 = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=risk_score,
+        title={'text': "Weather Risk"},
+        gauge={
+            'axis': {'range': [0, 100]},
+            'bar': {'color': "cyan"},
+            'steps': [
+                {'range': [0, 30], 'color': "lightgreen"},
+                {'range': [30, 70], 'color': "yellow"},
+                {'range': [70, 100], 'color': "red"}
+            ]
+        }
+    ))
 
-    y=weather_df["Rain"],
-
-    name='Rainfall',
-
-    opacity=0.20
-
-))
-              
-
-# ====================================================
-# GRAPH SETTINGS
-# ====================================================
-
-fig.update_layout(
-
-    height=350,
-
-    template="plotly_white",
-
-    hovermode="x unified",
-
-    margin=dict(
-        l=5,
-        r=5,
-        t=40,
-        b=5
-    ),
-
-    legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="right",
-        x=1
-    ),
-
-    xaxis_title="Forecast Time",
-
-    yaxis_title="Predicted Chemical Dose",
-
-    xaxis=dict(
-        tickformat="%H:%M",
-        tickmode="linear",
-        dtick=10800000,
-        tickangle=-45
+    fig2.update_layout(
+        height=230,
+        margin=dict(l=5, r=5, t=35, b=5)
     )
 
-)
-
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
-
+    st.plotly_chart(fig2, use_container_width=True)
 # ========================================================
 # WEATHER RISK GAUGE
 # ========================================================
