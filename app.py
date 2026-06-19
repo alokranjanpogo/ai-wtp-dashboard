@@ -4353,7 +4353,7 @@ with right:
         margin=dict(l=5, r=5, t=35, b=5)
     )
 
-    st.plotly_chart(fig2, use_container_width=True)
+    
 # ========================================================
 # WEATHER RISK GAUGE
 # ========================================================
