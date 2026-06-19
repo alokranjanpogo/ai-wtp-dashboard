@@ -7297,4 +7297,207 @@ if complaint:
             st.success("Chlorine OK")
         else:
             st.error("Chlorine Out of Range")
+import streamlit as st
 
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:28px;
+font-weight:bold;
+color:#0A2E6B;">
+🛡️ Water Safety Risk Predictor
+</div>
+""", unsafe_allow_html=True)
+
+mode = st.radio(
+    "Select Monitoring Location",
+    ["Plant End", "Customer End"],
+    horizontal=True
+)
+
+# ======================================================
+# PLANT END
+# ======================================================
+
+if mode == "Plant End":
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        raw_turbidity = st.number_input(
+            "Raw Water Turbidity (NTU)",
+            0.0, 500.0, 20.0
+        )
+
+        filter_turbidity = st.number_input(
+            "Filter Outlet Turbidity (NTU)",
+            0.0, 50.0, 0.5
+        )
+
+        frc = st.number_input(
+            "FRC at Sump (ppm)",
+            0.0, 5.0, 0.5
+        )
+
+    with col2:
+
+        rainfall = st.number_input(
+            "Rainfall (mm/hr)",
+            0.0, 100.0, 0.0
+        )
+
+        temp = st.number_input(
+            "Water Temperature (°C)",
+            0.0, 50.0, 28.0
+        )
+
+        ph = st.number_input(
+            "pH",
+            4.0, 10.0, 7.2
+        )
+
+    risk = 0
+
+    # Filter Turbidity Risk
+    if filter_turbidity > 5:
+        risk += 40
+    elif filter_turbidity > 1:
+        risk += 20
+
+    # FRC Risk
+    if frc < 0.2:
+        risk += 35
+    elif frc < 0.5:
+        risk += 15
+
+    # Rainfall Risk
+    if rainfall > 30:
+        risk += 15
+    elif rainfall > 10:
+        risk += 8
+
+    # Raw Turbidity Risk
+    if raw_turbidity > 100:
+        risk += 10
+    elif raw_turbidity > 50:
+        risk += 5
+
+    risk = min(risk, 100)
+
+# ======================================================
+# CUSTOMER END
+# ======================================================
+
+else:
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        customer_turbidity = st.number_input(
+            "Customer End Turbidity (NTU)",
+            0.0, 50.0, 0.5
+        )
+
+        frc = st.number_input(
+            "Customer End FRC (ppm)",
+            0.0, 5.0, 0.3
+        )
+
+        water_age = st.number_input(
+            "Estimated Water Age (hrs)",
+            0.0, 100.0, 12.0
+        )
+
+    with col2:
+
+        rainfall = st.number_input(
+            "Rainfall (mm/hr)",
+            0.0, 100.0, 0.0
+        )
+
+        complaints = st.selectbox(
+            "Recent Complaints Received?",
+            ["No", "Yes"]
+        )
+
+    risk = 0
+
+    # Turbidity
+    if customer_turbidity > 5:
+        risk += 40
+    elif customer_turbidity > 1:
+        risk += 20
+
+    # FRC
+    if frc < 0.1:
+        risk += 35
+    elif frc < 0.2:
+        risk += 20
+
+    # Water Age
+    if water_age > 48:
+        risk += 15
+    elif water_age > 24:
+        risk += 8
+
+    # Rainfall
+    if rainfall > 30:
+        risk += 10
+    elif rainfall > 10:
+        risk += 5
+
+    # Complaints
+    if complaints == "Yes":
+        risk += 10
+
+    risk = min(risk, 100)
+
+# ======================================================
+# RESULTS
+# ======================================================
+
+st.markdown("---")
+
+if risk <= 30:
+
+    st.success(
+        f"🟢 LOW MICROBIAL RISK\n\nRisk Score: {risk}/100"
+    )
+
+    probability = "< 5%"
+
+elif risk <= 60:
+
+    st.warning(
+        f"🟡 MODERATE MICROBIAL RISK\n\nRisk Score: {risk}/100"
+    )
+
+    probability = "5 - 20%"
+
+else:
+
+    st.error(
+        f"🔴 HIGH MICROBIAL RISK\n\nRisk Score: {risk}/100"
+    )
+
+    probability = "> 20%"
+
+st.metric(
+    "Estimated Probability of Microbial Contamination",
+    probability
+)
+
+st.info(
+    """
+    This prediction is based on operational
+    indicators such as turbidity, free residual
+    chlorine, rainfall and distribution conditions.
+
+    It is a microbial risk prediction tool and
+    not a direct E.coli measurement system.
+    """
+)
