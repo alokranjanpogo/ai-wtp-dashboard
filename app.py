@@ -2847,6 +2847,12 @@ pH = st.slider(
     6.0,9.0,7.2,0.1
 )
 
+temperature = st.slider(
+    "Water Temperature (°C)",
+    0, 70, 25, 1
+)
+
+
 # -----------------------------
 # STANDARD SELECTION
 # -----------------------------
@@ -2858,16 +2864,18 @@ standards = st.multiselect(
 )
 
 # -----------------------------
-# CHLORINE DEMAND MODEL (REALISTIC)
+# REGRESSION-BASED CHLORINE DEMAND MODEL
 # -----------------------------
 
-base_demand = 2.5
+chlorine_demand = (
+    -1.60
+    + 1.40 * nitrite
+    + 0.0020 * conductivity
+    + 0.35 * pH
+    + 0.05 * temperature
+)
 
-nitrite_effect = nitrite * 1.5
-conductivity_effect = (conductivity - 300)/250
-ph_effect = (pH - 7.0) * 0.8
-
-chlorine_demand = base_demand + nitrite_effect + conductivity_effect + ph_effect
+chlorine_demand = max(chlorine_demand, 0.1)
 
 # -----------------------------
 # SINGLE CURVE (CORRECT)
@@ -2927,7 +2935,7 @@ fig_hypo.add_trace(go.Scatter(
 
 fig_hypo.update_layout(
     template="plotly_dark",
-    title="Hypochlorite Dose vs Residual Chlorine (Correct Model)",
+    title="Regression-Based Sodium Hypochlorite Dosing Model",
     xaxis_title="Free Residual Chlorine (ppm)",
     yaxis_title="NaOCl Dose (kg/day)",
     height=500
