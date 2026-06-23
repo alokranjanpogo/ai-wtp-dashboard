@@ -4496,346 +4496,180 @@ else:
 #================================================
 
 st.markdown("""
-<div style="
-background:#F4F8FF;
-border-left:8px solid #0A2E6B;
-padding:15px;
+<style>
+
+.blue_header{
+background:#0B2E73;
+color:white;
+padding:8px 15px;
 border-radius:8px;
-font-size:28px;
 font-weight:bold;
-color:#0A2E6B;">
-🌡️ Moharda WTP – Storage Temperature Profiles &
-Weather Adjusted Hypochlorite Dosing
-</div>
+font-size:20px;
+}
+
+.info_card{
+background:#F4F8FF;
+border:1px solid #C7D6F5;
+padding:15px;
+border-radius:10px;
+}
+
+.ref_card{
+background:#F5FFF5;
+border:1px solid #A5D6A7;
+padding:15px;
+border-radius:10px;
+}
+
+.metric_blue{
+background:#F7FAFF;
+border:1px solid #C7D6F5;
+padding:12px;
+border-radius:8px;
+text-align:center;
+}
+
+.metric_red{
+background:#FFF8F8;
+border:1px solid #F5B7B1;
+padding:12px;
+border-radius:8px;
+text-align:center;
+}
+
+.metric_green{
+background:#F7FFF7;
+border:1px solid #A5D6A7;
+padding:12px;
+border-radius:8px;
+text-align:center;
+}
+
+.summary_card{
+background:white;
+border-radius:10px;
+padding:15px;
+border:1px solid #DADADA;
+text-align:center;
+}
+
+</style>
 """, unsafe_allow_html=True)
 
-st.write("")
-c1,c2 = st.columns([3,1])
+st.markdown("""
+<h1 style='color:#0B2E73'>
+🌡️ Moharda WTP – Storage Temperature Profiles &
+Weather Adjusted Hypochlorite Dosing
+</h1>
+""", unsafe_allow_html=True)
+
+c1,c2 = st.columns([3,2])
 
 with c1:
 
-    st.info("""
-**Objective**
+    st.markdown("""
+    <div class='info_card'>
 
-Evaluate temperature variation inside:
+    <b>OBJECTIVE</b><br><br>
 
-• Ground Sump (4 m depth)
+    • Ground Sump (4 m depth)
 
-• Elevated Service Reservoir (50 KL)
+    • Elevated Service Reservoir (50 KL)
 
-and estimate weather adjusted hypochlorite demand
-using Arrhenius temperature correction.
-""")
+    • Estimate weather adjusted chlorine demand
+
+    • Evaluate temperature impact on chlorine decay
+
+    </div>
+    """, unsafe_allow_html=True)
 
 with c2:
 
-    st.success("""
-**Reference**
+    st.markdown("""
+    <div class='ref_card'>
 
-• ASHRAE Handbook
+    <b>REFERENCE</b>
 
-• Environmental Soil Physics
+    <ul>
+    <li>ASHRAE Handbook</li>
+    <li>Environmental Soil Physics</li>
+    <li>AWWA D100</li>
+    <li>EPA Storage Guidance</li>
+    </ul>
 
-• AWWA D100
+    </div>
+    """, unsafe_allow_html=True)
 
-• EPA Storage Guidance
-""")
-
-current_air_temp = temperature
-
-depths = np.arange(0,4.5,0.5)
-
-ground_temp = 26
-
-sump_temp_profile = (
-    ground_temp +
-    (current_air_temp-ground_temp)*
-    np.exp(-depths/2.5)
-)
-
-water_levels = np.arange(0,5,1)
-
-esr_bottom = current_air_temp - 2
-
-esr_top = current_air_temp + 2
-
-esr_temp_profile = np.linspace(
-    esr_bottom,
-    esr_top,
-    len(water_levels)
-)
-left,right = st.columns(2)
+left,right = st.columns([1,2])
 
 with left:
 
-    st.markdown("### 1️⃣ Ground Sump (4 m Below Ground)")
+    st.markdown("""
+    <div class='blue_header'>
+    1 Ground Sump (4 m Below Ground)
+    </div>
+    """, unsafe_allow_html=True)
 
-    fig_sump = go.Figure()
+    st.image("ground_sump.png", use_container_width=True)
 
-    fig_sump.add_shape(
-        type="rect",
-        x0=0,
-        y0=0,
-        x1=4,
-        y1=4,
-        line=dict(width=3,color="black"),
-        fillcolor="lightblue"
+with right:
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=sump_temp_profile,
+            y=sump_depth,
+            mode="lines+markers",
+            line=dict(color="blue",width=4)
+        )
     )
 
-    fig_sump.add_annotation(
-        x=2,
-        y=2,
-        text="15 Lakh L<br>Ground Sump",
-        showarrow=False
+    fig.update_yaxes(
+        autorange="reversed"
     )
 
-    fig_sump.update_layout(
+    fig.update_layout(
+        title="Ground Sump Temperature Profile",
         height=350,
-        xaxis_visible=False,
-        yaxis_title="Depth (m)",
-        yaxis_autorange="reversed",
-        margin=dict(l=5,r=5,t=5,b=5)
+        template="plotly_white"
     )
 
     st.plotly_chart(
-        fig_sump,
+        fig,
         use_container_width=True
     )
-    with right:
 
-        st.markdown("### 2️⃣ Elevated Service Reservoir")
-    
-        fig_esr = go.Figure()
-    
-        fig_esr.add_shape(
-            type="rect",
-            x0=0,
-            y0=20,
-            x1=4,
-            y1=24,
-            fillcolor="lightblue",
-            line=dict(width=3)
-        )
-    
-        for i in [0.5,1.5,2.5,3.5]:
-    
-            fig_esr.add_shape(
-                type="line",
-                x0=i,
-                y0=0,
-                x1=i,
-                y1=20,
-                line=dict(width=4)
-            )
-    
-        fig_esr.add_annotation(
-            x=2,
-            y=22,
-            text="50 KL ESR",
-            showarrow=False
-        )
-    
-        fig_esr.update_layout(
-            height=350,
-            yaxis_title="Height (m)",
-            xaxis_visible=False,
-            margin=dict(l=5,r=5,t=5,b=5)
-        )
-    
-        st.plotly_chart(
-            fig_esr,
-            use_container_width=True
-        )
-    g1,g2 = st.columns(2)
+col1,col2,col3 = st.columns(3)
 
-    with g1:
-    
-        st.markdown(
-            "### A. Ground Sump Temperature Profile"
-        )
-    
-        fig = go.Figure()
-    
-        fig.add_trace(
-            go.Scatter(
-                x=sump_temp_profile,
-                y=depths,
-                mode="lines+markers",
-                name="Sump"
-            )
-        )
-    
-        fig.update_layout(
-            height=350,
-            xaxis_title="Temperature (°C)",
-            yaxis_title="Depth (m)",
-            yaxis_autorange="reversed"
-        )
-    
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-    
-    with g2:
-    
-        st.markdown(
-            "### B. ESR Temperature Profile"
-        )
-    
-        fig = go.Figure()
-    
-        fig.add_trace(
-            go.Scatter(
-                x=esr_temp_profile,
-                y=water_levels,
-                mode="lines+markers",
-                name="ESR"
-            )
-        )
-    
-        fig.update_layout(
-            height=350,
-            xaxis_title="Temperature (°C)",
-            yaxis_title="Water Level (m)"
-        )
-    
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-    theta = 1.04
+with col1:
 
-    avg_sump_temp = np.mean(
-        sump_temp_profile
-    )
-    
-    avg_esr_temp = np.mean(
-        esr_temp_profile
-    )
-    
-    weather_df["Sump Dose"] = (
-    
-        dose_selected *
-    
-        (
-            theta **
-            (
-                weather_df["Temp"] -
-                avg_sump_temp
-            )
-        )
-    )
-    
-    weather_df["ESR Dose"] = (
-    
-        dose_selected *
-    
-        (
-            theta **
-            (
-                weather_df["Temp"] -
-                avg_esr_temp
-            )
-        )
-    )
-    
-    weather_df["Network Dose"] = (
-    
-        0.3 *
-        weather_df["Sump Dose"]
-    
-        +
-    
-        0.7 *
-        weather_df["ESR Dose"]
-    )
-st.markdown("""
-### 3️⃣ Weather Adjusted Hypochlorite Requirement Forecast
-""")
+    st.markdown(f"""
+    <div class='metric_blue'>
+    Surface Temp<br>
+    <b>{current_air_temp:.1f}°C</b>
+    </div>
+    """, unsafe_allow_html=True)
 
-fig = make_subplots(
-    rows=1,
-    cols=3,
-    subplot_titles=[
-        "Ground Sump",
-        "ESR",
-        "Network"
-    ]
-)
+with col2:
 
-fig.add_trace(
+    st.markdown(f"""
+    <div class='metric_blue'>
+    Bottom Temp<br>
+    <b>{sump_temp_profile[-1]:.1f}°C</b>
+    </div>
+    """, unsafe_allow_html=True)
 
-    go.Scatter(
-        x=weather_df["Time"],
-        y=weather_df["Sump Dose"],
-        mode="lines+markers",
-        name="Sump"
-    ),
+with col3:
 
-    row=1,col=1
-)
+    st.markdown(f"""
+    <div class='metric_blue'>
+    Avg Temp<br>
+    <b>{avg_sump_temp:.1f}°C</b>
+    </div>
+    """, unsafe_allow_html=True)
 
-fig.add_trace(
 
-    go.Scatter(
-        x=weather_df["Time"],
-        y=weather_df["ESR Dose"],
-        mode="lines+markers",
-        name="ESR"
-    ),
-
-    row=1,col=2
-)
-
-fig.add_trace(
-
-    go.Scatter(
-        x=weather_df["Time"],
-        y=weather_df["Network Dose"],
-        mode="lines+markers",
-        name="Network"
-    ),
-
-    row=1,col=3
-)
-
-fig.update_layout(
-    height=450,
-    showlegend=False
-)
-
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
-st.markdown("### 4️⃣ Smart Decision Summary")
-
-m1,m2,m3,m4 = st.columns(4)
-
-with m1:
-    st.metric(
-        "Current Dose",
-        f"{dose_selected:.1f} kg/day"
-    )
-
-with m2:
-    st.metric(
-        "Peak Sump",
-        f"{weather_df['Sump Dose'].max():.1f}"
-    )
-
-with m3:
-    st.metric(
-        "Peak ESR",
-        f"{weather_df['ESR Dose'].max():.1f}"
-    )
-
-with m4:
-    st.metric(
-        "Peak Network",
-        f"{weather_df['Network Dose'].max():.1f}"
-    )
 # ==========================================================
 # CUSTOMER END GIS MAP
 # ==========================================================
