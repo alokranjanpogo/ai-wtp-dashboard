@@ -4789,19 +4789,35 @@ base_dose = dose_selected
 # ============================================================
 
 sump_hypo = []
-
 esr_hypo = []
 
 for temp in weather_df["Temp"]:
 
-    # Ground sump average temperature
-    sump_avg_temp = (
+    # Ground sump temperature model
+    sump_depth = np.array([0,0.5,1,1.5,2,2.5,3,3.5,4])
+
+    sump_profile = (
         26 +
-        (temp - 26) * np.exp(-2/2.5)
+        (temp - 26)
+        * np.exp(-sump_depth/2.5)
     )
 
-    # ESR average temperature
-    esr_avg_temp = temp
+    sump_avg_temp = float(
+        np.mean(sump_profile)
+    )
+
+    # ESR temperature model
+    esr_profile = np.array([
+        temp-2,
+        temp-1,
+        temp,
+        temp+1,
+        temp+2
+    ])
+
+    esr_avg_temp = float(
+        np.mean(esr_profile)
+    )
 
     sump_dose_adj = (
         base_dose *
@@ -4812,6 +4828,44 @@ for temp in weather_df["Temp"]:
         base_dose *
         (theta ** (esr_avg_temp - 25))
     )
+
+    sump_hypo.append(
+        sump_dose_adj
+    )
+
+    esr_hypo.append(
+        esr_dose_adj
+    )
+
+# ============================================================
+# CONVERT TO NUMPY
+# ============================================================
+
+sump_hypo = np.array(sump_hypo)
+
+esr_hypo = np.array(esr_hypo)
+
+peak_sump = float(
+    np.max(sump_hypo)
+)
+
+peak_esr = float(
+    np.max(esr_hypo)
+)
+
+recommended_network = (
+    0.4 * peak_sump +
+    0.6 * peak_esr
+)
+st.metric(
+    "Peak Sump Requirement",
+    f"{peak_sump:.1f} kg/day"
+)
+
+st.metric(
+    "Peak ESR Requirement",
+    f"{peak_esr:.1f} kg/day"
+)
 fig = go.Figure()
 
 # ============================================================
