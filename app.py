@@ -4699,8 +4699,10 @@ for _, row in weather_df.iterrows():
         + deltaT
         - cooling
     )
+    
     # ESR profile based on average ESR temperature
-
+    avg_esr_temp = np.mean(esr_avg_temp_list)
+    
     bottom_temp = esr_avg_temp - 1.0
     mid_temp = esr_avg_temp
     top_temp = esr_avg_temp + 1.0
