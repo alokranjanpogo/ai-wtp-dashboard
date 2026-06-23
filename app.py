@@ -4690,7 +4690,7 @@ for _, row in weather_df.iterrows():
     )
     
     esr_avg_temp = (
-        temp
+        ambient_temp
         + deltaT
         - cooling
     )
