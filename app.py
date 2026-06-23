@@ -4655,10 +4655,158 @@ with c:
     st.info(
         f"Average Temp\n\n{avg_sump_temp:.1f}°C"
     )
+# ============================================================
+# ELEVATED SERVICE RESERVOIR (ESR)
+# ============================================================
+
+st.markdown("""
+<div style="
+background:#0A2E6B;
+color:white;
+padding:8px;
+border-radius:6px;
+font-size:22px;
+font-weight:bold;">
+2️⃣ Elevated Service Reservoir (50 KL)
+</div>
+""", unsafe_allow_html=True)
+
+left,right = st.columns([1,2])
+
+# ============================================================
+# ESR IMAGE
+# ============================================================
+
+with left:
+
+    st.image(
+        "water_tower.png",
+        use_container_width=True
+    )
+
+# ============================================================
+# ESR TEMPERATURE PROFILE
+# ============================================================
+
+with right:
+
+    esr_height = [0,1,2,3,4]
+
+    ambient_temp = weather_df["Temp"].mean()
+
+    esr_temp_profile = [
+
+        ambient_temp - 2,
+
+        ambient_temp - 1,
+
+        ambient_temp,
+
+        ambient_temp + 1,
+
+        ambient_temp + 2
+
+    ]
+
+    fig_esr = go.Figure()
+
+    fig_esr.add_trace(
+        go.Scatter(
+            x=esr_temp_profile,
+            y=esr_height,
+            mode="lines+markers",
+            line=dict(
+                color="red",
+                width=4
+            )
+        )
+    )
+
+    fig_esr.update_layout(
+
+        title="ESR Temperature Profile",
+
+        xaxis_title="Temperature (°C)",
+
+        yaxis_title="Water Level (m)",
+
+        height=420,
+
+        template="plotly_white"
+
+    )
+
+    st.plotly_chart(
+        fig_esr,
+        use_container_width=True
+    )
+
+st.markdown(f"""
+<div style="
+background:#FFF5F5;
+border:1px solid #FFB3B3;
+padding:12px;
+border-radius:10px;
+text-align:center;
+font-weight:bold;
+color:#D62828;">
+
+Bottom Temp (0 m): {esr_temp_profile[0]:.1f} °C
+&nbsp;&nbsp; | &nbsp;&nbsp;
+
+Top Temp (4 m): {esr_temp_profile[-1]:.1f} °C
+&nbsp;&nbsp; | &nbsp;&nbsp;
+
+Avg Temp: {sum(esr_temp_profile)/len(esr_temp_profile):.1f} °C
+
+</div>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# STORAGE IMPACT ON CHLORINE DECAY
+# ============================================================
+
+st.markdown("""
+<div style="
+background:#0A2E6B;
+color:white;
+padding:8px;
+border-radius:6px;
+font-size:22px;
+font-weight:bold;">
+3️⃣ Storage Temperature Impact on Chlorine Decay
+</div>
+""", unsafe_allow_html=True)
+
+theta = 1.04
+
+base_dose = dose_selected
+
+avg_sump_temp = sum(sump_temp_profile)/len(sump_temp_profile)
+
+avg_esr_temp = sum(esr_temp_profile)/len(esr_temp_profile)
+
+sump_dose = base_dose * (
+    theta ** (avg_sump_temp - 25)
+)
+
+esr_dose = base_dose * (
+    theta ** (avg_esr_temp - 25)
+)
+
+network_dose = (
+    sump_dose * 0.4 +
+    esr_dose * 0.6
+)
+
+overall_inc = (
+    (network_dose-base_dose)
+    /
+    base_dose
+)*100
 
 
-
-# ==========================================================
+# =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
 
