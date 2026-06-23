@@ -4805,6 +4805,163 @@ overall_inc = (
     base_dose
 )*100
 
+# ============================================================
+# STORAGE BASED HYPOCHLORITE REQUIREMENT
+# ============================================================
+
+st.markdown("""
+<div style="
+background:#0A2E6B;
+color:white;
+padding:10px;
+border-radius:8px;
+font-size:22px;
+font-weight:bold;">
+Storage Temperature Based Hypochlorite Adjustment
+</div>
+""", unsafe_allow_html=True)
+
+theta = 1.04
+
+base_dose = dose_selected
+
+# ============================================================
+# ARRHENIUS TEMPERATURE CORRECTION
+# ============================================================
+
+sump_hypo = []
+
+esr_hypo = []
+
+for temp in weather_df["Temp"]:
+
+    # Ground sump average temperature
+    sump_avg_temp = (
+        26 +
+        (temp - 26) * np.exp(-2/2.5)
+    )
+
+    # ESR average temperature
+    esr_avg_temp = temp
+
+    sump_dose_adj = (
+        base_dose *
+        (theta ** (sump_avg_temp - 25))
+    )
+
+    esr_dose_adj = (
+        base_dose *
+        (theta ** (esr_avg_temp - 25))
+    )
+fig = go.Figure()
+
+# ============================================================
+# GROUND SUMP
+# ============================================================
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=weather_df["Time"],
+
+        y=sump_hypo,
+
+        mode="lines+markers",
+
+        name="Ground Sump",
+
+        line=dict(
+            color="blue",
+            width=4
+        ),
+
+        marker=dict(
+            size=8,
+            color="blue"
+        )
+
+    )
+
+)
+
+# ============================================================
+# ESR
+# ============================================================
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=weather_df["Time"],
+
+        y=esr_hypo,
+
+        mode="lines+markers",
+
+        name="ESR",
+
+        line=dict(
+            color="orange",
+            width=4
+        ),
+
+        marker=dict(
+            size=8,
+            color="orange"
+        )
+
+    )
+
+)
+
+fig.update_layout(
+
+    title="Arrhenius Based Hypochlorite Requirement",
+
+    xaxis_title="Forecast Time",
+
+    yaxis_title="Required Hypochlorite Dose (kg/day)",
+
+    height=450,
+
+    hovermode="x unified",
+
+    template="plotly_white",
+
+    legend=dict(
+        orientation="h",
+        y=1.05
+    )
+
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
+c1,c2,c3 = st.columns(3)
+
+with c1:
+
+    st.metric(
+        "Current Dose",
+        f"{base_dose:.1f} kg/day"
+    )
+
+with c2:
+
+    st.metric(
+        "Peak Sump Requirement",
+        f"{max(sump_hypo):.1f} kg/day"
+    )
+
+with c3:
+
+    st.metric(
+        "Peak ESR Requirement",
+        f"{max(esr_hypo):.1f} kg/day"
+    )
 
 # =======================================
 # CUSTOMER END GIS MAP
