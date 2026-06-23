@@ -4680,7 +4680,7 @@ left,right = st.columns([1,2])
 with left:
 
     st.image(
-        "water_tower.png",
+        "esr_tower.png",
         use_container_width=True
     )
 
