@@ -4176,6 +4176,7 @@ if response.status_code == 200:
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
+import plotly.subplots import make_subplots
 
 # ========================================================
 # SAFETY CHECKS
@@ -4490,7 +4491,351 @@ else:
         "Normal treatment performance expected."
 
     )
+#================================================
+# Weather adjustment for sump and water tower
+#================================================
 
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:28px;
+font-weight:bold;
+color:#0A2E6B;">
+🌡️ Moharda WTP – Storage Temperature Profiles &
+Weather Adjusted Hypochlorite Dosing
+</div>
+""", unsafe_allow_html=True)
+
+st.write("")
+c1,c2 = st.columns([3,1])
+
+with c1:
+
+    st.info("""
+**Objective**
+
+Evaluate temperature variation inside:
+
+• Ground Sump (4 m depth)
+
+• Elevated Service Reservoir (50 KL)
+
+and estimate weather adjusted hypochlorite demand
+using Arrhenius temperature correction.
+""")
+
+with c2:
+
+    st.success("""
+**Reference**
+
+• ASHRAE Handbook
+
+• Environmental Soil Physics
+
+• AWWA D100
+
+• EPA Storage Guidance
+""")
+
+current_air_temp = temperature
+
+depths = np.arange(0,4.5,0.5)
+
+ground_temp = 26
+
+sump_temp_profile = (
+    ground_temp +
+    (current_air_temp-ground_temp)*
+    np.exp(-depths/2.5)
+)
+
+water_levels = np.arange(0,5,1)
+
+esr_bottom = current_air_temp - 2
+
+esr_top = current_air_temp + 2
+
+esr_temp_profile = np.linspace(
+    esr_bottom,
+    esr_top,
+    len(water_levels)
+)
+left,right = st.columns(2)
+
+with left:
+
+    st.markdown("### 1️⃣ Ground Sump (4 m Below Ground)")
+
+    fig_sump = go.Figure()
+
+    fig_sump.add_shape(
+        type="rect",
+        x0=0,
+        y0=0,
+        x1=4,
+        y1=4,
+        line=dict(width=3,color="black"),
+        fillcolor="lightblue"
+    )
+
+    fig_sump.add_annotation(
+        x=2,
+        y=2,
+        text="15 Lakh L<br>Ground Sump",
+        showarrow=False
+    )
+
+    fig_sump.update_layout(
+        height=350,
+        xaxis_visible=False,
+        yaxis_title="Depth (m)",
+        yaxis_autorange="reversed",
+        margin=dict(l=5,r=5,t=5,b=5)
+    )
+
+    st.plotly_chart(
+        fig_sump,
+        use_container_width=True
+    )
+    with right:
+
+    st.markdown("### 2️⃣ Elevated Service Reservoir")
+
+    fig_esr = go.Figure()
+
+    fig_esr.add_shape(
+        type="rect",
+        x0=0,
+        y0=20,
+        x1=4,
+        y1=24,
+        fillcolor="lightblue",
+        line=dict(width=3)
+    )
+
+    for i in [0.5,1.5,2.5,3.5]:
+
+        fig_esr.add_shape(
+            type="line",
+            x0=i,
+            y0=0,
+            x1=i,
+            y1=20,
+            line=dict(width=4)
+        )
+
+    fig_esr.add_annotation(
+        x=2,
+        y=22,
+        text="50 KL ESR",
+        showarrow=False
+    )
+
+    fig_esr.update_layout(
+        height=350,
+        yaxis_title="Height (m)",
+        xaxis_visible=False,
+        margin=dict(l=5,r=5,t=5,b=5)
+    )
+
+    st.plotly_chart(
+        fig_esr,
+        use_container_width=True
+    )
+    g1,g2 = st.columns(2)
+
+with g1:
+
+    st.markdown(
+        "### A. Ground Sump Temperature Profile"
+    )
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=sump_temp_profile,
+            y=depths,
+            mode="lines+markers",
+            name="Sump"
+        )
+    )
+
+    fig.update_layout(
+        height=350,
+        xaxis_title="Temperature (°C)",
+        yaxis_title="Depth (m)",
+        yaxis_autorange="reversed"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+
+with g2:
+
+    st.markdown(
+        "### B. ESR Temperature Profile"
+    )
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=esr_temp_profile,
+            y=water_levels,
+            mode="lines+markers",
+            name="ESR"
+        )
+    )
+
+    fig.update_layout(
+        height=350,
+        xaxis_title="Temperature (°C)",
+        yaxis_title="Water Level (m)"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
+    theta = 1.04
+
+avg_sump_temp = np.mean(
+    sump_temp_profile
+)
+
+avg_esr_temp = np.mean(
+    esr_temp_profile
+)
+
+weather_df["Sump Dose"] = (
+
+    dose_selected *
+
+    (
+        theta **
+        (
+            weather_df["Temp"] -
+            avg_sump_temp
+        )
+    )
+)
+
+weather_df["ESR Dose"] = (
+
+    dose_selected *
+
+    (
+        theta **
+        (
+            weather_df["Temp"] -
+            avg_esr_temp
+        )
+    )
+)
+
+weather_df["Network Dose"] = (
+
+    0.3 *
+    weather_df["Sump Dose"]
+
+    +
+
+    0.7 *
+    weather_df["ESR Dose"]
+)
+st.markdown("""
+### 3️⃣ Weather Adjusted Hypochlorite Requirement Forecast
+""")
+
+fig = make_subplots(
+    rows=1,
+    cols=3,
+    subplot_titles=[
+        "Ground Sump",
+        "ESR",
+        "Network"
+    ]
+)
+
+fig.add_trace(
+
+    go.Scatter(
+        x=weather_df["Time"],
+        y=weather_df["Sump Dose"],
+        mode="lines+markers",
+        name="Sump"
+    ),
+
+    row=1,col=1
+)
+
+fig.add_trace(
+
+    go.Scatter(
+        x=weather_df["Time"],
+        y=weather_df["ESR Dose"],
+        mode="lines+markers",
+        name="ESR"
+    ),
+
+    row=1,col=2
+)
+
+fig.add_trace(
+
+    go.Scatter(
+        x=weather_df["Time"],
+        y=weather_df["Network Dose"],
+        mode="lines+markers",
+        name="Network"
+    ),
+
+    row=1,col=3
+)
+
+fig.update_layout(
+    height=450,
+    showlegend=False
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
+st.markdown("### 4️⃣ Smart Decision Summary")
+
+m1,m2,m3,m4 = st.columns(4)
+
+with m1:
+    st.metric(
+        "Current Dose",
+        f"{dose_selected:.1f} kg/day"
+    )
+
+with m2:
+    st.metric(
+        "Peak Sump",
+        f"{weather_df['Sump Dose'].max():.1f}"
+    )
+
+with m3:
+    st.metric(
+        "Peak ESR",
+        f"{weather_df['ESR Dose'].max():.1f}"
+    )
+
+with m4:
+    st.metric(
+        "Peak Network",
+        f"{weather_df['Network Dose'].max():.1f}"
+    )
 # ==========================================================
 # CUSTOMER END GIS MAP
 # ==========================================================
