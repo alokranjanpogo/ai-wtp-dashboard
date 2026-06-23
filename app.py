@@ -4176,7 +4176,7 @@ if response.status_code == 200:
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
-import plotly.subplots import make_subplots
+from plotly.subplots import make_subplots
 
 # ========================================================
 # SAFETY CHECKS
