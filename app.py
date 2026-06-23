@@ -4624,7 +4624,8 @@ with left:
 # ============================================================
 # ESR HEAT TRANSFER MODEL
 # ============================================================
-
+esr_avg_temp_list = []
+for _, row in weather_df.iterrows():
 try:
     wind_speed = float(row["Wind"])
 except:
