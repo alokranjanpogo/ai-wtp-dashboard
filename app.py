@@ -4496,99 +4496,62 @@ else:
 #================================================
 
 st.markdown("""
-<style>
-
-.blue_header{
-background:#0B2E73;
-color:white;
-padding:8px 15px;
-border-radius:8px;
-font-weight:bold;
-font-size:20px;
-}
-
-.info_card{
+<div style="
 background:#F4F8FF;
-border:1px solid #C7D6F5;
+border-left:8px solid #0A2E6B;
 padding:15px;
-border-radius:10px;
-}
-
-.ref_card{
-background:#F5FFF5;
-border:1px solid #A5D6A7;
-padding:15px;
-border-radius:10px;
-}
-
-.metric_blue{
-background:#F7FAFF;
-border:1px solid #C7D6F5;
-padding:12px;
 border-radius:8px;
-text-align:center;
-}
-
-.metric_red{
-background:#FFF8F8;
-border:1px solid #F5B7B1;
-padding:12px;
-border-radius:8px;
-text-align:center;
-}
-
-.metric_green{
-background:#F7FFF7;
-border:1px solid #A5D6A7;
-padding:12px;
-border-radius:8px;
-text-align:center;
-}
-
-.summary_card{
-background:white;
-border-radius:10px;
-padding:15px;
-border:1px solid #DADADA;
-text-align:center;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<h1 style='color:#0B2E73'>
-🌡️ Moharda WTP – Storage Temperature Profiles &
+font-size:31px;
+font-weight:bold;
+color:#0A2E6B;">
+Moharda WTP – Storage Temperature Profiles &
 Weather Adjusted Hypochlorite Dosing
-</h1>
+</div>
 """, unsafe_allow_html=True)
 
-c1,c2 = st.columns([3,2])
+obj, ref = st.columns([3,2])
 
-with c1:
+with obj:
 
     st.markdown("""
-    <div class='info_card'>
+    <div style="
+    background:#F8FBFF;
+    border:1px solid #C8D8F0;
+    padding:18px;
+    border-radius:10px;
+    min-height:180px;">
 
-    <b>OBJECTIVE</b><br><br>
+    <h3 style="color:#0A2E6B;">
+    OBJECTIVE
+    </h3>
 
-    • Ground Sump (4 m depth)
+    Evaluate temperature variation inside:
 
-    • Elevated Service Reservoir (50 KL)
+    <ul>
+    <li>Ground Sump (4 m depth)</li>
+    <li>Elevated Service Reservoir (50 KL)</li>
+    </ul>
 
-    • Estimate weather adjusted chlorine demand
-
-    • Evaluate temperature impact on chlorine decay
+    and estimate weather adjusted
+    hypochlorite demand using
+    Arrhenius temperature correction.
 
     </div>
     """, unsafe_allow_html=True)
 
-with c2:
+with ref:
 
     st.markdown("""
-    <div class='ref_card'>
+    <div style="
+    background:#F9FFF9;
+    border:1px solid #B8DDB8;
+    padding:18px;
+    border-radius:10px;
+    min-height:180px;">
 
-    <b>REFERENCE</b>
+    <h3 style="color:#1D7C2A;">
+    REFERENCE
+    </h3>
 
     <ul>
     <li>ASHRAE Handbook</li>
@@ -4600,17 +4563,26 @@ with c2:
     </div>
     """, unsafe_allow_html=True)
 
+st.markdown("""
+<div style="
+background:#0A2E6B;
+color:white;
+padding:8px 15px;
+border-radius:8px;
+font-size:22px;
+font-weight:bold;">
+1 Ground Sump (4 m Below Ground)
+</div>
+""", unsafe_allow_html=True)
+
 left,right = st.columns([1,2])
 
 with left:
 
-    st.markdown("""
-    <div class='blue_header'>
-    1 Ground Sump (4 m Below Ground)
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.image("ground_sump.png", use_container_width=True)
+    st.image(
+        "ground_sump.png",
+        use_container_width=True
+    )
 
 with right:
 
@@ -4621,7 +4593,10 @@ with right:
             x=sump_temp_profile,
             y=sump_depth,
             mode="lines+markers",
-            line=dict(color="blue",width=4)
+            line=dict(
+                color="#0A55FF",
+                width=4
+            )
         )
     )
 
@@ -4640,34 +4615,26 @@ with right:
         use_container_width=True
     )
 
-col1,col2,col3 = st.columns(3)
+a,b,c = st.columns(3)
 
-with col1:
+with a:
 
-    st.markdown(f"""
-    <div class='metric_blue'>
-    Surface Temp<br>
-    <b>{current_air_temp:.1f}°C</b>
-    </div>
-    """, unsafe_allow_html=True)
+    st.info(
+        f"Surface Temp (0 m)\n\n{current_air_temp:.1f}°C"
+    )
 
-with col2:
+with b:
 
-    st.markdown(f"""
-    <div class='metric_blue'>
-    Bottom Temp<br>
-    <b>{sump_temp_profile[-1]:.1f}°C</b>
-    </div>
-    """, unsafe_allow_html=True)
+    st.info(
+        f"Bottom Temp (4 m)\n\n{sump_temp_profile[-1]:.1f}°C"
+    )
 
-with col3:
+with c:
 
-    st.markdown(f"""
-    <div class='metric_blue'>
-    Avg Temp<br>
-    <b>{avg_sump_temp:.1f}°C</b>
-    </div>
-    """, unsafe_allow_html=True)
+    st.info(
+        f"Average Temp\n\n{avg_sump_temp:.1f}°C"
+    )
+
 
 
 # ==========================================================
