@@ -4762,48 +4762,7 @@ Avg Temp: {sum(esr_temp_profile)/len(esr_temp_profile):.1f} °C
 </div>
 """, unsafe_allow_html=True)
 
-# ============================================================
-# STORAGE IMPACT ON CHLORINE DECAY
-# ============================================================
 
-st.markdown("""
-<div style="
-background:#0A2E6B;
-color:white;
-padding:8px;
-border-radius:6px;
-font-size:22px;
-font-weight:bold;">
-3️⃣ Storage Temperature Impact on Chlorine Decay
-</div>
-""", unsafe_allow_html=True)
-
-theta = 1.04
-
-base_dose = dose_selected
-
-avg_sump_temp = sum(sump_temp_profile)/len(sump_temp_profile)
-
-avg_esr_temp = sum(esr_temp_profile)/len(esr_temp_profile)
-
-sump_dose = base_dose * (
-    theta ** (avg_sump_temp - 25)
-)
-
-esr_dose = base_dose * (
-    theta ** (avg_esr_temp - 25)
-)
-
-network_dose = (
-    sump_dose * 0.4 +
-    esr_dose * 0.6
-)
-
-overall_inc = (
-    (network_dose-base_dose)
-    /
-    base_dose
-)*100
 
 # ============================================================
 # STORAGE BASED HYPOCHLORITE REQUIREMENT
