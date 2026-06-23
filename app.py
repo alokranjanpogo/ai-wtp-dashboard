@@ -4830,32 +4830,32 @@ for temp in weather_df["Temp"]:
         np.mean(forecast_esr_profile)
     )
     
-        # Arrhenius Correction
+    # Arrhenius Correction
     
-        sump_dose = (
-            base_dose *
-            (
-                theta **
-                (sump_avg_temp - 25)
-            )
+    sump_dose = (
+        base_dose *
+        (
+            theta **
+            (sump_avg_temp - 25)
         )
-    
-        esr_dose = (
-            base_dose *
-            (
-                theta **
-                (esr_avg_temp - 25)
-            )
+    )
+
+    esr_dose = (
+        base_dose *
+        (
+            theta **
+            (esr_avg_temp - 25)
         )
-    
-        sump_hypo.append(
-            sump_dose
-        )
-    
-        esr_hypo.append(
-            esr_dose
-        )
-    
+    )
+
+    sump_hypo.append(
+        sump_dose
+    )
+
+    esr_hypo.append(
+        esr_dose
+    )
+
     # ============================================================
     # FORECAST TIME LABELS
     # ============================================================
