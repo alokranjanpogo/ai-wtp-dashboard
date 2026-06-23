@@ -4780,187 +4780,107 @@ font-weight:bold;">
 </div>
 """, unsafe_allow_html=True)
 
-theta = 1.04
-
-base_dose = dose_selected
-
 # ============================================================
-# STORAGE TEMPERATURE MODEL
+# TEMPERATURE VS HYPOCHLORITE REQUIREMENT
 # ============================================================
+
+sump_avg_temps = []
+esr_avg_temps = []
 
 sump_hypo = []
 esr_hypo = []
 
 for temp in weather_df["Temp"]:
 
-    # Ground Sump Model (4 m depth)
-    
-    # ============================================================
-    # SUMP TEMPERATURE PROFILE FOR EACH FORECAST TEMPERATURE
-    # ============================================================
-    
     forecast_depth = np.array(
         [0,0.5,1,1.5,2,2.5,3,3.5,4]
     )
-    
+
     forecast_sump_profile = (
         26 +
         (temp - 26)
-        *
-        np.exp(-forecast_depth / 2.5)
-    )
-    
-    sump_avg_temp = float(
-        np.mean(forecast_sump_profile)
-    )
-    
-    # ============================================================
-    # ESR TEMPERATURE PROFILE FOR EACH FORECAST TEMPERATURE
-    # ============================================================
-    
-    forecast_esr_profile = np.array([
-        temp - 1.5,
-        temp - 0.5,
-        temp,
-        temp + 1,
-        temp + 1.5
-    ])
-    
-    esr_avg_temp = float(
-        np.mean(forecast_esr_profile)
-    )
-    
-    # Arrhenius Correction
-    
-    sump_dose = (
-        base_dose *
-        (
-            theta **
-            (sump_avg_temp - 25)
-        )
+        * np.exp(-forecast_depth/2.5)
     )
 
-    esr_dose = (
-        base_dose *
-        (
-            theta **
-            (esr_avg_temp - 25)
-        )
+    sump_avg_temp = np.mean(
+        forecast_sump_profile
+    )
+
+    forecast_esr_profile = np.array([
+        temp-1.5,
+        temp-0.5,
+        temp,
+        temp+1,
+        temp+1.5
+    ])
+
+    esr_avg_temp = np.mean(
+        forecast_esr_profile
+    )
+
+    sump_avg_temps.append(
+        sump_avg_temp
+    )
+
+    esr_avg_temps.append(
+        esr_avg_temp
     )
 
     sump_hypo.append(
-        sump_dose
+        base_dose *
+        (theta**(sump_avg_temp-25))
     )
 
     esr_hypo.append(
-        esr_dose
+        base_dose *
+        (theta**(esr_avg_temp-25))
     )
 
-    # ============================================================
-    # FORECAST TIME LABELS
-    # ============================================================
-    
-    time_labels = [
-        "09:00",
-        "12:00",
-        "15:00",
-        "18:00",
-        "21:00",
-        "00:00",
-        "03:00",
-        "06:00"
-    ]
-    
-    time_labels = time_labels[:len(sump_hypo)]
-
 # ============================================================
-# GRAPH
+# ARRHENIUS GRAPH
 # ============================================================
 
 fig = go.Figure()
 
 fig.add_trace(
-
     go.Scatter(
-
-        x=time_labels,
-
+        x=sump_avg_temps,
         y=sump_hypo,
-
         mode="lines+markers",
-
         name="Ground Sump",
-
         line=dict(
-            color="#0066FF",
+            color="blue",
             width=4
         ),
-
-        marker=dict(
-            size=9
-        )
-
+        marker=dict(size=10)
     )
-
 )
 
 fig.add_trace(
-
     go.Scatter(
-
-        x=time_labels,
-
+        x=esr_avg_temps,
         y=esr_hypo,
-
         mode="lines+markers",
-
         name="ESR",
-
         line=dict(
-            color="#FF9900",
+            color="orange",
             width=4
         ),
-
-        marker=dict(
-            size=9
-        )
-
+        marker=dict(size=10)
     )
-
-)
-
-fig.update_xaxes(
-
-    categoryorder="array",
-
-    categoryarray=time_labels
-
 )
 
 fig.update_layout(
-
-    height=500,
-
+    title="Average Storage Temperature vs Hypochlorite Requirement",
+    xaxis_title="Average Water Temperature (°C)",
+    yaxis_title="Required Hypochlorite Dose (kg/day)",
     template="plotly_white",
-
-    hovermode="x unified",
-
+    height=500,
+    hovermode="closest",
     legend=dict(
         orientation="h",
-        y=1.08
-    ),
-
-    xaxis_title="Forecast Time",
-
-    yaxis_title="Required Hypochlorite Dose (kg/day)",
-
-    margin=dict(
-        l=20,
-        r=20,
-        t=40,
-        b=20
+        y=1.05
     )
-
 )
 
 st.plotly_chart(
@@ -4968,40 +4888,6 @@ st.plotly_chart(
     use_container_width=True
 )
 
-# ============================================================
-# SUMMARY
-# ============================================================
-
-peak_sump = float(
-    np.max(sump_hypo)
-)
-
-peak_esr = float(
-    np.max(esr_hypo)
-)
-
-c1, c2, c3 = st.columns(3)
-
-with c1:
-
-    st.metric(
-        "Current Dose",
-        f"{base_dose:.1f} kg/day"
-    )
-
-with c2:
-
-    st.metric(
-        "Peak Sump Requirement",
-        f"{peak_sump:.1f} kg/day"
-    )
-
-with c3:
-
-    st.metric(
-        "Peak ESR Requirement",
-        f"{peak_esr:.1f} kg/day"
-    )
 
 st.info(
     """
