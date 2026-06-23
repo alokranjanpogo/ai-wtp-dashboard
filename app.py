@@ -4794,84 +4794,84 @@ esr_hypo = []
 for temp in weather_df["Temp"]:
 
     # Ground Sump Model (4 m depth)
-
+    
     # ============================================================
-# SUMP TEMPERATURE PROFILE FOR EACH FORECAST TEMPERATURE
-# ============================================================
-
-forecast_depth = np.array(
-    [0,0.5,1,1.5,2,2.5,3,3.5,4]
-)
-
-forecast_sump_profile = (
-    26 +
-    (temp - 26)
-    *
-    np.exp(-forecast_depth / 2.5)
-)
-
-sump_avg_temp = float(
-    np.mean(forecast_sump_profile)
-)
-
-# ============================================================
-# ESR TEMPERATURE PROFILE FOR EACH FORECAST TEMPERATURE
-# ============================================================
-
-forecast_esr_profile = np.array([
-    temp - 1.5,
-    temp - 0.5,
-    temp,
-    temp + 1,
-    temp + 1.5
-])
-
-esr_avg_temp = float(
-    np.mean(forecast_esr_profile)
-)
-
-    # Arrhenius Correction
-
-    sump_dose = (
-        base_dose *
-        (
-            theta **
-            (sump_avg_temp - 25)
+    # SUMP TEMPERATURE PROFILE FOR EACH FORECAST TEMPERATURE
+    # ============================================================
+    
+    forecast_depth = np.array(
+        [0,0.5,1,1.5,2,2.5,3,3.5,4]
+    )
+    
+    forecast_sump_profile = (
+        26 +
+        (temp - 26)
+        *
+        np.exp(-forecast_depth / 2.5)
+    )
+    
+    sump_avg_temp = float(
+        np.mean(forecast_sump_profile)
+    )
+    
+    # ============================================================
+    # ESR TEMPERATURE PROFILE FOR EACH FORECAST TEMPERATURE
+    # ============================================================
+    
+    forecast_esr_profile = np.array([
+        temp - 1.5,
+        temp - 0.5,
+        temp,
+        temp + 1,
+        temp + 1.5
+    ])
+    
+    esr_avg_temp = float(
+        np.mean(forecast_esr_profile)
+    )
+    
+        # Arrhenius Correction
+    
+        sump_dose = (
+            base_dose *
+            (
+                theta **
+                (sump_avg_temp - 25)
+            )
         )
-    )
-
-    esr_dose = (
-        base_dose *
-        (
-            theta **
-            (esr_avg_temp - 25)
+    
+        esr_dose = (
+            base_dose *
+            (
+                theta **
+                (esr_avg_temp - 25)
+            )
         )
-    )
-
-    sump_hypo.append(
-        sump_dose
-    )
-
-    esr_hypo.append(
-        esr_dose
-    )
-
-# ============================================================
-# FORECAST TIME LABELS
-# ============================================================
-
-time_labels = [
-    "09:00",
-    "12:00",
-    "15:00",
-    "18:00",
-    "21:00",
-    "00:00",
-    "03:00",
-    "06:00"
-]
-
-time_labels = time_labels[:len(sump_hypo)]
+    
+        sump_hypo.append(
+            sump_dose
+        )
+    
+        esr_hypo.append(
+            esr_dose
+        )
+    
+    # ============================================================
+    # FORECAST TIME LABELS
+    # ============================================================
+    
+    time_labels = [
+        "09:00",
+        "12:00",
+        "15:00",
+        "18:00",
+        "21:00",
+        "00:00",
+        "03:00",
+        "06:00"
+    ]
+    
+    time_labels = time_labels[:len(sump_hypo)]
 
 # ============================================================
 # GRAPH
