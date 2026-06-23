@@ -4629,10 +4629,7 @@ with left:
 with right:
 
     # Current weather temperature from API
-    try:
-        ambient_temp = float(temperature)
-    except:
-        ambient_temp = float(weather_df["Temp"].mean())
+    ambient_temp = float(weather_df["Temp"].mean())
 
     # Wind speed from API
     try:
