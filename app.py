@@ -4699,29 +4699,38 @@ for _, row in weather_df.iterrows():
         + deltaT
         - cooling
     )
-    # ============================================================
-    # ESR TEMPERATURE SUMMARY CARDS
-    # ============================================================
-    
-    avg_esr_temp = np.mean(esr_temp_profile)
-    
-    c1, c2, c3 = st.columns(3)
-    
-    with c1:
-        st.error(
-            f"Top Temp (0 m)\n\n{esr_temp_profile[0]:.1f}°C"
-        )
-    
-    with c2:
-        st.error(
-            f"Bottom Temp (4 m)\n\n{esr_temp_profile[-1]:.1f}°C"
-        )
-    
-    with c3:
-        st.error(
-            f"Average Temp\n\n{avg_esr_temp:.1f}°C"
-        )
+    # ESR profile based on average ESR temperature
 
+    bottom_temp = esr_avg_temp - 1.0
+    mid_temp = esr_avg_temp
+    top_temp = esr_avg_temp + 1.0
+    
+    esr_temp_profile = [
+        bottom_temp,
+        mid_temp,
+        top_temp
+    ]
+avg_esr_temp = np.mean(esr_avg_temp_list)
+
+bottom_temp = avg_esr_temp - 1.0
+top_temp = avg_esr_temp + 1.0
+
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    st.info(
+        f"Bottom Temp (0 m)\n\n{bottom_temp:.1f}°C"
+    )
+
+with c2:
+    st.info(
+        f"Top Temp (4 m)\n\n{top_temp:.1f}°C"
+    )
+
+with c3:
+    st.info(
+        f"Average Temp\n\n{avg_esr_temp:.1f}°C"
+    )
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
