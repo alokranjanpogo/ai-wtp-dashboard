@@ -4626,74 +4626,74 @@ with left:
 # ============================================================
 esr_avg_temp_list = []
 for _, row in weather_df.iterrows():
-try:
-    wind_speed = float(row["Wind"])
-except:
-    wind_speed = 2.0
+    try:
+        wind_speed = float(row["Wind"])
+    except:
+        wind_speed = 2.0
 
-# McAdams correlation
-h = 5.7 + 3.8 * wind_speed
-
-# Solar radiation estimate
-hour_index = len(esr_avg_temp_list)
-
-if 2 <= hour_index <= 5:
-    solar_radiation = 800
-elif 1 <= hour_index <= 6:
-    solar_radiation = 400
-else:
-    solar_radiation = 0
-
-# ESR geometry
-tank_area = 75.0
-
-# Light blue paint
-absorptivity = 0.45
-
-# Solar gain
-Qsolar = (
-    absorptivity
-    *
-    solar_radiation
-    *
-    tank_area
-)
-
-# Convective cooling
-Qconv = (
-    h
-    *
-    tank_area
-)
-
-# Water mass
-water_mass = 50000.0
-
-cp = 4186.0
-
-# Residence time
-residence_time = 2 * 3600
-
-# Temperature rise
-
-deltaT = (
-    (Qsolar)
-    /
-    (water_mass * cp)
-) * residence_time
-
-# Cooling correction
-
-cooling = (
-    h
-    * 0.015
-)
-
-esr_avg_temp = (
-    temp
-    + deltaT
-    - cooling
-)
+    # McAdams correlation
+    h = 5.7 + 3.8 * wind_speed
+    
+    # Solar radiation estimate
+    hour_index = len(esr_avg_temp_list)
+    
+    if 2 <= hour_index <= 5:
+        solar_radiation = 800
+    elif 1 <= hour_index <= 6:
+        solar_radiation = 400
+    else:
+        solar_radiation = 0
+    
+    # ESR geometry
+    tank_area = 75.0
+    
+    # Light blue paint
+    absorptivity = 0.45
+    
+    # Solar gain
+    Qsolar = (
+        absorptivity
+        *
+        solar_radiation
+        *
+        tank_area
+    )
+    
+    # Convective cooling
+    Qconv = (
+        h
+        *
+        tank_area
+    )
+    
+    # Water mass
+    water_mass = 50000.0
+    
+    cp = 4186.0
+    
+    # Residence time
+    residence_time = 2 * 3600
+    
+    # Temperature rise
+    
+    deltaT = (
+        (Qsolar)
+        /
+        (water_mass * cp)
+    ) * residence_time
+    
+    # Cooling correction
+    
+    cooling = (
+        h
+        * 0.015
+    )
+    
+    esr_avg_temp = (
+        temp
+        + deltaT
+        - cooling
+    )
 # ============================================================
 # ESR TEMPERATURE SUMMARY CARDS
 # ============================================================
