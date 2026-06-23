@@ -4621,82 +4621,100 @@ with left:
 # ESR TEMPERATURE PROFILE
 # ============================================================
 
-with right:
+# ============================================================
+# ESR HEAT TRANSFER MODEL
+# ============================================================
 
-    esr_height = [0,1,2,3,4]
+try:
+    wind_speed = float(row["Wind"])
+except:
+    wind_speed = 2.0
 
-    ambient_temp = weather_df["Temp"].mean()
+# McAdams correlation
+h = 5.7 + 3.8 * wind_speed
 
-    esr_temp_profile = [
+# Solar radiation estimate
+hour_index = len(esr_avg_temp_list)
 
-        ambient_temp - 2,
+if 2 <= hour_index <= 5:
+    solar_radiation = 800
+elif 1 <= hour_index <= 6:
+    solar_radiation = 400
+else:
+    solar_radiation = 0
 
-        ambient_temp - 1,
+# ESR geometry
+tank_area = 75.0
 
-        ambient_temp,
+# Light blue paint
+absorptivity = 0.45
 
-        ambient_temp + 1,
+# Solar gain
+Qsolar = (
+    absorptivity
+    *
+    solar_radiation
+    *
+    tank_area
+)
 
-        ambient_temp + 2
+# Convective cooling
+Qconv = (
+    h
+    *
+    tank_area
+)
 
-    ]
+# Water mass
+water_mass = 50000.0
 
-    fig_esr = go.Figure()
+cp = 4186.0
 
-    fig_esr.add_trace(
-        go.Scatter(
-            x=esr_temp_profile,
-            y=esr_height,
-            mode="lines+markers",
-            line=dict(
-                color="red",
-                width=4
-            )
-        )
+# Residence time
+residence_time = 2 * 3600
+
+# Temperature rise
+
+deltaT = (
+    (Qsolar)
+    /
+    (water_mass * cp)
+) * residence_time
+
+# Cooling correction
+
+cooling = (
+    h
+    * 0.015
+)
+
+esr_avg_temp = (
+    temp
+    + deltaT
+    - cooling
+)
+# ============================================================
+# ESR TEMPERATURE SUMMARY CARDS
+# ============================================================
+
+avg_esr_temp = np.mean(esr_temp_profile)
+
+c1, c2, c3 = st.columns(3)
+
+with c1:
+    st.error(
+        f"Top Temp (0 m)\n\n{esr_temp_profile[0]:.1f}°C"
     )
 
-    fig_esr.update_layout(
-
-        title="ESR Temperature Profile",
-
-        xaxis_title="Temperature (°C)",
-
-        yaxis_title="Water Level (m)",
-
-        height=420,
-
-        template="plotly_white"
-
+with c2:
+    st.error(
+        f"Bottom Temp (4 m)\n\n{esr_temp_profile[-1]:.1f}°C"
     )
 
-    st.plotly_chart(
-        fig_esr,
-        use_container_width=True
+with c3:
+    st.error(
+        f"Average Temp\n\n{avg_esr_temp:.1f}°C"
     )
-
-st.markdown(f"""
-<div style="
-background:#FFF5F5;
-border:1px solid #FFB3B3;
-padding:12px;
-border-radius:10px;
-text-align:center;
-font-weight:bold;
-color:#D62828;">
-
-Bottom Temp (0 m): {esr_temp_profile[0]:.1f} °C
-&nbsp;&nbsp; | &nbsp;&nbsp;
-
-Top Temp (4 m): {esr_temp_profile[-1]:.1f} °C
-&nbsp;&nbsp; | &nbsp;&nbsp;
-
-Avg Temp: {sum(esr_temp_profile)/len(esr_temp_profile):.1f} °C
-
-</div>
-""", unsafe_allow_html=True)
-
-
-
 
 # =======================================
 # CUSTOMER END GIS MAP
