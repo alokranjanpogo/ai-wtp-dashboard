@@ -4765,7 +4765,7 @@ Avg Temp: {sum(esr_temp_profile)/len(esr_temp_profile):.1f} °C
 
 
 # ============================================================
-# STORAGE BASED HYPOCHLORITE REQUIREMENT
+# ARRHENIUS BASED HYPOCHLORITE REQUIREMENT
 # ============================================================
 
 st.markdown("""
@@ -4776,7 +4776,7 @@ padding:10px;
 border-radius:8px;
 font-size:22px;
 font-weight:bold;">
-Storage Temperature Based Hypochlorite Adjustment
+📈 Arrhenius Based Hypochlorite Requirement
 </div>
 """, unsafe_allow_html=True)
 
@@ -4785,7 +4785,7 @@ theta = 1.04
 base_dose = dose_selected
 
 # ============================================================
-# ARRHENIUS TEMPERATURE CORRECTION
+# STORAGE TEMPERATURE MODEL
 # ============================================================
 
 sump_hypo = []
@@ -4793,20 +4793,25 @@ esr_hypo = []
 
 for temp in weather_df["Temp"]:
 
-    # Ground sump temperature model
-    sump_depth = np.array([0,0.5,1,1.5,2,2.5,3,3.5,4])
+    # Ground Sump Model (4 m depth)
+
+    sump_depth = np.array(
+        [0,0.5,1,1.5,2,2.5,3,3.5,4]
+    )
 
     sump_profile = (
         26 +
         (temp - 26)
-        * np.exp(-sump_depth/2.5)
+        *
+        np.exp(-sump_depth/2.5)
     )
 
     sump_avg_temp = float(
         np.mean(sump_profile)
     )
 
-    # ESR temperature model
+    # ESR Model
+
     esr_profile = np.array([
         temp-2,
         temp-1,
@@ -4819,31 +4824,147 @@ for temp in weather_df["Temp"]:
         np.mean(esr_profile)
     )
 
-    sump_dose_adj = (
+    # Arrhenius Correction
+
+    sump_dose = (
         base_dose *
-        (theta ** (sump_avg_temp - 25))
+        (
+            theta **
+            (sump_avg_temp - 25)
+        )
     )
 
-    esr_dose_adj = (
+    esr_dose = (
         base_dose *
-        (theta ** (esr_avg_temp - 25))
+        (
+            theta **
+            (esr_avg_temp - 25)
+        )
     )
 
     sump_hypo.append(
-        sump_dose_adj
+        sump_dose
     )
 
     esr_hypo.append(
-        esr_dose_adj
+        esr_dose
     )
 
 # ============================================================
-# CONVERT TO NUMPY
+# FORECAST TIME LABELS
 # ============================================================
 
-sump_hypo = np.array(sump_hypo)
+time_labels = [
+    "09:00",
+    "12:00",
+    "15:00",
+    "18:00",
+    "21:00",
+    "00:00",
+    "03:00",
+    "06:00"
+]
 
-esr_hypo = np.array(esr_hypo)
+time_labels = time_labels[:len(sump_hypo)]
+
+# ============================================================
+# GRAPH
+# ============================================================
+
+fig = go.Figure()
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=time_labels,
+
+        y=sump_hypo,
+
+        mode="lines+markers",
+
+        name="Ground Sump",
+
+        line=dict(
+            color="#0066FF",
+            width=4
+        ),
+
+        marker=dict(
+            size=9
+        )
+
+    )
+
+)
+
+fig.add_trace(
+
+    go.Scatter(
+
+        x=time_labels,
+
+        y=esr_hypo,
+
+        mode="lines+markers",
+
+        name="ESR",
+
+        line=dict(
+            color="#FF9900",
+            width=4
+        ),
+
+        marker=dict(
+            size=9
+        )
+
+    )
+
+)
+
+fig.update_xaxes(
+
+    categoryorder="array",
+
+    categoryarray=time_labels
+
+)
+
+fig.update_layout(
+
+    height=500,
+
+    template="plotly_white",
+
+    hovermode="x unified",
+
+    legend=dict(
+        orientation="h",
+        y=1.08
+    ),
+
+    xaxis_title="Forecast Time",
+
+    yaxis_title="Required Hypochlorite Dose (kg/day)",
+
+    margin=dict(
+        l=20,
+        r=20,
+        t=40,
+        b=20
+    )
+
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
+
+# ============================================================
+# SUMMARY
+# ============================================================
 
 peak_sump = float(
     np.max(sump_hypo)
@@ -4853,107 +4974,7 @@ peak_esr = float(
     np.max(esr_hypo)
 )
 
-recommended_network = (
-    0.4 * peak_sump +
-    0.6 * peak_esr
-)
-st.metric(
-    "Peak Sump Requirement",
-    f"{peak_sump:.1f} kg/day"
-)
-
-st.metric(
-    "Peak ESR Requirement",
-    f"{peak_esr:.1f} kg/day"
-)
-fig = go.Figure()
-
-# ============================================================
-# GROUND SUMP
-# ============================================================
-
-fig.add_trace(
-
-    go.Scatter(
-
-        x=weather_df["Time"],
-
-        y=sump_hypo,
-
-        mode="lines+markers",
-
-        name="Ground Sump",
-
-        line=dict(
-            color="blue",
-            width=4
-        ),
-
-        marker=dict(
-            size=8,
-            color="blue"
-        )
-
-    )
-
-)
-
-# ============================================================
-# ESR
-# ============================================================
-
-fig.add_trace(
-
-    go.Scatter(
-
-        x=weather_df["Time"],
-
-        y=esr_hypo,
-
-        mode="lines+markers",
-
-        name="ESR",
-
-        line=dict(
-            color="orange",
-            width=4
-        ),
-
-        marker=dict(
-            size=8,
-            color="orange"
-        )
-
-    )
-
-)
-
-fig.update_layout(
-
-    title="Arrhenius Based Hypochlorite Requirement",
-
-    xaxis_title="Forecast Time",
-
-    yaxis_title="Required Hypochlorite Dose (kg/day)",
-
-    height=450,
-
-    hovermode="x unified",
-
-    template="plotly_white",
-
-    legend=dict(
-        orientation="h",
-        y=1.05
-    )
-
-)
-
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
-c1,c2,c3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
 
 with c1:
 
@@ -4966,15 +4987,28 @@ with c2:
 
     st.metric(
         "Peak Sump Requirement",
-        f"{max(sump_hypo):.1f} kg/day"
+        f"{peak_sump:.1f} kg/day"
     )
 
 with c3:
 
     st.metric(
         "Peak ESR Requirement",
-        f"{max(esr_hypo):.1f} kg/day"
+        f"{peak_esr:.1f} kg/day"
     )
+
+st.info(
+    """
+Ground Sump remains thermally buffered due to 4 m underground storage,
+resulting in lower chlorine decay.
+
+ESR is exposed to solar heating and ambient weather,
+resulting in higher chlorine decay and higher hypochlorite demand.
+
+Arrhenius Temperature Coefficient (θ = 1.04)
+used for chlorine decay correction.
+"""
+)
 
 # =======================================
 # CUSTOMER END GIS MAP
