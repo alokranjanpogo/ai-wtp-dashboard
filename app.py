@@ -4784,10 +4784,8 @@ theta = 1.04
 
 base_dose = dose_selected
 # ============================================================
-# TEMPERATURE vs HYPOCHLORITE REQUIREMENT
+# TEMPERATURE VS HYPOCHLORITE REQUIREMENT
 # ============================================================
-
-import matplotlib.pyplot as plt
 
 sump_avg_temps = []
 esr_avg_temps = []
@@ -4811,7 +4809,17 @@ for temp in weather_df["Temp"]:
         forecast_sump_profile
     )
 
-    esr_avg_temp = temp
+    forecast_esr_profile = np.array([
+        temp-1.5,
+        temp-0.5,
+        temp,
+        temp+1,
+        temp+1.5
+    ])
+
+    esr_avg_temp = np.mean(
+        forecast_esr_profile
+    )
 
     sump_avg_temps.append(
         sump_avg_temp
@@ -4823,49 +4831,65 @@ for temp in weather_df["Temp"]:
 
     sump_hypo.append(
         base_dose *
-        (theta ** (sump_avg_temp - 25))
+        (theta**(sump_avg_temp-25))
     )
 
     esr_hypo.append(
         base_dose *
-        (theta ** (esr_avg_temp - 25))
+        (theta**(esr_avg_temp-25))
     )
 
-fig, ax = plt.subplots(figsize=(10,5))
+# ============================================================
+# ARRHENIUS GRAPH
+# ============================================================
 
-ax.plot(
-    sump_avg_temps,
-    sump_hypo,
-    marker='o',
-    linewidth=3,
-    label='Ground Sump'
+fig = go.Figure()
+
+fig.add_trace(
+    go.Scatter(
+        x=sump_avg_temps,
+        y=sump_hypo,
+        mode="markers",
+        name="Ground Sump",
+        line=dict(
+            color="blue",
+            width=4
+        ),
+        marker=dict(size=10)
+    )
 )
 
-ax.plot(
-    esr_avg_temps,
-    esr_hypo,
-    marker='o',
-    linewidth=3,
-    label='ESR'
+fig.add_trace(
+    go.Scatter(
+        x=esr_avg_temps,
+        y=esr_hypo,
+        mode="markers",
+        name="ESR",
+        line=dict(
+            color="orange",
+            width=4
+        ),
+        marker=dict(size=10)
+    )
 )
 
-ax.set_xlabel(
-    "Average Water Temperature (°C)"
+fig.update_layout(
+    title="Average Storage Temperature vs Hypochlorite Requirement",
+    xaxis_title="Average Water Temperature (°C)",
+    yaxis_title="Required Hypochlorite Dose (kg/day)",
+    template="plotly_white",
+    height=500,
+    hovermode="closest",
+    legend=dict(
+        orientation="h",
+        y=1.05
+    )
 )
 
-ax.set_ylabel(
-    "Required Hypochlorite Dose (kg/day)"
+st.plotly_chart(
+    fig,
+    use_container_width=True
 )
-
-ax.set_title(
-    "Arrhenius Temperature vs Hypochlorite Requirement"
-)
-
-ax.grid(True)
-
-ax.legend()
-
-st.pyplot(fig)
 st.info(
     """
 Ground Sump remains thermally buffered due to 4 m underground storage,
