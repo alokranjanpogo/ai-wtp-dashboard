@@ -4627,24 +4627,27 @@ with left:
 esr_avg_temp_list = []
         
 for _, row in weather_df.iterrows():
-    
+
+    temp = float(row["Temp"])
+
     try:
         wind_speed = float(row["Wind"])
     except:
         wind_speed = 2.0
 
-    # McAdams correlation
     h = 5.7 + 3.8 * wind_speed
-    
-    # Solar radiation estimate
-    hour_index = len(esr_avg_temp_list)
-    
-    if 2 <= hour_index <= 5:
-        solar_radiation = 800
-    elif 1 <= hour_index <= 6:
-        solar_radiation = 400
-    else:
-        solar_radiation = 0
+
+    solar_radiation = 600
+
+    deltaT = (
+        solar_radiation / 1000
+        + 0.03 * temp
+        - 0.015 * h
+    )
+
+    esr_avg_temp = temp + deltaT
+
+    esr_avg_temp_list.append(esr_avg_temp)
     
     # ESR geometry
     tank_area = 75.0
