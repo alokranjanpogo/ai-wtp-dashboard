@@ -4705,74 +4705,74 @@ for _, row in weather_df.iterrows():
     mid_temp = esr_avg_temp
     top_temp = esr_avg_temp + 1.0
     # ============================================================
-# ESR TEMPERATURE PROFILE GRAPH
-# ============================================================
-
-with right:
-
-    esr_height = [0, 2, 4]
-
-    esr_temp_profile = [
-        bottom_temp,
-        avg_esr_temp,
-        top_temp
-    ]
-
-    fig_esr = go.Figure()
-
-    fig_esr.add_trace(
-        go.Scatter(
-            x=esr_temp_profile,
-            y=esr_height,
-            mode="lines+markers",
-            line=dict(
-                color="red",
-                width=4
-            ),
-            marker=dict(
-                size=10
+    # ESR TEMPERATURE PROFILE GRAPH
+    # ============================================================
+    
+    with right:
+    
+        esr_height = [0, 2, 4]
+    
+        esr_temp_profile = [
+            bottom_temp,
+            avg_esr_temp,
+            top_temp
+        ]
+    
+        fig_esr = go.Figure()
+    
+        fig_esr.add_trace(
+            go.Scatter(
+                x=esr_temp_profile,
+                y=esr_height,
+                mode="lines+markers",
+                line=dict(
+                    color="red",
+                    width=4
+                ),
+                marker=dict(
+                    size=10
+                )
             )
         )
-    )
-
-    fig_esr.update_layout(
-        title="ESR Temperature Profile",
-        xaxis_title="Temperature (°C)",
-        yaxis_title="Water Level (m)",
-        height=420,
-        template="plotly_white"
-    )
-
-    st.plotly_chart(
-        fig_esr,
-        use_container_width=True
-    )
-    esr_temp_profile = [
-        bottom_temp,
-        mid_temp,
-        top_temp
-    ]
-avg_esr_temp = np.mean(esr_avg_temp_list)
-
-bottom_temp = avg_esr_temp - 1.0
-top_temp = avg_esr_temp + 1.0
-
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    st.info(
-        f"Bottom Temp (0 m)\n\n{bottom_temp:.1f}°C"
-    )
-
-with c2:
-    st.info(
-        f"Top Temp (4 m)\n\n{top_temp:.1f}°C"
-    )
-
-with c3:
-    st.info(
-        f"Average Temp\n\n{avg_esr_temp:.1f}°C"
-    )
+    
+        fig_esr.update_layout(
+            title="ESR Temperature Profile",
+            xaxis_title="Temperature (°C)",
+            yaxis_title="Water Level (m)",
+            height=420,
+            template="plotly_white"
+        )
+    
+        st.plotly_chart(
+            fig_esr,
+            use_container_width=True
+        )
+        esr_temp_profile = [
+            bottom_temp,
+            mid_temp,
+            top_temp
+        ]
+    avg_esr_temp = np.mean(esr_avg_temp_list)
+    
+    bottom_temp = avg_esr_temp - 1.0
+    top_temp = avg_esr_temp + 1.0
+    
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        st.info(
+            f"Bottom Temp (0 m)\n\n{bottom_temp:.1f}°C"
+        )
+    
+    with c2:
+        st.info(
+            f"Top Temp (4 m)\n\n{top_temp:.1f}°C"
+        )
+    
+    with c3:
+        st.info(
+            f"Average Temp\n\n{avg_esr_temp:.1f}°C"
+        )
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
