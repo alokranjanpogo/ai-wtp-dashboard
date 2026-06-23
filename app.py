@@ -4780,6 +4780,9 @@ font-weight:bold;">
 </div>
 """, unsafe_allow_html=True)
 
+theta = 1.04
+
+base_dose = dose_selected
 # ============================================================
 # TEMPERATURE VS HYPOCHLORITE REQUIREMENT
 # ============================================================
