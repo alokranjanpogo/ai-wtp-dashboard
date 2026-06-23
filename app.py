@@ -4583,7 +4583,28 @@ with left:
         "ground_sump.png",
         use_container_width=True
     )
+# ============================================================
+# GROUND SUMP TEMPERATURE MODEL
+# ============================================================
 
+import numpy as np
+
+try:
+    current_air_temp = float(temperature)
+except:
+    current_air_temp = 40.0
+
+sump_depth = np.arange(0, 4.5, 0.5)
+
+ground_temp = 26.0
+
+sump_temp_profile = (
+    ground_temp +
+    (current_air_temp - ground_temp)
+    * np.exp(-sump_depth / 2.5)
+)
+
+avg_sump_temp = np.mean(sump_temp_profile)
 with right:
 
     fig = go.Figure()
