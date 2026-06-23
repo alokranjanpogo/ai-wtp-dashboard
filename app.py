@@ -4795,34 +4795,40 @@ for temp in weather_df["Temp"]:
 
     # Ground Sump Model (4 m depth)
 
-    sump_depth = np.array(
-        [0,0.5,1,1.5,2,2.5,3,3.5,4]
-    )
+    # ============================================================
+# SUMP TEMPERATURE PROFILE FOR EACH FORECAST TEMPERATURE
+# ============================================================
 
-    sump_profile = (
-        26 +
-        (temp - 26)
-        *
-        np.exp(-sump_depth/2.5)
-    )
+forecast_depth = np.array(
+    [0,0.5,1,1.5,2,2.5,3,3.5,4]
+)
 
-    sump_avg_temp = float(
-        np.mean(sump_profile)
-    )
+forecast_sump_profile = (
+    26 +
+    (temp - 26)
+    *
+    np.exp(-forecast_depth / 2.5)
+)
 
-    # ESR Model
+sump_avg_temp = float(
+    np.mean(forecast_sump_profile)
+)
 
-    esr_profile = np.array([
-        temp-2,
-        temp-1,
-        temp,
-        temp+1,
-        temp+2
-    ])
+# ============================================================
+# ESR TEMPERATURE PROFILE FOR EACH FORECAST TEMPERATURE
+# ============================================================
 
-    esr_avg_temp = float(
-        np.mean(esr_profile)
-    )
+forecast_esr_profile = np.array([
+    temp - 1.5,
+    temp - 0.5,
+    temp,
+    temp + 1,
+    temp + 1.5
+])
+
+esr_avg_temp = float(
+    np.mean(forecast_esr_profile)
+)
 
     # Arrhenius Correction
 
