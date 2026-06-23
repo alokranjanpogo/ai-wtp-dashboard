@@ -4625,7 +4625,9 @@ with left:
 # ESR HEAT TRANSFER MODEL
 # ============================================================
 esr_avg_temp_list = []
+        
 for _, row in weather_df.iterrows():
+    
     try:
         wind_speed = float(row["Wind"])
     except:
@@ -4690,32 +4692,32 @@ for _, row in weather_df.iterrows():
     )
     
     esr_avg_temp = (
-        ambient_temp
+        temp
         + deltaT
         - cooling
     )
-# ============================================================
-# ESR TEMPERATURE SUMMARY CARDS
-# ============================================================
-
-avg_esr_temp = np.mean(esr_temp_profile)
-
-c1, c2, c3 = st.columns(3)
-
-with c1:
-    st.error(
-        f"Top Temp (0 m)\n\n{esr_temp_profile[0]:.1f}°C"
-    )
-
-with c2:
-    st.error(
-        f"Bottom Temp (4 m)\n\n{esr_temp_profile[-1]:.1f}°C"
-    )
-
-with c3:
-    st.error(
-        f"Average Temp\n\n{avg_esr_temp:.1f}°C"
-    )
+    # ============================================================
+    # ESR TEMPERATURE SUMMARY CARDS
+    # ============================================================
+    
+    avg_esr_temp = np.mean(esr_temp_profile)
+    
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        st.error(
+            f"Top Temp (0 m)\n\n{esr_temp_profile[0]:.1f}°C"
+        )
+    
+    with c2:
+        st.error(
+            f"Bottom Temp (4 m)\n\n{esr_temp_profile[-1]:.1f}°C"
+        )
+    
+    with c3:
+        st.error(
+            f"Average Temp\n\n{avg_esr_temp:.1f}°C"
+        )
 
 # =======================================
 # CUSTOMER END GIS MAP
