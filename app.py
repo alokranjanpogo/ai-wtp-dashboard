@@ -3025,7 +3025,7 @@ from email.mime.multipart import MIMEMultipart
 def send_email_alert(message):
 
     sender = "alokranjan18april@gmail.com"
-    password = "wpnrabqfbtkhsqpe"
+    password = "libgfruyoebldida"
 
     receiver = "alok.ranjan6@tatasteel.com"
 
