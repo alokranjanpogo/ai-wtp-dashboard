@@ -2849,7 +2849,7 @@ pH = st.slider(
 
 temperature = st.slider(
     "Water Temperature (°C)",
-    0, 70, 25, 1
+    0, 70, 25, 0.5
 )
 
 
