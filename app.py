@@ -1351,7 +1351,7 @@ for i in range(1,7):
         "Status": status
 
     })
-    if filter_outlet > 4.5 or status == "🔴 Backwash Needed":
+    if filter_outlet > 1 or status == "🔴 Backwash Needed":
 
         st.error(f"🚨 FILTER ALARM : {filter_name}")
     
