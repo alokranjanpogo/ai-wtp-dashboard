@@ -1364,7 +1364,7 @@ for i in range(1,7):
                 key=f"stop_alarm_{filter_name}"
             ):
                 st.session_state.filter_alarm_muted = True
-
+                st.rerun()
     
     # ========================================================
     # SMALL SPEEDOMETER GAUGE
@@ -1467,10 +1467,41 @@ if alarm_triggered and not st.session_state.filter_alarm_muted:
     with open("mixkit-sport-start-bleeps-918.wav", "rb") as f:
         audio_bytes = f.read()
 
-    st.audio(
-        audio_bytes,
-        format="audio/wav",
-        autoplay=True
+    b64 = base64.b64encode(audio_bytes).decode()
+
+    st.components.v1.html(
+        f"""
+        <!DOCTYPE html>
+        <html>
+        <body>
+
+        <audio id="alarm" loop autoplay style="display:none;">
+            <source src="data:audio/wav;base64,{b64}" type="audio/wav">
+        </audio>
+
+        <script>
+            var alarm = document.getElementById("alarm");
+            alarm.volume = 1.0;
+
+            var playPromise = alarm.play();
+
+            if (playPromise !== undefined) {{
+                playPromise.catch(function(error) {{
+                    document.addEventListener(
+                        "click",
+                        function() {{
+                            alarm.play();
+                        }},
+                        {{once:true}}
+                    );
+                }});
+            }}
+        </script>
+
+        </body>
+        </html>
+        """,
+        height=0,
     )
 
 # ============================================================
