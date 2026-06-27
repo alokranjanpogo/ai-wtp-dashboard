@@ -4973,7 +4973,7 @@ color:#0A2E6B;">
 </div>
 """, unsafe_allow_html=True)
 
-washout = pd.read_excel("Wahout_points.xlsx")
+washout = pd.read_excel("Wahout_pointss.xlsx")
 
 # Safe date conversion
 washout["Prv_Washout Date"] = pd.to_datetime(washout["Prv_Washout Date"], errors="coerce")
