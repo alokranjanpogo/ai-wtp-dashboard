@@ -1339,6 +1339,7 @@ for i in range(1,7):
         
         alarm_triggered = True
         st.session_state.alarm_active = True
+        st.session_state.filter_alarm_muted = False
     filter_summary.append({
 
         "Filter Bed": filter_name,
@@ -1364,26 +1365,7 @@ for i in range(1,7):
             ):
                 st.session_state.filter_alarm_muted = True
 
-    if not st.session_state.filter_alarm_muted:
-
-        with open(
-            "mixkit-sport-start-bleeps-918.wav",
-            "rb"
-        ) as f:
-
-            audio_bytes = f.read()
-
-        b64 = base64.b64encode(audio_bytes).decode()
-
-        st.markdown(
-            f"""
-            <audio autoplay loop>
-                <source src="data:audio/wav;base64,{b64}"
-                        type="audio/wav">
-            </audio>
-            """,
-            unsafe_allow_html=True
-        )
+    
     # ========================================================
     # SMALL SPEEDOMETER GAUGE
     # ========================================================
@@ -1480,27 +1462,17 @@ for i in range(1,7):
 # ============================================================
 # AUTO ALARM
 # ============================================================
-
 if alarm_triggered and not st.session_state.filter_alarm_muted:
 
     with open("mixkit-sport-start-bleeps-918.wav", "rb") as f:
         audio_bytes = f.read()
 
-    b64 = base64.b64encode(audio_bytes).decode()
-
-    st.markdown(
-        f"""
-        <audio id="alarmAudio" loop>
-            <source src="data:audio/wav;base64,{b64}" type="audio/wav">
-        </audio>
-
-        <script>
-        var audio=document.getElementById("alarmAudio");
-        audio.play();
-        </script>
-        """,
-        unsafe_allow_html=True
+    st.audio(
+        audio_bytes,
+        format="audio/wav",
+        autoplay=True
     )
+
 # ============================================================
 # FILTER SUMMARY
 # ============================================================
