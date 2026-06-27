@@ -1364,6 +1364,7 @@ for i in range(1,7):
                 key=f"stop_alarm_{filter_name}"
             ):
                 st.session_state.filter_alarm_muted = True
+                st.session_state.alarm_active = False
                 st.rerun()
     
     # ========================================================
@@ -1462,7 +1463,7 @@ for i in range(1,7):
 # ============================================================
 # AUTO ALARM
 # ============================================================
-if alarm_triggered and not st.session_state.filter_alarm_muted:
+if not st.session_state.filter_alarm_muted and alarm_triggered:
 
     with open("mixkit-sport-start-bleeps-918.wav", "rb") as f:
         audio_bytes = f.read()
@@ -1471,39 +1472,30 @@ if alarm_triggered and not st.session_state.filter_alarm_muted:
 
     st.components.v1.html(
         f"""
-        <!DOCTYPE html>
-        <html>
-        <body>
-
-        <audio id="alarm" loop autoplay style="display:none;">
+        <audio id="alarm" autoplay loop style="display:none;">
             <source src="data:audio/wav;base64,{b64}" type="audio/wav">
         </audio>
 
         <script>
-            var alarm = document.getElementById("alarm");
-            alarm.volume = 1.0;
-
-            var playPromise = alarm.play();
-
-            if (playPromise !== undefined) {{
-                playPromise.catch(function(error) {{
-                    document.addEventListener(
-                        "click",
-                        function() {{
-                            alarm.play();
-                        }},
-                        {{once:true}}
-                    );
-                }});
-            }}
+            document.getElementById("alarm").play();
         </script>
-
-        </body>
-        </html>
         """,
         height=0,
     )
 
+else:
+    st.components.v1.html(
+        """
+        <script>
+            var audios = document.getElementsByTagName("audio");
+            for (var i = 0; i < audios.length; i++) {
+                audios[i].pause();
+                audios[i].currentTime = 0;
+            }
+        </script>
+        """,
+        height=0,
+    )
 # ============================================================
 # FILTER SUMMARY
 # ============================================================
