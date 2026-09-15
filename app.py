@@ -3410,11 +3410,10 @@ color:#0A2E6B;">
 """, unsafe_allow_html=True)
 
 # ============================================================
-# API SETTINGS
+# API
 # ============================================================
 
 API_KEY = "f899db331049be78181d1afddbc92935"
-
 CITY = "Jamshedpur"
 
 url = (
@@ -3425,7 +3424,7 @@ url = (
 )
 
 # ============================================================
-# GET WEATHER DATA
+# FETCH WEATHER
 # ============================================================
 
 try:
@@ -3444,18 +3443,13 @@ try:
 
             item = data["list"][i]
 
-            time_ = item["dt_txt"][11:16]
-
-            temp = item["main"]["temp"]
-
+            forecast_time = item["dt_txt"][11:16]
+            temperature = item["main"]["temp"]
             humidity = item["main"]["humidity"]
-
-            rain = item.get("rain", {}).get("3h", 0)
-
+            rainfall = item.get("rain", {}).get("3h", 0)
             condition = item["weather"][0]["main"]
 
             # Weather Icon
-
             if condition == "Clear":
                 icon = "☀️"
 
@@ -3471,48 +3465,46 @@ try:
             elif condition == "Drizzle":
                 icon = "🌦️"
 
-            elif condition == "Mist":
-                icon = "🌫️"
-
             else:
                 icon = "🌤️"
 
-            with colsst.markdown(
+            with cols[i]:
+
+kdown(
                     f"""
                     <div style="
                     background:linear-gradient(180deg,#1E3A8A,#0F172A);
                     color:white;
                     border-radius:18px;
-                    padding:15px;
+                    padding:12px;
                     text-align:center;
-                    min-height:220px;
-                    box-shadow:0px 4px 12px rgba(0,0,0,0.25);
+                    min-height:210px;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.25);
                     ">
 
                     <div style="
                     font-size:14px;
                     font-weight:600;
                     color:#E2E8F0;">
-                    {time_}
+                    {forecast_time}
                     </div>
 
                     <div style="
-                    font-size:42px;
-                    margin-top:10px;">
+                    font-size:40px;
+                    margin-top:8px;">
                     {icon}
                     </div>
 
                     <div style="
-                    font-size:32px;
-                    font-weight:bold;
-                    margin-top:5px;">
-                    {temp:.0f}°
+                    font-size:30px;
+                    font-weight:bold;">
+                    {temperature:.0f}°
                     </div>
 
                     <div style="
                     color:#CBD5E1;
                     font-size:13px;
-                    margin-bottom:10px;">
+                    margin-bottom:12px;">
                     {condition}
                     </div>
 
@@ -3522,8 +3514,8 @@ try:
                     margin-bottom:10px;">
 
                     <div style="
-                    font-size:13px;
-                    color:#E5E7EB;">
+                    font-size:12px;
+                    color:#CBD5E1;">
                     Humidity
                     </div>
 
@@ -3535,15 +3527,15 @@ try:
 
                     <div style="
                     margin-top:10px;
-                    font-size:13px;
-                    color:#E5E7EB;">
+                    font-size:12px;
+                    color:#CBD5E1;">
                     Rainfall
                     </div>
 
                     <div style="
                     font-size:16px;
                     font-weight:bold;">
-                    {rain} mm
+                    {rainfall} mm
                     </div>
 
                     </div>
@@ -3555,15 +3547,7 @@ try:
 
         st.error(
             f"Weather API Error : {response.status_code}"
-        )
-
-        st.write(response.text)
-
-except Exception as e:
-
-    st.error(
-        f"Unable to fetch weather data : {e}"
-    )
+  
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
