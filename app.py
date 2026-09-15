@@ -3390,6 +3390,7 @@ with right_col:
 # ============================================================
 
 import requests
+import pandas as pd
 import streamlit as st
 
 # ============================================================
@@ -3401,8 +3402,8 @@ st.markdown("""
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
-border-radius:10px;
-font-size:30px;
+border-radius:8px;
+font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
 🌦️ Weather Forecast
@@ -3410,10 +3411,31 @@ color:#0A2E6B;">
 """, unsafe_allow_html=True)
 
 # ============================================================
-# API
+# CSS
+# ============================================================
+
+st.markdown("""
+<style>
+
+.small-weather{
+    background: linear-gradient(135deg,#0f172a,#1e293b);
+    padding:8px;
+    border-radius:10px;
+    text-align:center;
+    color:white;
+    border:1px solid rgba(255,255,255,0.06);
+    font-size:13px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# WEATHER API
 # ============================================================
 
 API_KEY = "f899db331049be78181d1afddbc92935"
+
 CITY = "Jamshedpur"
 
 url = (
@@ -3423,10 +3445,6 @@ url = (
     f"&units=metric"
 )
 
-# ============================================================
-# FETCH WEATHER
-# ============================================================
-
 try:
 
     response = requests.get(url, timeout=10)
@@ -3435,118 +3453,53 @@ try:
 
         data = response.json()
 
-        st.markdown("### Next 18 Hours Forecast")
+        weather_data = []
+
+        for item in data["list"][:6]:
+
+            weather_data.append({
+
+                "Time": item["dt_txt"][11:16],
+
+                "Temp": item["main"]["temp"],
+
+                "Humidity": item["main"]["humidity"],
+
+                "Rain": item.get("rain", {}).get("3h", 0)
+
+            })
+
+        weather_df = pd.DataFrame(weather_data)
+
+        st.markdown("### ⏰ Hourly Weather Forecast")
 
         cols = st.columns(6)
 
         for i in range(6):
 
-            item = data["list"][i]
-
-            forecast_time = item["dt_txt"][11:16]
-            temperature = item["main"]["temp"]
-            humidity = item["main"]["humidity"]
-            rainfall = item.get("rain", {}).get("3h", 0)
-            condition = item["weather"][0]["main"]
-
-            # Weather Icon
-            if condition == "Clear":
-                icon = "☀️"
-
-            elif condition == "Clouds":
-                icon = "☁️"
-
-            elif condition == "Rain":
-                icon = "🌧️"
-
-            elif condition == "Thunderstorm":
-                icon = "⛈️"
-
-            elif condition == "Drizzle":
-                icon = "🌦️"
-
-            else:
-                icon = "🌤️"
+            row = weather_df.iloc[i]
 
             with cols[i]:
 
-kdown(
-                    f"""
-                    <div style="
-                    background:linear-gradient(180deg,#1E3A8A,#0F172A);
-                    color:white;
-                    border-radius:18px;
-                    padding:12px;
-                    text-align:center;
-                    min-height:210px;
-                    box-shadow:0 4px 12px rgba(0,0,0,0.25);
-                    ">
+                st.markdown(f"""
+                <div class='small-weather'>
 
-                    <div style="
-                    font-size:14px;
-                    font-weight:600;
-                    color:#E2E8F0;">
-                    {forecast_time}
-                    </div>
+                <b>{row['Time']}</      Temp: {row['Temp']:.1f}°C<br>
 
-                    <div style="
-                    font-size:40px;
-                    margin-top:8px;">
-                    {icon}
-                    </div>
+                Humidity: {row['Humidity']}%<br>
 
-                    <div style="
-                    font-size:30px;
-                    font-weight:bold;">
-                    {temperature:.0f}°
-                    </div>
+                Rain: {row['Rain']} mm
 
-                    <div style="
-                    color:#CBD5E1;
-                    font-size:13px;
-                    margin-bottom:12px;">
-                    {condition}
-                    </div>
-
-                    <hr style="
-                    border:0.5px solid #334155;
-                    margin-top:10px;
-                    margin-bottom:10px;">
-
-                    <div style="
-                    font-size:12px;
-                    color:#CBD5E1;">
-                    Humidity
-                    </div>
-
-                    <div style="
-                    font-size:16px;
-                    font-weight:bold;">
-                    {humidity}%
-                    </div>
-
-                    <div style="
-                    margin-top:10px;
-                    font-size:12px;
-                    color:#CBD5E1;">
-                    Rainfall
-                    </div>
-
-                    <div style="
-                    font-size:16px;
-                    font-weight:bold;">
-                    {rainfall} mm
-                    </div>
-
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                </div>
+                """, unsafe_allow_html=True)
 
     else:
 
-        st.error(
-            f"Weather API Error : {response.status_code}"
+        st.error(f"Weather API Error : {response.status_code}")
+
+except Exception as e:
+
+    st.error(f"Unable to fetch weather data : {e}")
   
 # =======================================
 # CUSTOMER END GIS MAP
