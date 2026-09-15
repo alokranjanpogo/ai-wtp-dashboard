@@ -4855,7 +4855,7 @@ try:
         # ==================================================
         # MAP
         # ==================================================
-        fig_map = px.scatter_mapbox(
+        fig_map = px.scatter_map(
             gis_filtered,
             lat="Latitude",
             lon="Longitude",
@@ -4887,7 +4887,7 @@ try:
         )
 
         fig_map.update_layout(
-            mapbox_style="open-street-map",
+            map_style="open-street-map",
             mapbox=dict(
                 center=dict(
                     lat=center_lat,
@@ -4985,7 +4985,7 @@ def classify(row):
 
 washout["Status"] = washout.apply(classify, axis=1)
 
-fig = px.scatter_mapbox(
+fig = px.scatter_map(
     washout,
     lat="Lattitude",
     lon="Longitude",
@@ -5006,7 +5006,7 @@ fig = px.scatter_mapbox(
     height=600
 )
 
-fig.update_layout(mapbox_style="open-street-map")
+fig.update_layout(map_style="open-street-map")
 fig.update_traces(marker=dict(size=15))
 
 st.plotly_chart(fig, use_container_width=True)
