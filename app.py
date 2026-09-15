@@ -3382,17 +3382,15 @@ with right_col:
             "Weather conditions normal."
         )
 # ============================================================
-# 🌦️ WEATHER BASED DOSING PREDICTION CENTER
+# 🌦️ WEATHER FORECAST
 # ============================================================
 
 import requests
 import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
 import streamlit as st
 
 # ============================================================
-# SECTION TITLE
+# TITLE
 # ============================================================
 
 st.markdown("""
@@ -3404,37 +3402,25 @@ border-radius:8px;
 font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
-🌦️ Weather Based Prediction System
+🌦️ Weather Forecast
 </div>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# CUSTOM CSS
+# CSS
 # ============================================================
 
 st.markdown("""
 <style>
-
 .small-weather{
     background: linear-gradient(135deg,#0f172a,#1e293b);
-    padding:8px;
+    padding:10px;
     border-radius:10px;
     text-align:center;
     color:white;
     border:1px solid rgba(255,255,255,0.06);
     font-size:13px;
 }
-
-.ai-alert{
-    background:#111827;
-    padding:10px;
-    border-radius:10px;
-    border-left:4px solid cyan;
-    margin-bottom:8px;
-    color:white;
-    font-size:14px;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -3442,16 +3428,19 @@ st.markdown("""
 # WEATHER API
 # ============================================================
 
-API_KEY = "f899db331049be78181d1afddbc92935"
+API_KEY = "YOUR_API_KEY"
 
 CITY = "Jamshedpur"
 
-url = f"https://api.openweathermap.org/data/2.5/forecast?q={CITY}&appid={API_KEY}&units=metric"
+url = (
+    f"https://api.openweathermap.org/data/2.5/forecast"
+    f"?q={CITY}&appid={API_KEY}&units=metric"
+)
 
 response = requests.get(url)
 
 # ============================================================
-# WEATHER DATA
+# FORECAST CARDS
 # ============================================================
 
 if response.status_code == 200:
@@ -3460,7 +3449,7 @@ if response.status_code == 200:
 
     weather_data = []
 
-    for item in data["list"][:12]:
+    for item in data["list"][:6]:
 
         weather_data.append({
 
@@ -3470,856 +3459,39 @@ if response.status_code == 200:
 
             "Humidity": item["main"]["humidity"],
 
-            "Rain": item.get("rain", {}).get("3h", 0),
-
-            "Condition": item["weather"][0]["main"]
+            "Rain": item.get("rain", {}).get("3h", 0)
 
         })
 
     weather_df = pd.DataFrame(weather_data)
 
-    # ========================================================
-    # SMALL WEATHER FORECAST CARDS
-    # ========================================================
-
-    st.markdown("⏰ Hourly Weather Forecast")
+    st.markdown("### ⏰ Next 18 Hours Forecast")
 
     cols = st.columns(6)
 
-    for i in range(6):
+    for i, col in enumerate(cols):
 
         row = weather_df.iloc[i]
 
-        with cols[i]:
+        with col:
 
             st.markdown(f"""
-            <div class='small-weather'>
+            <div class="small-weather">
 
-            <b>{row['Time']}</b><br>
+            <b>{row['Time']}</b><br><br>
 
-            🌡️ {row['Temp']:.1f}°C<br>
+            🌡️ {row['Temp']:.1f} °C<br>
 
-            💧 {row['Humidity']}%<br>
+            💧 {row['Humidity']} %<br>
 
             🌧️ {row['Rain']} mm
 
             </div>
             """, unsafe_allow_html=True)
 
-    # ========================================================
-    # WEATHER IMPACT ENGINE
-    # ========================================================
-
-    predicted_alum = []
-    predicted_chlorine = []
-
-    ai_messages = []
-
-    for _, row in weather_df.iterrows():
-
-        # ====================================================
-        # TEMPERATURE FACTOR
-        # ====================================================
-
-        temp_factor = 1.0
-
-        if row["Temp"] > 35:
-            temp_factor += 0.12
-
-        elif row["Temp"] > 30:
-            temp_factor += 0.06
-
-        # ====================================================
-        # RAIN FACTOR
-        # ====================================================
-
-        rain_factor = 1.0
-
-        if row["Rain"] > 8:
-            rain_factor += 0.30
-
-        elif row["Rain"] > 3:
-            rain_factor += 0.15
-
-        # ====================================================
-        # HUMIDITY FACTOR
-        # ====================================================
-
-        humidity_factor = 1.0
-
-        if row["Humidity"] > 85:
-            humidity_factor += 0.05
-
-        # ====================================================
-        # INDUSTRIAL FACTOR
-        # ====================================================
-
-        weather_industrial_factor = 1.0
-
-        if industrial:
-
-            if conductivity > 1200:
-                weather_industrial_factor += 0.15
-
-            elif conductivity > 800:
-                weather_industrial_factor += 0.08
-
-        # ====================================================
-        # FUTURE ALUM PREDICTION
-        # ====================================================
-
-        future_alum = (
-
-            ai_dose *
-
-            temp_factor *
-
-            rain_factor *
-
-            humidity_factor *
-
-            weather_industrial_factor
-
-        )
-
-        predicted_alum.append(future_alum)
-
-        # ====================================================
-        # FUTURE CHLORINE DEMAND PREDICTION
-        # ====================================================
-
-        base_chlorine_dose = frc_selected * 4.5
-
-        temp_chlorine_factor = (
-            1 + ((row["Temp"] - 25) * 0.02)
-        )
-
-        rain_chlorine_factor = (
-            1 + (row["Rain"] * 0.035)
-        )
-
-        humidity_chlorine_factor = 1.0
-
-        if row["Humidity"] > 85:
-            humidity_chlorine_factor += 0.03
-
-        future_chlorine_dose = (
-
-            base_chlorine_dose *
-
-            temp_chlorine_factor *
-
-            rain_chlorine_factor *
-
-            humidity_chlorine_factor
-
-        )
-
-        predicted_chlorine.append(
-            future_chlorine_dose
-        )
-
-    weather_df["Pred Alum"] = predicted_alum
-
-    weather_df["Pred Chlorine"] = predicted_chlorine
-
-    # ========================================================
-    # RECOMMENDATION SYSTEM
-    # ========================================================
-
-    st.markdown("Operational Recommendations")
-
-    avg_temp = weather_df["Temp"].mean()
-    
-    avg_rain = weather_df["Rain"].sum()
-    
-    avg_humidity = weather_df["Humidity"].mean()
-
-    # ========================================================
-    # HIGH TEMPERATURE
-    # ========================================================
-
-    if avg_temp > 35:
-
-        ai_messages.append(
-            "🔥 High temperature detected → Increase chlorine dosing gradually due to faster chlorine decay."
-        )
-
-        ai_messages.append(
-            "🧪 Conduct frequent jar testing to optimize alum consumption."
-        )
-
-        ai_messages.append(
-            "💨 Increase aeration rates to maintain dissolved oxygen stability."
-        )
-        for msg in ai_messages:
-            st.info(msg)
-    # ========================================================
-    # HEAVY RAIN
-    # ========================================================
-
-    if avg_rain > 10:
-
-        ai_messages.append(
-            "🌧️ Heavy rainfall expected → Raw water turbidity may increase sharply."
-        )
-
-        ai_messages.append(
-            "⚠️ Increase Alum/PAC dose gradually for stable coagulation."
-        )
-
-        ai_messages.append(
-            "🚨 Monitor sludge blanket and filter loading carefully."
-        )
-
-        ai_messages.append(
-            "🧫 Increase chlorine monitoring frequency during rainfall period."
-        )
-
-    # ========================================================
-    # HIGH HUMIDITY
-    # ========================================================
-
-    if avg_humidity > 85:
-
-        ai_messages.append(
-            "💧 High humidity may affect powder chemical storage and handling."
-        )
-
-        ai_messages.append(
-            "🔌 Inspect electrical and SCADA panels for moisture condensation."
-        )
-
-    # ========================================================
-    # INDUSTRIAL IMPACT
-    # ========================================================
-
-    if industrial:
-
-        ai_messages.append(
-            f"🏭 Industrial discharge impact active → Conductivity: {conductivity} µS/cm"
-        )
-
-    # ========================================================
-    # DISPLAY ALERTS
-    # ========================================================
-
-    for msg in ai_messages:
-
-        st.markdown(f"""
-        <div class='ai-alert'>
-        {msg}
-        </div>
-        """, unsafe_allow_html=True)
-
-    # ========================================================
-    # WEATHER RISK INDEX
-    # ========================================================
-
-    risk_score = 0
-
-    if avg_temp > 35:
-        risk_score += 30
-
-    if avg_rain > 10:
-        risk_score += 45
-
-    if avg_humidity > 85:
-        risk_score += 15
-
-    if industrial:
-        risk_score += 10
-
-    # ========================================================
-    # LAYOUT
-    # ========================================================
-
-    left, right = st.columns([5,1])
-
-# ========================================================
-# FUTURE DOSING PREDICTION ENGINE (FULLY CORRECTED)
-# ========================================================
-
-import pandas as pd
-import plotly.graph_objects as go
-from datetime import datetime
-from plotly.subplots import make_subplots
-
-# ========================================================
-# SAFETY CHECKS
-# ========================================================
-
-required_columns = ["Rain", "Humidity", "Temp"]
-
-for col in required_columns:
-
-    if col not in weather_df.columns:
-
-        weather_df[col] = 0
-
-# ========================================================
-# RAW TURBIDITY SAFETY
-# ========================================================
-
-try:
-    raw_turbidity
-except NameError:
-    raw_turbidity = 50
-
-# ========================================================
-# RESET INDEX
-# ========================================================
-
-weather_df = weather_df.reset_index(drop=True)
-
-# ========================================================
-# TIME SERIES GENERATION
-# ========================================================
-
-weather_df["DateTime"] = pd.date_range(
-    start=datetime.now(),
-    periods=int(len(weather_df)),
-    freq="3h"
-)
-
-# ========================================================
-# SCIENTIFIC HYPOCHLORITE FORECAST
-# ========================================================
-
-# Baseline dose from Dynamic Hypochlorite Dosing System
-
-current_hypo_dose = dose_selected
-
-# Current live temperature from weather panel
-
-current_temp = temperature
-
-# Temperature coefficient for chlorine decay
-
-theta = 1.04
-
-# ========================================================
-# FUTURE HYPOCHLORITE REQUIREMENT
-# ========================================================
-
-weather_df["Pred Chlorine"] = (
-
-    current_hypo_dose *
-
-    (
-
-        theta ** (
-
-            weather_df["Temp"] - current_temp
-
-        )
-
-    )
-
-)
-
-# ========================================================
-# LIMIT EXTREME VALUES
-# ========================================================
-
-weather_df["Pred Chlorine"] = weather_df[
-    "Pred Chlorine"
-].clip(
-
-    lower=current_hypo_dose * 0.70,
-
-    upper=current_hypo_dose * 1.50
-
-)
-# ========================================================
-# WEATHER RISK SCORE
-# ========================================================
-
-risk_score = int(
-
-    (
-
-        weather_df["Rain"].mean() * 3
-
-        +
-
-        weather_df["Humidity"].mean() * 0.4
-
-        +
-
-        weather_df["Temp"].mean() * 0.8
-
-    )
-
-)
-
-risk_score = max(0, min(risk_score, 100))
-
-# ========================================================
-# FUTURE DOSING TREND + WEATHER RISK
-# ========================================================
-
-left, right = st.columns([3,1])
-
-# ========================================================
-# LEFT COLUMN
-# ========================================================
-with left:
-
-    st.subheader("📈 Weather-Adjusted Hypochlorite Requirement")
-
-    fig = go.Figure()
-
-    fig.add_trace(go.Scatter(
-        x=weather_df["DateTime"],
-        y=weather_df["Pred Chlorine"],
-        mode='lines+markers',
-        name='Weather Adjusted Hypochlorite Requirement',
-        line=dict(width=4, color="red"),
-        marker=dict(size=8, color="red")
-    ))
-
-    fig.add_trace(go.Bar(
-        x=weather_df["DateTime"],
-        y=weather_df["Rain"],
-        name='Rainfall',
-        opacity=0.20
-    ))
-
-    fig.update_layout(
-        height=280, # reduced height
-        template="plotly_white",
-        hovermode="x unified",
-        margin=dict(l=5, r=5, t=20, b=5), # smaller top margin
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        ),
-        xaxis_title="Forecast Time",
-        yaxis_title="Predicted Chemical Dose"
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-# ========================================================
-# RIGHT COLUMN
-# ========================================================
-with right:
-
-    fig2 = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=risk_score,
-        title={'text': "Weather Risk"},
-        gauge={
-            'axis': {'range': [0, 100]},
-            'bar': {'color': "cyan"},
-            'steps': [
-                {'range': [0, 30], 'color': "lightgreen"},
-                {'range': [30, 70], 'color': "yellow"},
-                {'range': [70, 100], 'color': "red"}
-            ]
-        }
-    ))
-
-    fig2.update_layout(
-        height=230,
-        margin=dict(l=5, r=5, t=35, b=5)
-    )
-
-    
-# ========================================================
-# WEATHER RISK GAUGE
-# ========================================================
-
-with right:
-
-    fig2 = go.Figure(go.Indicator(
-
-        mode="gauge+number",
-
-        value=risk_score,
-
-        title={'text': "Weather Risk"},
-
-        gauge={
-
-            'axis': {'range': [0, 100]},
-
-            'bar': {'color': "cyan"},
-
-            'steps': [
-
-                {'range': [0, 30], 'color': "lightgreen"},
-
-                {'range': [30, 70], 'color': "yellow"},
-
-                {'range': [70, 100], 'color': "red"}
-
-            ]
-
-        }
-
-    ))
-
-    fig2.update_layout(
-
-        height=230,
-
-        margin=dict(
-            l=5,
-            r=5,
-            t=35,
-            b=5
-        )
-
-    )
-
-    st.plotly_chart(
-        fig2,
-        use_container_width=True
-    )
-
-st.subheader("✅ Smart Decision Summary")
-
-c1, c2, c3 = st.columns(3)
-
-# ========================================================
-# CURRENT DOSE
-# ========================================================
-
-with c1:
-
-    st.metric(
-        "Current Hypochlorite Dose",
-        f"{dose_selected:.1f} kg/day"
-    )
-
-# ========================================================
-# PEAK FORECAST REQUIREMENT
-# ========================================================
-
-with c2:
-
-    st.metric(
-        "Peak Forecast Requirement",
-        f"{weather_df['Pred Chlorine'].max():.1f} kg/day"
-    )
-
-# ========================================================
-# WEATHER RISK STATUS
-# ========================================================
-
-with c3:
-
-    if risk_score > 60:
-
-        st.error("🔴 High Impact")
-
-    elif risk_score > 30:
-
-        st.warning("🟡 Moderate")
-
-    else:
-
-        st.success("🟢 Stable")
-
-# ========================================================
-# SYSTEM INTERPRETATION
-# ========================================================
-
-if risk_score > 60:
-
-    st.error(
-
-        "⚠️ Severe weather instability detected. "
-        "High probability of turbidity fluctuation "
-        "and increased chemical demand."
-
-    )
-
-elif risk_score > 30:
-
-    st.warning(
-
-        "⚠️ Moderate weather influence detected. "
-        "Operator monitoring and dosing adjustments "
-        "may be required."
-
-    )
-
 else:
 
-    st.success(
-
-        "✅ Weather conditions are operationally stable. "
-        "Normal treatment performance expected."
-
-    )
-#================================================
-# Weather adjustment for sump and water tower
-#================================================
-
-
-st.markdown("""
-<div style="
-background:#0A2E6B;
-color:white;
-padding:8px 15px;
-border-radius:8px;
-font-size:22px;
-font-weight:bold;">
-1 Ground Sump (4 m Below Ground)
-</div>
-""", unsafe_allow_html=True)
-
-left,right = st.columns([1,2])
-
-with left:
-
-    st.image(
-        "ground_sump.png",
-        use_container_width=True
-    )
-# ============================================================
-# GROUND SUMP TEMPERATURE MODEL
-# ============================================================
-
-import numpy as np
-
-try:
-    current_air_temp = float(temperature)
-except:
-    current_air_temp = 40.0
-
-sump_depth = np.arange(0, 4.5, 0.5)
-
-ground_temp = 26.0
-
-sump_temp_profile = (
-    ground_temp +
-    (current_air_temp - ground_temp)
-    * np.exp(-sump_depth / 2.5)
-)
-
-avg_sump_temp = np.mean(sump_temp_profile)
-with right:
-
-    fig = go.Figure()
-
-    fig.add_trace(
-        go.Scatter(
-            x=sump_temp_profile,
-            y=sump_depth,
-            mode="lines+markers",
-            line=dict(
-                color="#0A55FF",
-                width=4
-            )
-        )
-    )
-
-    fig.update_yaxes(
-        autorange="reversed"
-    )
-
-    fig.update_layout(
-        title="Ground Sump Temperature Profile",
-        height=350,
-        template="plotly_white"
-    )
-
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
-
-a,b,c = st.columns(3)
-
-with a:
-
-    st.info(
-        f"Surface Temp (0 m)\n\n{current_air_temp:.1f}°C"
-    )
-
-with b:
-
-    st.info(
-        f"Bottom Temp (4 m)\n\n{sump_temp_profile[-1]:.1f}°C"
-    )
-
-with c:
-
-    st.info(
-        f"Average Temp\n\n{avg_sump_temp:.1f}°C"
-    )
-# ============================================================
-# ELEVATED SERVICE RESERVOIR (ESR)
-# ============================================================
-
-st.markdown("""
-<div style="
-background:#0A2E6B;
-color:white;
-padding:8px;
-border-radius:6px;
-font-size:22px;
-font-weight:bold;">
-2️⃣ Elevated Service Reservoir (50 KL)
-</div>
-""", unsafe_allow_html=True)
-
-left,right = st.columns([1,2])
-
-# ============================================================
-# ESR IMAGE
-# ============================================================
-
-with left:
-
-    st.image(
-        "esr_tower.png",
-        use_container_width=True
-    )
-
-# ============================================================
-# ESR TEMPERATURE PROFILE
-# ============================================================
-
-# ============================================================
-# ESR TEMPERATURE PROFILE
-# HEAT TRANSFER + MCADAMS CORRELATION
-# ============================================================
-
-with right:
-
-    # Current weather temperature from API
-    ambient_temp = float(weather_df["Temp"].mean())
-
-    # Wind speed from API
-    try:
-        wind_speed = float(weather_df["Wind"].mean())
-    except:
-        wind_speed = 2.0
-
-    # McAdams correlation
-    h = 5.7 + 3.8 * wind_speed
-
-    # Solar radiation estimate
-    solar_radiation = 600.0
-
-    # ESR Geometry
-    volume = 50.0 # m3
-    height = 4.0 # m
-
-    radius = np.sqrt(volume/(np.pi*height))
-    diameter = 2 * radius
-
-    tank_area = (
-        np.pi * radius**2
-        +
-        2 * np.pi * radius * height
-    )
-
-    # Light blue paint
-    absorptivity = 0.45
-
-    # Solar heat gain
-    q_solar = (
-        absorptivity
-        * solar_radiation
-        * tank_area
-    )
-
-    # Water properties
-    water_mass = 50000.0
-    cp = 4186.0
-
-    # Residence time
-    residence_time = 2 * 3600
-
-    # Temperature rise due to solar load
-    deltaT = (
-        q_solar
-        /
-        (water_mass * cp)
-    ) * residence_time
-
-    # Convective cooling
-    cooling = h * 0.015
-
-    # Average ESR temperature
-    avg_esr_temp = (
-        ambient_temp
-        + deltaT
-        - cooling
-    )
-
-    # Vertical profile
-    bottom_temp = avg_esr_temp - 1.0
-    top_temp = avg_esr_temp + 1.0
-
-    esr_height = [0, 2, 4]
-
-    esr_temp_profile = [
-        bottom_temp,
-        avg_esr_temp,
-        top_temp
-    ]
-
-    fig_esr = go.Figure()
-
-    fig_esr.add_trace(
-        go.Scatter(
-            x=esr_temp_profile,
-            y=esr_height,
-            mode="lines+markers",
-            line=dict(
-                color="red",
-                width=4
-            ),
-            marker=dict(size=10)
-        )
-    )
-
-    fig_esr.update_layout(
-        title="ESR Temperature Profile",
-        xaxis_title="Temperature (°C)",
-        yaxis_title="Water Level (m)",
-        height=420,
-        template="plotly_white"
-    )
-
-    st.plotly_chart(
-        fig_esr,
-        use_container_width=True
-    )
-
-# ============================================================
-# ESR SUMMARY CARDS
-# ============================================================
-
-c1, c2, c3 = st.columns(3)
-
-with c1:
-
-    st.info(
-        f"Bottom Temp (0 m)\n\n{bottom_temp:.1f}°C"
-    )
-
-with c2:
-
-    st.info(
-        f"Top Temp (4 m)\n\n{top_temp:.1f}°C"
-    )
-
-with c3:
-
-    st.info(
-        f"Average Temp\n\n{avg_esr_temp:.1f}°C"
-    )
+    st.error("Unable to fetch weather data.")
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
