@@ -2188,22 +2188,19 @@ st.markdown("")
 
 col1, col2 = st.columns(2)
 
-# Turbidity Input
 with col1:
 
-    t1, t2 = st.columns([4,1])
-
-   t1, t2 = st.columns([4,1])
+    t1, t2 = st.columns([4, 1])
 
     with t1:
         turbidity = st.number_input(
             "Raw Water Turbidity",
             min_value=0.0,
             value=10.0,
-            step=0.1,     # allows decimal values
+            step=0.1,
             format="%.1f"
         )
-    
+
     with t2:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(
@@ -2211,16 +2208,15 @@ with col1:
             unsafe_allow_html=True
         )
 
-# pH Slider
 with col2:
 
     ph = st.slider(
-    "pH",
-    min_value=0.0,
-    max_value=14.0,
-    value=7.0,
-    step=0.1
-)
+        "pH",
+        min_value=0.0,
+        max_value=14.0,
+        value=7.0,
+        step=0.1
+    )
 # =====================================================
 # RANGE CHECK
 # =====================================================
