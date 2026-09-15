@@ -3415,18 +3415,19 @@ st.markdown("""
 .small-weather{
     background: linear-gradient(135deg,#0f172a,#1e293b);
     padding:12px;
-    border-radius:10px;
+    border-radius:12px;
     text-align:center;
     color:white;
     border:1px solid rgba(255,255,255,0.08);
     font-size:13px;
+    min-height:130px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# API DETAILS
+# WEATHER API
 # ============================================================
 
 API_KEY = "f899db331049be78181d1afddbc92935"
@@ -3440,7 +3441,7 @@ url = (
 )
 
 # ============================================================
-# GET WEATHER DATA
+# FETCH WEATHER DATA
 # ============================================================
 
 try:
@@ -3477,27 +3478,28 @@ try:
                 icon = "☀️"
             elif condition == "Thunderstorm":
                 icon = "⛈️"
+            elif condition == "Drizzle":
+                icon = "🌦️"
             else:
                 icon = "🌤️"
 
             with cols[i]:
 
-                           f"""
-                    <div class="small-weather">
-
-                    <b>{forecast_time}</b>
+                st.markdown(
+                    f"""
+                    <div class                 <b>{forecast_time}</b>
 
                     <br><br>
 
+                    <div style="font-size:24px;">
                     {icon}
-
-                    <br><br>
+                    </div>
 
                     🌡️ {temperature:.1f} °C
 
                     <br>
 
-                    💧 {humidity} %
+                    💧 {humidity}%
 
                     <br>
 
@@ -3511,10 +3513,12 @@ try:
     else:
 
         st.error(
-            f"Unable to fetch weather data. Error Code: {response.status_code}"
+            f"Unable to fetch weather data. Status Code: {response.status_code}"
         )
 
-except Exception as e
+except Exception as e:
+
+    st.error(f"Weather API Error: {e}")
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
