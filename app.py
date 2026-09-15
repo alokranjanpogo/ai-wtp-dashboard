@@ -4888,11 +4888,12 @@ try:
 
         fig_map.update_layout(
             map_style="open-street-map",
-            mapbox=dict(
+            map=dict(
                 center=dict(
                     lat=center_lat,
                     lon=center_lon
-                )
+                ),
+                zoom=12
             ),
             legend=dict(
                 title="Water Quality Status",
