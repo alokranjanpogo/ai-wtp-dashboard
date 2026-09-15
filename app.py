@@ -3743,14 +3743,14 @@ def classify(row):
 
 washout["Status"] = washout.apply(classify, axis=1)
 
-fig = px.scatter_map(
+fig = px.scatter_mapbox(
     washout,
     lat="Lattitude",
     lon="Longitude",
     color="Status",
     color_discrete_map={
         "OK": "green",
-        "Due Soon": "yellow",
+        "Due Soon": "orange",
         "Overdue": "red"
     },
     hover_name="Location",
@@ -3764,10 +3764,19 @@ fig = px.scatter_map(
     height=600
 )
 
-fig.update_layout(map_style="open-street-map")
-fig.update_traces(marker=dict(size=15))
+fig.update_layout(
+    mapbox_style="open-street-map",
+    margin=dict(l=0, r=0, t=0, b=0)
+)
 
-st.plotly_chart(fig, use_container_width=True)
+fig.update_traces(
+    marker=dict(size=15)
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True
+)
 # ==========================================================
 # WATER QUALITY EXECUTIVE DASHBOARD - PART 1
 # HEADER + KPI + WQI GAUGE
