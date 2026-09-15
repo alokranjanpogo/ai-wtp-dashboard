@@ -2172,7 +2172,7 @@ border-radius:8px;
 font-size:30px;
 font-weight:bold;
 color:#0A2E6B;">
-🧪 Historical Chemical Dosing System
+Coagulant Dosing Decision Support System
 </div>
 """, unsafe_allow_html=True)
 
@@ -2271,7 +2271,7 @@ else:
     # DOSING DISPLAY
     # =================================================
 
-    st.markdown("## 🧪 Recommended Chemical Doses")
+    st.markdown("##  Recommended Chemical Doses")
 
     c1, c2, c3, c4, c5 = st.columns(5)
 
