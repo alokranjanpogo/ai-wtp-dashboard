@@ -3382,133 +3382,138 @@ with right_col:
             "Weather conditions normal."
         )
 # ============================================================
-# 🌦️ WEATHER FORECAST
+# WEATHER FORECAST
 # ============================================================
 
 import requests
-import pandas as pd
 import streamlit as st
-
-# ============================================================
-# TITLE
-# ============================================================
 
 st.markdown("""
 <div style="
 background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
-border-radius:8px;
-font-size:31px;
+border-radius:10px;
+font-size:30px;
 font-weight:bold;
 color:#0A2E6B;">
-🌦️ Weather Forecast
+Weather Forecast
 </div>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# SMALL CARD CSS
+# CSS
 # ============================================================
 
 st.markdown("""
 <style>
 
-.small-weather{
-    background: linear-gradient(135deg,#0f172a,#1e293b);
-    padding:8px;
-    border-radius:10px;
-    text-align:center;
+.weather-card {
+    background:#111827;
     color:white;
-    border:1px solid rgba(255,255,255,0.08);
-    font-size:13px;
+    border-radius:12px;
+    padding:10px;
+    text-align:center;
+    border:1px solid #1f2937;
+}
+
+.weather-time{
+    font-size:14px;
+    font-weight:bold;
+    color:#60A5FA;
+}
+
+.weather-temp{
+    font-size:22px;
+    font-weight:bold;
+    margin-top:5px;
+}
+
+.weather-small{
+    font-size:12px;
+    color:#d1d5db;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# WEATHER API
+# API
 # ============================================================
 
 API_KEY = "f899db331049be78181d1afddbc92935"
 
 CITY = "Jamshedpur"
 
-url = f"https://api.openweathermap.org/data/2.5/forecast?q={CITY}&appid={API_KEY}&units=metric"
+url = (
+    f"https://api.openweathermap.org/data/2.5/forecast"
+    f"?q={CITY}"
+    f"&appid={API_KEY}"
+    f"&units=metric"
+)
 
 # ============================================================
-# FETCH DATA
+# WEATHER
 # ============================================================
 
 try:
 
-    response = requests.get(url, timeout=15)
+    response = requests.get(url, timeout=10)
 
     if response.status_code == 200:
 
         data = response.json()
 
-        weather_data = []
-
-        for item in data["list"][:6]:
-
-            condition = item["weather"][0]["main"]
-
-            if condition == "Rain":
-                icon = "🌧️"
-
-            elif condition == "Clouds":
-                icon = "☁️"
-
-            elif condition == "Clear":
-                icon = "☀️"
-
-            elif condition == "Thunderstorm":
-                icon = "⛈️"
-
-            else:
-                icon = "🌤️"
-
-            weather_data.append({
-
-                "Time": item["dt_txt"][11:16],
-
-                "Temp": item["main"]["temp"],
-
-                "Humidity": item["main"]["humidity"],
-
-                "Rain": item.get("rain", {}).get("3h", 0),
-
-                "Icon": icon
-
-            })
-
-        weather_df = pd.DataFrame(weather_data)
-
-        st.markdown("### ⏰ Hourly Weather Forecast")
+        st.markdown("### Next Forecast Intervals")
 
         cols = st.columns(6)
 
         for i in range(6):
 
-            row = weather_df.iloc[i]
+            item = data["list"][i]
+
+            time_ = item["dt_txt"][11:16]
+
+            temp = item["main"]["temp"]
+
+            humidity = item["main"]["humidity"]
+
+            rain = item.get("rain", {}).get("3h", 0)
 
             with cols[i]:
 
-                st.markdown<div class="small-weather">
+                st.markdown(
+                    f"""
+                    <div class="weather-card">
 
-                <b>{row['Time']}</b><br><br>
+           eather-time">
+                    {time_}
+                    </div>
 
-                {row['Icon']}<br>
+                    <div class="weather-temp">
+                    {temp:.1f}°C
+                    </div>
 
-                🌡️ {row['Temp']:.1f}°C<br>
+                    <div class="weather-small">
+                    Humidity
+                    </div>
 
-                💧 {row['Humidity']}%<br>
+                    <div>
+                    {humidity}%
+                    </div>
 
-                🌧️ {row['Rain']} mm
+                    <div class="weather-small" style="margin-top:5px;">
+                    Rainfall
+                    </div>
 
-                </div>
-                """, unsafe_allow_html=True)
+                    <div>
+                    {rain} mm
+                    </div>
+
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
     else:
 
