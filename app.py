@@ -3386,6 +3386,7 @@ with right_col:
 # ============================================================
 
 import requests
+import pandas as pd
 import streamlit as st
 
 # ============================================================
@@ -3406,7 +3407,7 @@ color:#0A2E6B;">
 """, unsafe_allow_html=True)
 
 # ============================================================
-# CSS
+# SMALL CARD CSS
 # ============================================================
 
 st.markdown("""
@@ -3414,13 +3415,12 @@ st.markdown("""
 
 .small-weather{
     background: linear-gradient(135deg,#0f172a,#1e293b);
-    padding:12px;
-    border-radius:12px;
+    padding:8px;
+    border-radius:10px;
     text-align:center;
     color:white;
     border:1px solid rgba(255,255,255,0.08);
     font-size:13px;
-    min-height:130px;
 }
 
 </style>
@@ -3431,17 +3431,13 @@ st.markdown("""
 # ============================================================
 
 API_KEY = "f899db331049be78181d1afddbc92935"
+
 CITY = "Jamshedpur"
 
-url = (
-    f"https://api.openweathermap.org/data/2.5/forecast"
-    f"?q={CITY}"
-    f"&appid={API_KEY}"
-    f"&units=metric"
-)
+url = f"https://api.openweathermap.org/data/2.5/forecast?q={CITY}&appid={API_KEY}&units=metric"
 
 # ============================================================
-# FETCH WEATHER DATA
+# FETCH DATA
 # ============================================================
 
 try:
@@ -3452,73 +3448,79 @@ try:
 
         data = response.json()
 
-        st.markdown("### ⏰ Next 18 Hours Forecast")
+        weather_data = []
 
-        cols = st.columns(6)
-
-        for i in range(6):
-
-            item = data["list"][i]
-
-            forecast_time = item["dt_txt"][11:16]
-
-            temperature = item["main"]["temp"]
-
-            humidity = item["main"]["humidity"]
-
-            rainfall = item.get("rain", {}).get("3h", 0)
+        for item in data["list"][:6]:
 
             condition = item["weather"][0]["main"]
 
             if condition == "Rain":
                 icon = "🌧️"
+
             elif condition == "Clouds":
                 icon = "☁️"
+
             elif condition == "Clear":
                 icon = "☀️"
+
             elif condition == "Thunderstorm":
                 icon = "⛈️"
-            elif condition == "Drizzle":
-                icon = "🌦️"
+
             else:
                 icon = "🌤️"
 
+            weather_data.append({
+
+                "Time": item["dt_txt"][11:16],
+
+                "Temp": item["main"]["temp"],
+
+                "Humidity": item["main"]["humidity"],
+
+                "Rain": item.get("rain", {}).get("3h", 0),
+
+                "Icon": icon
+
+            })
+
+        weather_df = pd.DataFrame(weather_data)
+
+        st.markdown("### ⏰ Hourly Weather Forecast")
+
+        cols = st.columns(6)
+
+        for i in range(6):
+
+            row = weather_df.iloc[i]
+
             with cols[i]:
 
-                st.markdown(
-                    f"""
-                    <div class                 <b>{forecast_time}</b>
+                st.markdown<div class="small-weather">
 
-                    <br><br>
+                <b>{row['Time']}</b><br><br>
 
-                    <div style="font-size:24px;">
-                    {icon}
-                    </div>
+                {row['Icon']}<br>
 
-                    🌡️ {temperature:.1f} °C
+                🌡️ {row['Temp']:.1f}°C<br>
 
-                    <br>
+                💧 {row['Humidity']}%<br>
 
-                    💧 {humidity}%
+                🌧️ {row['Rain']} mm
 
-                    <br>
-
-                    🌧️ {rainfall} mm
-
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                </div>
+                """, unsafe_allow_html=True)
 
     else:
 
         st.error(
-            f"Unable to fetch weather data. Status Code: {response.status_code}"
+            f"Weather API Error : {response.status_code}"
         )
 
 except Exception as e:
 
-    st.error(f"Weather API Error: {e}")
+    st.error(
+        f"Unable to fetch weather data : {e}"
+    )
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
