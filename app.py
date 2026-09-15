@@ -3385,8 +3385,16 @@ with right_col:
 # WEATHER FORECAST
 # ============================================================
 
+# ============================================================
+# 🌦️ WEATHER FORECAST
+# ============================================================
+
 import requests
 import streamlit as st
+
+# ============================================================
+# TITLE
+# ============================================================
 
 st.markdown("""
 <div style="
@@ -3397,48 +3405,12 @@ border-radius:10px;
 font-size:30px;
 font-weight:bold;
 color:#0A2E6B;">
-Weather Forecast
+🌦️ Weather Forecast
 </div>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# CSS
-# ============================================================
-
-st.markdown("""
-<style>
-
-.weather-card {
-    background:#111827;
-    color:white;
-    border-radius:12px;
-    padding:10px;
-    text-align:center;
-    border:1px solid #1f2937;
-}
-
-.weather-time{
-    font-size:14px;
-    font-weight:bold;
-    color:#60A5FA;
-}
-
-.weather-temp{
-    font-size:22px;
-    font-weight:bold;
-    margin-top:5px;
-}
-
-.weather-small{
-    font-size:12px;
-    color:#d1d5db;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ============================================================
-# API
+# API SETTINGS
 # ============================================================
 
 API_KEY = "f899db331049be78181d1afddbc92935"
@@ -3453,7 +3425,7 @@ url = (
 )
 
 # ============================================================
-# WEATHER
+# GET WEATHER DATA
 # ============================================================
 
 try:
@@ -3464,7 +3436,7 @@ try:
 
         data = response.json()
 
-        st.markdown("### Next Forecast Intervals")
+        st.markdown("### Next 18 Hours Forecast")
 
         cols = st.columns(6)
 
@@ -3480,33 +3452,97 @@ try:
 
             rain = item.get("rain", {}).get("3h", 0)
 
-            with cols[i]:
+            condition = item["weather"][0]["main"]
 
-                st.markdown(
+            # Weather Icon
+
+            if condition == "Clear":
+                icon = "☀️"
+
+            elif condition == "Clouds":
+                icon = "☁️"
+
+            elif condition == "Rain":
+                icon = "🌧️"
+
+            elif condition == "Thunderstorm":
+                icon = "⛈️"
+
+            elif condition == "Drizzle":
+                icon = "🌦️"
+
+            elif condition == "Mist":
+                icon = "🌫️"
+
+            else:
+                icon = "🌤️"
+
+            with colsst.markdown(
                     f"""
-                    <div class="weather-card">
+                    <div style="
+                    background:linear-gradient(180deg,#1E3A8A,#0F172A);
+                    color:white;
+                    border-radius:18px;
+                    padding:15px;
+                    text-align:center;
+                    min-height:220px;
+                    box-shadow:0px 4px 12px rgba(0,0,0,0.25);
+                    ">
 
-           eather-time">
+                    <div style="
+                    font-size:14px;
+                    font-weight:600;
+                    color:#E2E8F0;">
                     {time_}
                     </div>
 
-                    <div class="weather-temp">
-                    {temp:.1f}°C
+                    <div style="
+                    font-size:42px;
+                    margin-top:10px;">
+                    {icon}
                     </div>
 
-                    <div class="weather-small">
+                    <div style="
+                    font-size:32px;
+                    font-weight:bold;
+                    margin-top:5px;">
+                    {temp:.0f}°
+                    </div>
+
+                    <div style="
+                    color:#CBD5E1;
+                    font-size:13px;
+                    margin-bottom:10px;">
+                    {condition}
+                    </div>
+
+                    <hr style="
+                    border:0.5px solid #334155;
+                    margin-top:10px;
+                    margin-bottom:10px;">
+
+                    <div style="
+                    font-size:13px;
+                    color:#E5E7EB;">
                     Humidity
                     </div>
 
-                    <div>
+                    <div style="
+                    font-size:16px;
+                    font-weight:bold;">
                     {humidity}%
                     </div>
 
-                    <div class="weather-small" style="margin-top:5px;">
+                    <div style="
+                    margin-top:10px;
+                    font-size:13px;
+                    color:#E5E7EB;">
                     Rainfall
                     </div>
 
-                    <div>
+                    <div style="
+                    font-size:16px;
+                    font-weight:bold;">
                     {rain} mm
                     </div>
 
@@ -3520,6 +3556,8 @@ try:
         st.error(
             f"Weather API Error : {response.status_code}"
         )
+
+        st.write(response.text)
 
 except Exception as e:
 
