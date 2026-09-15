@@ -13,3 +13,5 @@ requests
 pytz
 streamlit-autorefresh
 xlsxwriter
+folium
+streamlit-folium
