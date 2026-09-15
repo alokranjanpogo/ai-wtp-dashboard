@@ -3706,8 +3706,14 @@ except Exception as e:
     st.error(
         f"GIS Map Error : {e}"
     )
+import streamlit as st
 import pandas as pd
-import plotly.express as px
+import folium
+from streamlit_folium import st_folium
+
+# ============================================================
+# TITLE
+# ============================================================
 
 st.markdown("""
 <div style="
@@ -3722,11 +3728,47 @@ color:#0A2E6B;">
 </div>
 """, unsafe_allow_html=True)
 
+# ============================================================
+# LOAD DATA
+# ============================================================
+
 washout = pd.read_excel("Wahout_pointss.xlsx")
 
-# Safe date conversion
-washout["Prv_Washout Date"] = pd.to_datetime(washout["Prv_Washout Date"], errors="coerce")
-washout["Due_Washout Date"] = pd.to_datetime(washout["Due_Washout Date"], errors="coerce")
+# ============================================================
+# DATE CONVERSION
+# ============================================================
+
+washout["Prv_Washout Date"] = pd.to_datetime(
+    washout["Prv_Washout Date"],
+    errors="coerce"
+)
+
+washout["Due_Washout Date"] = pd.to_datetime(
+    washout["Due_Washout Date"],
+    errors="coerce"
+)
+
+# ============================================================
+# LAT LONG CLEANING
+# ============================================================
+
+washout["Lattitude"] = pd.to_numeric(
+    washout["Lattitude"],
+    errors="coerce"
+)
+
+washout["Longitude"] = pd.to_numeric(
+    washout["Longitude"],
+    errors="coerce"
+)
+
+washout = washout.dropna(
+    subset=["Lattitude", "Longitude"]
+)
+
+# ============================================================
+# STATUS CLASSIFICATION
+# ============================================================
 
 today = pd.Timestamp.today()
 
@@ -3738,44 +3780,77 @@ def classify(row):
     elif row["Due_Washout Date"] <= today + pd.Timedelta(days=10):
         return "Due Soon"
 
+    return "OK"
+
+washout["Status"] = washout.apply(
+    classify,
+    axis=1
+)
+
+# ============================================================
+# MAP CENTER
+# ============================================================
+
+center_lat = washout["Lattitude"].mean()
+center_lon = washout["Longitude"].mean()
+
+# ============================================================
+# CREATE MAP
+# ============================================================
+
+m = folium.Map(
+    location=[center_lat, center_lon],
+    zoom_start=12,
+    tiles="OpenStreetMap"
+)
+
+# ============================================================
+# MARKERS
+# ============================================================
+
+for _, row in washout.iterrows():
+
+    if row["Status"] == "OK":
+        color = "green"
+
+    elif row["Status"] == "Due Soon":
+        color = "orange"
+
     else:
-        return "OK"
+        color = "red"
 
-washout["Status"] = washout.apply(classify, axis=1)
+    popup_text = f"""
+    <b>Location:</b> {row['Location']}<br>
+    <b>Sl No:</b> {row['Sl no.']}<br>
+    <b>Previous Washout:</b> {row['Prv_Washout Date'].strftime('%d-%m-%Y') if pd.notnull(row['Prv_Washout Date']) else 'NA'}<br>
+    <b>Due Washout:</b> {row['Due_Washout Date'].strftime('%d-%m-%Y') if pd.notnull(row['Due_Washout Date']) else 'NA'}<br>
+    <b>Status:</b> {row['Status']}
+    """
 
-fig = px.scatter_mapbox(
-    washout,
-    lat="Lattitude",
-    lon="Longitude",
-    color="Status",
-    color_discrete_map={
-        "OK": "green",
-        "Due Soon": "orange",
-        "Overdue": "red"
-    },
-    hover_name="Location",
-    hover_data=[
-        "Sl no.",
-        "Prv_Washout Date",
-        "Due_Washout Date",
-        "Status"
-    ],
-    zoom=12,
-    height=600
-)
+    folium.CircleMarker(
+        location=[
+            row["Lattitude"],
+            row["Longitude"]
+        ],
+        radius=8,
+        color=color,
+        fill=True,
+        fill_color=color,
+        fill_opacity=0.9,
+        popup=folium.Popup(
+            popup_text,
+            max_width=300
+        )
+    ).add_to(m)
 
-fig.update_layout(
-    mapbox_style="open-street-map",
-    margin=dict(l=0, r=0, t=0, b=0)
-)
+# ============================================================
+# DISPLAY MAP
+# ============================================================
 
-fig.update_traces(
-    marker=dict(size=15)
-)
-
-st.plotly_chart(
-    fig,
-    use_container_width=True
+st_folium(
+    m,
+    width=None,
+    height=650
 )
 # ==========================================================
 # WATER QUALITY EXECUTIVE DASHBOARD - PART 1
