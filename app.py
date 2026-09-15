@@ -2132,13 +2132,36 @@ else:
         st.error(
             "🔴 Immediate operator attention required."
         )
-# ============================================================
-# Intelligent alum dosing section
-# ============================================================
-
 import streamlit as st
-import numpy as np
-import plotly.graph_objects as go
+import pandas as pd
+
+# =====================================================
+# LOAD DATA
+# =====================================================
+
+@st.cache_data
+def load_data():
+    df = pd.read_excel("LRD_Pc.xlsx")
+    return df
+
+df = load_data()
+
+# Rename columns for easy handling
+df.columns = [
+    "Raw_Turbidity_NTU",
+    "Raw_pH",
+    "S_Alum",
+    "L_Alum",
+    "P_PAC",
+    "L_PAC",
+    "Polymer"
+]
+
+df = df.sort_values("Raw_Turbidity_NTU")
+
+# =====================================================
+# HEADER
+# =====================================================
 
 st.markdown("""
 <div style="
@@ -2146,642 +2169,199 @@ background:#F4F8FF;
 border-left:8px solid #0A2E6B;
 padding:15px;
 border-radius:8px;
-font-size:31px;
+font-size:30px;
 font-weight:bold;
 color:#0A2E6B;">
-Smart Alum Dosing Decision System
+🧪 Historical Chemical Dosing System
 </div>
 """, unsafe_allow_html=True)
 
-# ============================================================
-# INPUTS
-# ============================================================
+st.markdown("")
 
-flow_mld = 18
-flow_m3_day = flow_mld * 1000
+# =====================================================
+# INPUT SECTION
+# =====================================================
 
-turbidity = float(st.session_state.get("live_turbidity",0))
+# =====================================================
+# INPUT SECTION
+# =====================================================
 
-ph = st.slider("pH", 4.5, 9.0, 7.0, 0.1)
+col1, col2 = st.columns(2)
 
-# ============================================================
-# INDUSTRIAL DISCHARGE INPUT
-# ============================================================
+# Turbidity Input
+with col1:
 
-industrial = st.toggle("⚠️ Industrial Discharge Present")
+    t1, t2 = st.columns([4,1])
 
-industrial_type = "None"
-discharge_level = 1
-conductivity = 350
-odor_detected = False
-water_color = "Normal"
+   t1, t2 = st.columns([4,1])
 
-if industrial:
-
-    industrial_type = st.selectbox(
-        "Industrial Discharge Type",
-        [
-            "Textile/Dye",
-            "Steel/Metal",
-            "Organic/Food",
-            "Chemical",
-            "Mixed Effluent"
-        ]
-    )
-
-    st.markdown("🧪 Industrial Impact Indicators")
-
-    conductivity = st.slider(
-        "Conductivity (µS/cm)",
-        100,
-        3000,
-        700
-    )
-
-    odor_detected = st.toggle(
-        "Chemical / Oily Odor Detected"
-    )
-
-    water_color = st.selectbox(
-        "Raw Water Appearance",
-        [
-            "Normal",
-            "Slightly Colored",
-            "Highly Colored"
-        ]
-    )
-
-    # ========================================================
-    # AUTOMATIC SEVERITY ESTIMATION
-    # ========================================================
-
-    severity_score = 0
-
-    if conductivity > 1200:
-        severity_score += 2
-
-    elif conductivity > 800:
-        severity_score += 1
-
-    if ph < 6 or ph > 8.5:
-        severity_score += 1
-
-    if turbidity > 250:
-        severity_score += 2
-
-    elif turbidity > 120:
-        severity_score += 1
-
-    if odor_detected:
-        severity_score += 1
-
-    if water_color == "Highly Colored":
-        severity_score += 2
-
-    elif water_color == "Slightly Colored":
-        severity_score += 1
-
-    # ========================================================
-    # FINAL SEVERITY CLASSIFICATION
-    # ========================================================
-
-    if severity_score <= 1:
-        discharge_level = 1
-        severity_label = "Very Mild"
-
-    elif severity_score == 2:
-        discharge_level = 2
-        severity_label = "Mild"
-
-    elif severity_score == 3:
-        discharge_level = 3
-        severity_label = "Moderate"
-
-    elif severity_score == 4:
-        discharge_level = 4
-        severity_label = "High"
-
-    else:
-        discharge_level = 5
-        severity_label = "Severe"
-
-    # ========================================================
-    # DISPLAY INDUSTRIAL SEVERITY
-    # ========================================================
-
-    if discharge_level >= 5:
-
-        st.error(
-            f"🔴 Industrial Severity: {severity_label}"
+    with t1:
+        turbidity = st.number_input(
+            "Raw Water Turbidity",
+            min_value=0.0,
+            value=10.0,
+            step=0.1,     # allows decimal values
+            format="%.1f"
+        )
+    
+    with t2:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(
+            "<h3 style='color:#0A2E6B;'>NTU</h3>",
+            unsafe_allow_html=True
         )
 
-    elif discharge_level >= 3:
+# pH Slider
+with col2:
 
-        st.warning(
-            f"🟠 Industrial Severity: {severity_label}"
-        )
+    ph = st.slider(
+    "pH",
+    min_value=0.0,
+    max_value=14.0,
+    value=7.0,
+    step=0.1
+)
+# =====================================================
+# RANGE CHECK
+# =====================================================
 
-    else:
+min_turb = df["Raw_Turbidity_NTU"].min()
+max_turb = df["Raw_Turbidity_NTU"].max()
+
+if turbidity < min_turb or turbidity > max_turb:
+
+    st.error(
+        f"❌ Value Not Available. Historical data available from "
+        f"{min_turb:.1f} NTU to {max_turb:.1f} NTU"
+    )
+
+else:
+
+    # =================================================
+    # NEAREST TURBIDITY MATCH
+    # =================================================
+
+    idx = (
+        df["Raw_Turbidity_NTU"]
+        .sub(turbidity)
+        .abs()
+        .idxmin()
+    )
+
+    result = df.loc[idx]
+
+    nearest_turbidity = result["Raw_Turbidity_NTU"]
+
+    # =================================================
+    # MATCH STATUS
+    # =================================================
+
+    if abs(nearest_turbidity - turbidity) < 0.01:
 
         st.success(
-            f"🟢 Industrial Severity: {severity_label}"
+            f"✅ Exact Match Found : {nearest_turbidity:.1f} NTU"
         )
 
-# ============================================================
-# 🧪 JAR TEST INPUT
-# ============================================================
+    else:
 
-st.markdown("🧪 Jar Test Input")
-
-jar_available = st.toggle("Use Jar Test")
-
-if jar_available:
-
-    jar_dose = st.number_input(
-        "Enter Jar Test Dose (mg/L)",
-        min_value=1.0,
-        max_value=200.0,
-        value=5.0,
-        step=1.0
-    )
-
-else:
-    jar_dose = None
-
-# ============================================================
-# ALKALINITY INPUT
-# ============================================================
-
-alkalinity = st.slider(
-    "Alkalinity (mg/L as CaCO3)",
-    20,
-    250,
-    100
-)
-
-# ============================================================
-# MULTIVARIABLE REGRESSION MODEL
-# ============================================================
-
-predicted_dose = (
-    -1.88
-    + 0.219 * turbidity
-    + 1.269 * ph
-    + 0.00593 * conductivity
-    - 0.0301 * alkalinity
-)
-
-predicted_dose = max(predicted_dose, 5)
-
-# ============================================================
-# pH EFFECT ON COAGULATION
-# ============================================================
-
-if ph < 5.5:
-    ph_factor = 1.25
-
-elif 5.5 <= ph < 6.0:
-    ph_factor = 1.10
-
-elif 6.0 <= ph <= 7.2:
-    ph_factor = 1.0
-
-elif 7.2 < ph <= 8.0:
-    ph_factor = 1.08
-
-else:
-    ph_factor = 1.18
-
-# ============================================================
-# INDUSTRIAL RISK ADJUSTMENT
-# ============================================================
-
-risk_adjustment = 0
-
-if conductivity > 1200:
-    risk_adjustment += 5
-
-elif conductivity > 800:
-    risk_adjustment += 3
-
-if odor_detected:
-    risk_adjustment += 3
-
-if water_color == "Highly Colored":
-    risk_adjustment += 5
-
-elif water_color == "Slightly Colored":
-    risk_adjustment += 2
-
-predicted_dose += risk_adjustment
-
-# ============================================================
-# TURBIDITY BOOST FACTOR
-# ============================================================
-
-if turbidity > 300:
-    turb_factor = 1.35
-
-elif turbidity > 150:
-    turb_factor = 1.20
-
-else:
-    turb_factor = 1.0
-
-# ============================================================
-# AI DOSING LOGIC
-# ============================================================
-
-# ============================================================
-# JAR TEST + REGRESSION HYBRID
-# ============================================================
-
-if jar_available:
-
-    ai_dose = (
-        0.80 * jar_dose
-        + 0.20 * predicted_dose
-    )
-
-    if abs(jar_dose - predicted_dose) > 20:
-
-        st.warning(
-            "⚠️ Significant deviation between Jar Test and Model Prediction"
+        st.info(
+            f"ℹ Entered Turbidity : {turbidity:.1f} NTU | "
+            f"Nearest Historical Value Used : {nearest_turbidity:.1f} NTU"
         )
 
-else:
+    st.markdown("---")
 
-    ai_dose = predicted_dose
-# ============================================================
-# FINAL CORRECTIONS
-# ============================================================
+    # =================================================
+    # DOSING DISPLAY
+    # =================================================
 
-ai_dose = ai_dose * ph_factor 
+    st.markdown("## 🧪 Recommended Chemical Doses")
 
-ai_dose = float(np.clip(ai_dose, 5, 150))
+    c1, c2, c3, c4, c5 = st.columns(5)
 
-# ============================================================
-# CHEMICAL REQUIREMENT
-# ============================================================
+    with c1:
+        st.metric(
+            "Solid Alum",
+            result["S_Alum"]
+        )
 
-alum_kg_day = (ai_dose * flow_m3_day) / 1000
+    with c2:
+        st.metric(
+            "Liquid Alum",
+            result["L_Alum"]
+        )
 
-pac_dose = ai_dose * 0.45
+    with c3:
+        st.metric(
+            "Powder PAC",
+            result["P_PAC"]
+        )
 
-# ============================================================
-# RAW WATER RISK CLASSIFICATION
-# ============================================================
+    with c4:
+        st.metric(
+            "Liquid PAC",
+            result["L_PAC"]
+        )
 
-if turbidity < 50:
-    raw_risk = "Low"
+    with c5:
+        st.metric(
+            "Polymer",
+            result["Polymer"]
+        )
 
-elif turbidity < 150:
-    raw_risk = "Moderate"
+    st.markdown("---")
 
-elif turbidity < 300:
-    raw_risk = "High"
+    # =================================================
+    # SUMMARY TABLE
+    # =================================================
 
-else:
-    raw_risk = "Critical"
+    st.markdown("### 📋 Dosing Record Used")
 
-# ============================================================
-# CONFIDENCE SCORE
-# ============================================================
+    summary = pd.DataFrame({
 
-confidence = 92
+        "Parameter": [
+            "Entered Turbidity",
+            "Historical Turbidity Used",
+            "Historical pH"
+        ],
 
-if not jar_available:
-    confidence -= 15
+        "Value": [
+            f"{turbidity:.1f} NTU",
+            f"{nearest_turbidity:.1f} NTU",
+            f"{result['Raw_pH']}"
+        ]
 
-if industrial:
-    confidence -= 8
+    })
 
-if turbidity > 300:
-    confidence -= 10
+    st.table(summary)
 
-confidence = max(confidence, 60)
+    st.markdown("### 📊 Chemical Recommendation")
 
-# ============================================================
-# STATUS BAND
-# ============================================================
+    chemical_df = pd.DataFrame({
 
-if ai_dose > 80:
+        "Chemical": [
+            "Solid Alum",
+            "Liquid Alum",
+            "Powder PAC",
+            "Liquid PAC",
+            "Polymer"
+        ],
 
-    st.error("🔴 High Chemical Demand")
+        "Recommended Dose": [
+            result["S_Alum"],
+            result["L_Alum"],
+            result["P_PAC"],
+            result["L_PAC"],
+            result["Polymer"]
+        ]
 
-elif ai_dose > 40:
+    })
 
-    st.warning("🟡 Moderate Condition")
-    
-else:
-
-    st.success("🟢 Normal Operation")
-
-# ============================================================
-# LAYOUT
-# ============================================================
-
-# ============================================================
-# EXECUTIVE KPI ROW
-# ============================================================
-
-k1, k2, k3, k4 = st.columns(4)
-
-with k1:
-    st.metric("Turbidity", f"{turbidity:.1f} NTU")
-
-with k2:
-    st.metric("pH", f"{ph:.1f}")
-
-with k3:
-    st.metric("Conductivity", f"{conductivity:.0f} µS/cm")
-
-with k4:
-    st.metric("Alkalinity", f"{alkalinity:.0f} mg/L")
-
-st.markdown("---")
-
-left, right = st.columns([1.3, 1], gap="large")
-# ============================================================
-# 📊 LEFT → GRAPH + METRICS
-# ============================================================
-
-with left:
-
-    st.markdown("""
-    <div style="
-    background:#F4F8FF;
-    border-left:8px solid #0A2E6B;
-    padding:15px;
-    border-radius:8px;
-    font-size:24px;
-    font-weight:bold;
-    color:#0A2E6B;">
-    🧪 Alum Dosing Recommendation System
-    </div>
-    """, unsafe_allow_html=True)
-        
-    st.markdown("")
-
-    x = np.linspace(0, 400, 150)
-
-    y_ai = (
-    -1.88
-    + 0.219 * x
-    + 1.269 * ph
-    + 0.00593 * conductivity
-    - 0.0301 * alkalinity
-)
-
-y_ai = np.clip(y_ai, 5, 150)
-
-fig = go.Figure()
-
-fig.add_hrect(
-    y0=0,
-    y1=20,
-    fillcolor="green",
-    opacity=0.10,
-    line_width=0
-)
-
-fig.add_hrect(
-    y0=20,
-    y1=40,
-    fillcolor="yellow",
-    opacity=0.08,
-    line_width=0
-)
-
-fig.add_hrect(
-    y0=40,
-    y1=80,
-    fillcolor="orange",
-    opacity=0.08,
-    line_width=0
-)
-
-fig.add_hrect(
-    y0=80,
-    y1=150,
-    fillcolor="red",
-    opacity=0.06,
-    line_width=0
-)    
-# ========================================================
-# AI CURVE
-# ========================================================
-
-fig.add_trace(go.Scatter(
-    x=x,
-    y=y_ai,
-    line=dict(
-        color="#0A66C2",
-        width=5
-    ),
-    name="Regression Model"
-))
-
-# ========================================================
-# OPERATING POINT
-# ========================================================
-
-fig.add_trace(go.Scatter(
-    x=[turbidity],
-    y=[ai_dose],
-    mode="markers+text",
-    marker=dict(
-        size=14,
-        color="yellow"
-    ),
-    text=["Operating"],
-    textposition="top center"
-))
-
-# ========================================================
-# GRAPH LAYOUT
-# ========================================================
-
-fig.update_layout(
-    template="plotly_white",
-    height=500,
-
-    margin=dict(
-        l=10,
-        r=10,
-        t=35,
-        b=10
-    ),
-
-    xaxis_title="Turbidity (NTU)",
-    yaxis_title="Alum Dose (mg/L)",
-    showlegend=False
-)
-
-st.plotly_chart(
-    fig,
-    use_container_width=True,
-    config={"displayModeBar": False}
-)
-
-st.markdown("### 📌 Decision Indicators")
-
-d1,d2,d3,d4 = st.columns(4)
-
-with d1:
-    st.metric(
-        "Recommended Dose",
-        f"{ai_dose:.1f} mg/L"
+    st.dataframe(
+        chemical_df,
+        use_container_width=True,
+        hide_index=True
     )
-
-with d2:
-    st.metric(
-        "Alum Required",
-        f"{alum_kg_day:,.0f} kg/day"
-    )
-
-with d3:
-    st.metric(
-        "Confidence",
-        f"{confidence}%"
-    )
-
-with d4:
-    st.metric(
-        "Risk Level",
-        raw_risk
-    )
-
-    summary_df = pd.DataFrame({
-    "Parameter":[
-        "Turbidity",
-        "pH",
-        "Conductivity",
-        "Alkalinity"
-    ],
-    "Value":[
-        f"{turbidity:.1f} NTU",
-        f"{ph:.1f}",
-        f"{conductivity:.0f} µS/cm",
-        f"{alkalinity:.0f} mg/L"
-    ]
-})
-
-st.table(summary_df)
-# ========================================================
-# INDUSTRIAL SUMMARY
-# ========================================================
-
-if industrial:
-
-    st.markdown(f"""
-### 🏭 Industrial Assessment
-
-| Parameter | Status |
-|---|---|
-| Discharge Type | **{industrial_type}** |
-| Conductivity | **{conductivity} µS/cm** |
-| Water Appearance | **{water_color}** |
-| Odor Detected | **{"Yes" if odor_detected else "No"}** |
-| Severity | **{severity_label} ({discharge_level}/5)** |
-| Risk Adjustment | **{risk_adjustment:.1f} mg/L** |
-""")
-st.markdown(f"""
-### 📐 Multivariable Regression Prediction
-
-| Parameter | Value |
-|---|---|
-| Turbidity | **{turbidity:.1f} NTU** |
-| pH | **{ph:.2f}** |
-| Conductivity | **{conductivity:.0f} µS/cm** |
-| Alkalinity | **{alkalinity:.0f} mg/L** |
-
-### Predicted Dose
-
-## {predicted_dose:.1f} mg/L
-""")
-
-
-# ========================================================
-# JAR TEST STATUS
-# ========================================================
-
-if jar_available:
-
-    st.success(
-        f"🧪 Jar Test Integrated: {jar_dose:.1f} mg/L"
-    )
-
-else:
-
-    st.warning(
-        "⚠️ Jar Test not used — relying on regression prediction"
-    )
-
-# ========================================================
-# FINAL RECOMMENDATION
-# ========================================================
-
-st.markdown(f"""
-<div style="
-background:#F8FAFC;
-border-left:6px solid #22C55E;
-padding:18px;
-border-radius:10px;
-margin-top:15px;">
-
-<h3 style="
-margin:0;
-color:#166534;
-font-size:24px;
-font-weight:700;">
-✅ Final Recommendation
-</h3>
-
-<p style="
-font-size:30px;
-font-weight:700;
-color:#0A2E6B;
-margin-top:10px;
-margin-bottom:10px;">
-{predicted_dose:.1f} mg/L Alum Dose
-</p>
-
-<p style="
-font-size:15px;
-color:#666;
-margin:0;">
-pH Factor: 1.00 &nbsp;&nbsp;|&nbsp;&nbsp;
-Risk Adjustment: 0.0 mg/L &nbsp;&nbsp;|&nbsp;&nbsp;
-Source: Regression Model
-</p>
-
-</div>
-""", unsafe_allow_html=True)
-st.markdown(f"""
-### Expected Outcomes
-
-- Optimized coagulant utilization
-- Improved floc formation
-- Better sedimentation performance
-- Reduced filter loading
-- Enhanced treated water quality
-
-### Chemical Requirement
-
-- Alum Requirement:
-
-**{alum_kg_day:,.0f} kg/day**
-
-- PAC Equivalent Dose:
-
-**{pac_dose:.1f} mg/L**
-
-### AI Confidence
-
-🎯 **{confidence}%**
-
-""")
 # ============================================================
 # CORRECT DYNAMIC HYPOCHLORITE DOSING MODEL
 # ============================================================
