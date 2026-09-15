@@ -3386,7 +3386,6 @@ with right_col:
 # ============================================================
 
 import requests
-import pandas as pd
 import streamlit as st
 
 # ============================================================
@@ -3412,86 +3411,110 @@ color:#0A2E6B;">
 
 st.markdown("""
 <style>
+
 .small-weather{
     background: linear-gradient(135deg,#0f172a,#1e293b);
-    padding:10px;
+    padding:12px;
     border-radius:10px;
     text-align:center;
     color:white;
-    border:1px solid rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.08);
     font-size:13px;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================
-# WEATHER API
+# API DETAILS
 # ============================================================
 
-API_KEY = "YOUR_API_KEY"
-
+API_KEY = "f899db331049be78181d1afddbc92935"
 CITY = "Jamshedpur"
 
 url = (
     f"https://api.openweathermap.org/data/2.5/forecast"
-    f"?q={CITY}&appid={API_KEY}&units=metric"
+    f"?q={CITY}"
+    f"&appid={API_KEY}"
+    f"&units=metric"
 )
 
-response = requests.get(url)
-
 # ============================================================
-# FORECAST CARDS
+# GET WEATHER DATA
 # ============================================================
 
-if response.status_code == 200:
+try:
 
-    data = response.json()
+    response = requests.get(url, timeout=15)
 
-    weather_data = []
+    if response.status_code == 200:
 
-    for item in data["list"][:6]:
+        data = response.json()
 
-        weather_data.append({
+        st.markdown("### ⏰ Next 18 Hours Forecast")
 
-            "Time": item["dt_txt"][11:16],
+        cols = st.columns(6)
 
-            "Temp": item["main"]["temp"],
+        for i in range(6):
 
-            "Humidity": item["main"]["humidity"],
+            item = data["list"][i]
 
-            "Rain": item.get("rain", {}).get("3h", 0)
+            forecast_time = item["dt_txt"][11:16]
 
-        })
+            temperature = item["main"]["temp"]
 
-    weather_df = pd.DataFrame(weather_data)
+            humidity = item["main"]["humidity"]
 
-    st.markdown("### ⏰ Next 18 Hours Forecast")
+            rainfall = item.get("rain", {}).get("3h", 0)
 
-    cols = st.columns(6)
+            condition = item["weather"][0]["main"]
 
-    for i, col in enumerate(cols):
+            if condition == "Rain":
+                icon = "🌧️"
+            elif condition == "Clouds":
+                icon = "☁️"
+            elif condition == "Clear":
+                icon = "☀️"
+            elif condition == "Thunderstorm":
+                icon = "⛈️"
+            else:
+                icon = "🌤️"
 
-        row = weather_df.iloc[i]
+            with cols[i]:
 
-        with col:
+                           f"""
+                    <div class="small-weather">
 
-            st.markdown(f"""
-            <div class="small-weather">
+                    <b>{forecast_time}</b>
 
-            <b>{row['Time']}</b><br><br>
+                    <br><br>
 
-            🌡️ {row['Temp']:.1f} °C<br>
+                    {icon}
 
-            💧 {row['Humidity']} %<br>
+                    <br><br>
 
-            🌧️ {row['Rain']} mm
+                    🌡️ {temperature:.1f} °C
 
-            </div>
-            """, unsafe_allow_html=True)
+                    <br>
 
-else:
+                    💧 {humidity} %
 
-    st.error("Unable to fetch weather data.")
+                    <br>
+
+                    🌧️ {rainfall} mm
+
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+    else:
+
+        st.error(
+            f"Unable to fetch weather data. Error Code: {response.status_code}"
+        )
+
+except Exception as e
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
