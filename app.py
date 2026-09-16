@@ -2767,20 +2767,23 @@ with left_col:
             "Raw Water Turbidity",
             0.0,
             1000.0,
-            50.0
+            50.0,
+            0.1
         )
 
         alum_dose = st.slider(
             "Alum Dose (mg/L)",
             0.0,
             100.0,
-            15.0
+            15.0,
+            0.1
         )
         pac_dose = st.slider(
             "PAC Dose (mg/L)",
             0.0,
             100.0,
-            10.0
+            10.0,
+            0.1
 
         )
         
