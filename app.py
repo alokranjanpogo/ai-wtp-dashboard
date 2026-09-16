@@ -2776,7 +2776,14 @@ with left_col:
             100.0,
             15.0
         )
+        pac_dose = st.slider(
+            "PAC Dose (mg/L)",
+            0.0,
+            100.0,
+            10.0
 
+        )
+        
         hypo_dose = st.slider(
             "Hypo Dose (ppm)",
             0.0,
