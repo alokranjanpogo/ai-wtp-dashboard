@@ -2178,11 +2178,12 @@ Coagulant Dosing Decision Support System
 
 st.markdown("""
 <div style="
-font-size:14px;
-color:#6B7280;
-margin-top:4px;
+font-size:18px;
+font-weight:600;
+color:#3B4A6B;
+margin-top:8px;
 margin-bottom:15px;">
-Based on historical jar test data and operational performance trends
+Based on Historical Jar Test Data & Plant Performance Records
 </div>
 """, unsafe_allow_html=True)
 # =====================================================
