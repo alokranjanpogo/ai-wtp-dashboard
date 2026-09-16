@@ -2580,15 +2580,6 @@ Smart Feedback System
 </div>
 """, unsafe_allow_html=True)
 
-st.write("CSV Location:", os.path.abspath(FILE))
-st.write("CSV Exists:", os.path.exists(FILE))
-
-if os.path.exists(FILE):
-    st.write(
-        "File Size:",
-        os.path.getsize(FILE),
-        "bytes"
-    )
 left_col, right_col = st.columns([2,1])
 
 from email.mime.text import MIMEText
