@@ -2580,6 +2580,15 @@ Smart Feedback System
 </div>
 """, unsafe_allow_html=True)
 
+st.write("CSV Location:", os.path.abspath(FILE))
+st.write("CSV Exists:", os.path.exists(FILE))
+
+if os.path.exists(FILE):
+    st.write(
+        "File Size:",
+        os.path.getsize(FILE),
+        "bytes"
+    )
 left_col, right_col = st.columns([2,1])
 
 from email.mime.text import MIMEText
@@ -2719,6 +2728,36 @@ except Exception as e:
     df = pd.DataFrame(
         columns=required_columns
     )
+
+# =========================================================
+# STORAGE DEBUG
+# =========================================================
+
+with st.expander("🔍 Storage Debug", expanded=False):
+
+    st.write("CSV Path:", os.path.abspath(FILE))
+
+    st.write("File Exists:", os.path.exists(FILE))
+
+    if os.path.exists(FILE):
+
+        st.write(
+            "File Size:",
+            os.path.getsize(FILE),
+            "bytes"
+        )
+
+        st.write(
+            "Rows Loaded:",
+            len(df)
+        )
+
+        if len(df) > 0:
+
+            st.dataframe(
+                df.tail(5),
+                use_container_width=True
+            )
 # =========================================================
 # ENSURE COLUMNS EXIST
 # =========================================================
@@ -2864,10 +2903,16 @@ if submit:
 
     df.to_csv(FILE, index=False, encoding='utf-8-sig')
 
+    # Verify saved file
+    saved_df = pd.read_csv(FILE)
+    
     st.success("✅ Feedback Stored Successfully")
-
-    st.info(f"📦 Total Samples Stored: {len(df)}")
-
+    
+    st.info(f"📦 Total Samples Stored In Memory : {len(df)}")
+    
+    st.info(f"💾 Total Rows Saved In File : {len(saved_df)}")
+    
+    st.code(os.path.abspath(FILE))
     # =====================================================
     # AI RECOMMENDATION
     # =====================================================
