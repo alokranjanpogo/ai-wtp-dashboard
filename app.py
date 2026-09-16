@@ -2176,8 +2176,15 @@ Coagulant Dosing Decision Support System
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("")
-
+st.markdown("""
+<div style="
+font-size:14px;
+color:#6B7280;
+margin-top:4px;
+margin-bottom:15px;">
+Based on historical jar test data and operational performance trends
+</div>
+""", unsafe_allow_html=True)
 # =====================================================
 # INPUT SECTION
 # =====================================================
