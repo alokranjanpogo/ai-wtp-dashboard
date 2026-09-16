@@ -14,7 +14,7 @@ if "filter_alarm_muted" not in st.session_state:
 # ===============================
 # AUTO REFRESH
 # ===============================
-st.set_page_config(page_title="WTP Moharda SCADA", layout="wide")
+st.set_page_config(page_title="WTP HMI PANEL", layout="wide")
 # ==========================================
 # DATA SOURCE SWITCH
 # ==========================================
