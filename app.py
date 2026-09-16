@@ -237,7 +237,7 @@ else:
 # ===============================
 # TITLE
 # ===============================
-st.title("🏭 WTP MOHARDA – LIVE HMI PANEL")
+st.title("🏭 WTP – LIVE HMI PANEL")
 ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.now(ist)
 st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
