@@ -2728,36 +2728,9 @@ except Exception as e:
     df = pd.DataFrame(
         columns=required_columns
     )
-
-# =========================================================
-# STORAGE DEBUG
-# =========================================================
-import os
-with st.expander("🔍 Storage Debug", expanded=False):
-
-    st.write("CSV Path:", os.path.abspath(FILE))
-
-    st.write("File Exists:", os.path.exists(FILE))
-
-    if os.path.exists(FILE):
-
-        st.write(
-            "File Size:",
-            os.path.getsize(FILE),
-            "bytes"
-        )
-
-        st.write(
-            "Rows Loaded:",
-            len(df)
-        )
-
-        if len(df) > 0:
-
-            st.dataframe(
-                df.tail(5),
-                use_container_width=True
-            )
+st.info(
+    f"📂 Records Loaded At Startup: {len(df)}"
+)
 # =========================================================
 # ENSURE COLUMNS EXIST
 # =========================================================
@@ -2901,18 +2874,30 @@ if submit:
     # SAVE CSV
     # =====================================================
 
-    df.to_csv(FILE, index=False, encoding='utf-8-sig')
-
-    # Verify saved file
+    
+    df.to_csv(
+        FILE,
+        index=False,
+        encoding="utf-8-sig"
+    )
+    
+    # Verify data actually saved
     saved_df = pd.read_csv(FILE)
     
     st.success("✅ Feedback Stored Successfully")
     
-    st.info(f"📦 Total Samples Stored In Memory : {len(df)}")
+    st.info(
+        f"📦 Total Samples In Memory: {len(df)}"
+    )
     
-    st.info(f"💾 Total Rows Saved In File : {len(saved_df)}")
+    st.info(
+        f"💾 Total Samples Saved In CSV: {len(saved_df)}"
+    )
     
-    st.code(os.path.abspath(FILE))
+    st.dataframe(
+        saved_df.tail(5),
+        use_container_width=True
+    )
     # =====================================================
     # AI RECOMMENDATION
     # =====================================================
