@@ -2388,7 +2388,7 @@ color:#0A2E6B;">
 </div>
 """, unsafe_allow_html=True)
 
-names=["Moharda WT","Zone 9 WT","Zone 3 WT","Zone 1 GSR outlet","Bagunhatu WT","Bagunnagar WT"]
+names=["Central WT","Kadma 9 WT","Sidgorah 3 WT","Sakchi WT","Tatanagar WT","Tatanagar WT"]
 tc=st.columns(3)
 for i in range(6):
     tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
