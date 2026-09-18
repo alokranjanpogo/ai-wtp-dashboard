@@ -205,7 +205,7 @@ else:
     
         })
     
-    # Filter Houses
+    # Filter Beds
     
     for i in range(1,7):
 
@@ -218,7 +218,7 @@ else:
     
             "Date": current_date,
     
-            "Unit": f"Filter House {i}",
+            "Unit": f"Filter Bed {i}",
     
             "Inlet Turbidity": clarifier_outlet,
     
@@ -1001,7 +1001,7 @@ def gauge(title,value,max_val,mode="normal"):
     return fig
 
 # ============================================================
-# SMART CLARIFIER + Filter House MONITORING SYSTEM
+# SMART CLARIFIER + Filter Bed MONITORING SYSTEM
 # FINAL STATIC + DYNAMIC VERSION
 # ============================================================
 
@@ -1027,7 +1027,7 @@ border-radius:8px;
 font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
-📊 Smart Clarifier & Filter House Monitoring
+📊 Smart Clarifier & Filter Bed Monitoring
 </div>
 """, unsafe_allow_html=True)
 
@@ -1299,11 +1299,11 @@ else:
 
 
 # ============================================================
-# Filter House SECTION
+# Filter Bed SECTION
 # ============================================================
 
 st.markdown("---")
-st.subheader("🧪 Filter House Live Status")
+st.subheader("🧪 Filter Bed Live Status")
 
 cols = st.columns(6)
 
@@ -1313,7 +1313,7 @@ alarm_triggered = False
 
 for i in range(1,7):
 
-    filter_name = f"Filter House {i}"
+    filter_name = f"Filter Bed {i}"
 
     # ========================================================
     # LIVE / STATIC VALUES
@@ -1362,7 +1362,7 @@ for i in range(1,7):
         st.session_state.filter_alarm_muted = False
     filter_summary.append({
 
-        "Filter House": filter_name,
+        "Filter Bed": filter_name,
 
         "Outlet Turbidity": round(
             filter_outlet,
@@ -1521,7 +1521,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.subheader("📋 Filter House Summary")
+st.subheader("📋 Filter Bed Summary")
 
 for item in filter_summary:
 
@@ -1556,7 +1556,7 @@ for item in filter_summary:
         ">
 
         <h4 style="margin:0;color:{text};">
-            {item['Filter House']}
+            {item['Filter Bed']}
         </h4>
 
         <p style="
@@ -1587,12 +1587,12 @@ st.subheader("📈 Output Turbidity Trend")
 
 units = [
     "Clarifier",
-    "Filter House 1",
-    "Filter House 2",
-    "Filter House 3",
-    "Filter House 4",
-    "Filter House 5",
-    "Filter House 6"
+    "Filter Bed 1",
+    "Filter Bed 2",
+    "Filter Bed 3",
+    "Filter Bed 4",
+    "Filter Bed 5",
+    "Filter Bed 6"
 ]
 
 # ============================================================
@@ -1709,12 +1709,12 @@ else:
         "Select Unit",
         [
             "Clarifier",
-            "Filter House 1",
-            "Filter House 2",
-            "Filter House 3",
-            "Filter House 4",
-            "Filter House 5",
-            "Filter House 6"
+            "Filter Bed 1",
+            "Filter Bed 2",
+            "Filter Bed 3",
+            "Filter Bed 4",
+            "Filter Bed 5",
+            "Filter Bed 6"
         ],
         key="output_trend_unit"
     )
