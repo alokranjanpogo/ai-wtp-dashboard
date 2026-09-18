@@ -2760,6 +2760,7 @@ if submit:
         "raw_turbidity": raw_turbidity,
 
         "alum_dose": alum_dose,
+        "pac_dose": pac_dose,
         "hypo_dose": hypo_dose,
 
         "outlet_turbidity": outlet_turbidity,
@@ -3185,6 +3186,12 @@ fig.add_trace(go.Scatter(
 fig.add_trace(go.Scatter(
     x=chart_df["timestamp"],
     y=chart_df["frc"],
+    mode='lines+markers',
+    name='FRC'
+))
+fig.add_trace(go.Scatter(
+    x=chart_df["timestamp"],
+    y=chart_df["pac_dose"],
     mode='lines+markers',
     name='FRC'
 ))
