@@ -2405,6 +2405,54 @@ border-radius:8px;
 font-size:24px;
 font-weight:bold;
 color:#0A2E6B;">
+
+
+# ===============================
+# SUMP LEVEL MONITORING
+# ===============================
+
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+💧 Sump Level Monitoring
+</div>
+""", unsafe_allow_html=True)
+
+sump_names = [
+    "Sonari Sump",
+    "Kadma Sump",
+    "Sakchi Sump",
+    "Tatanagar Sump",
+    "Central Sump",
+    "Sidgorah Sump"
+]
+
+sump_levels = [
+    82,  # Sonari
+    65,  # Kadma
+    91,  # Sakchi
+    73,  # Tatanagar
+    88,  # Central
+    57   # Sidgorah
+]
+
+cols = st.columns(3)
+
+for i in range(6):
+    cols[i % 3].plotly_chart(
+        gauge(
+            sump_names[i],
+            sump_levels[i],
+            100
+        ),
+        use_container_width=True
+    )
 🗼 Distribution Water Towers
 </div>
 """, unsafe_allow_html=True)
