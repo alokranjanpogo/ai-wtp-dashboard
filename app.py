@@ -2937,7 +2937,7 @@ Final Turbidity: {final_turbidity}
 FRC: {frc}
 
 Alum Dose: {alum_dose}
-
+Pac Dose: {pac dose}
 Hypo Dose: {hypo_dose}
 
 Immediate operator action required.
@@ -3193,7 +3193,7 @@ fig.add_trace(go.Scatter(
     x=chart_df["timestamp"],
     y=chart_df["pac_dose"],
     mode='lines+markers',
-    name='FRC'
+    name='PAC Dose'
 ))
 
 # =====================================================
