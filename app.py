@@ -2424,7 +2424,6 @@ color:#0A2E6B;">
 </div>
 """, unsafe_allow_html=True)
 
-# Sump Names
 sump_names = [
     "Sonari Sump",
     "Kadma Sump",
@@ -2434,47 +2433,17 @@ sump_names = [
     "Sidgorah Sump"
 ]
 
-# Sump Levels (%)
-sump_levels = [
-    82,
-    65,
-    91,
-    73,
-    88,
-    57
-]
+sump_levels = [82, 65, 91, 73, 88, 57]
 
-# 3 Columns Layout
 cols = st.columns(3)
 
-for i in range(len(sump_names)):
-    
-    fig = go.Figure(
-        go.Indicator(
-            mode="gauge+number",
-            value=sump_levels[i],
-            number={"suffix": "%"},
-            title={"text": sump_names[i]},
-            gauge={
-                "axis": {"range": [0, 100]},
-                "bar": {"color": "#0077b6"},
-                "steps": [
-                    {"range": [0, 30], "color": "#f8d7da"},
-                    {"range": [30, 70], "color": "#fff3cd"},
-                    {"range": [70, 100], "color": "#d4edda"}
-                ]
-            }
-        )
-    )
-
-    fig.update_layout(
-        height=250,
-        paper_bgcolor="white",
-        margin=dict(l=10, r=10, t=40, b=10)
-    )
-
+for i in range(6):
     cols[i % 3].plotly_chart(
-        fig,
+        gauge(
+            sump_names[i],
+            sump_levels[i],
+            100
+        ),
         use_container_width=True
     )
 🗼 Distribution Water Towers
