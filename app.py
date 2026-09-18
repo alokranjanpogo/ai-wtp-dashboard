@@ -2408,7 +2408,7 @@ color:#0A2E6B;">
 
 
 # ===============================
-# SUMP LEVELS
+# SUMP LEVEL MONITORING
 # ===============================
 
 st.markdown("""
@@ -2439,11 +2439,7 @@ tc = st.columns(3)
 
 for i in range(6):
     tc[i % 3].plotly_chart(
-        gauge(
-            names[i],
-            levels[i],
-            100
-        ),
+        gauge(names[i], levels[i], 100),
         use_container_width=True
     )
 🗼 Distribution Water Towers
