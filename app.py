@@ -2668,19 +2668,22 @@ with left_col:
 
         alum_dose = st.slider(
             "Alum Dose (mg/L)",
-            0.0,
-            100.0,
-            15.0,
-            0.1
+            min_value=0.00,
+            max_value=100.00,
+            value=15.00,
+            step=0.10
         )
+
+st.write(f"Selected Alum Dose: {alum_dose:.2f} mg/L")
         pac_dose = st.slider(
             "PAC Dose (mg/L)",
-            0.0,
-            100.0,
-            10.0,
-            0.1
-
+            min_value=0.00,
+            max_value=100.00,
+            value=10.00,
+            step=0.10
         )
+
+st.write(f"Selected PAC Dose: {pac_dose:.2f} mg/L")
         
         hypo_dose = st.slider(
             "Hypo Dose (ppm)",
