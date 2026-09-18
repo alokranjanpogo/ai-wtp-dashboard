@@ -2408,7 +2408,7 @@ color:#0A2E6B;">
 
 
 # ===============================
-# SUMP LEVEL MONITORING
+# SUMP LEVELS
 # ===============================
 
 st.markdown("""
@@ -2424,7 +2424,7 @@ color:#0A2E6B;">
 </div>
 """, unsafe_allow_html=True)
 
-sump_names = [
+names = [
     "Sonari Sump",
     "Kadma Sump",
     "Sakchi Sump",
@@ -2433,15 +2433,15 @@ sump_names = [
     "Sidgorah Sump"
 ]
 
-sump_levels = [82, 65, 91, 73, 88, 57]
+levels = [82, 65, 91, 73, 88, 57]
 
-cols = st.columns(3)
+tc = st.columns(3)
 
 for i in range(6):
-    cols[i % 3].plotly_chart(
+    tc[i % 3].plotly_chart(
         gauge(
-            sump_names[i],
-            sump_levels[i],
+            names[i],
+            levels[i],
             100
         ),
         use_container_width=True
