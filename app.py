@@ -5212,7 +5212,19 @@ st.markdown("""
 # TITLE
 # ==========================
 
-st.title("💧 Clariflocculator SCADA")
+st.markdown("""
+<div style="
+background:#F4F8FF;
+border-left:8px solid #0A2E6B;
+padding:15px;
+border-radius:8px;
+font-size:24px;
+font-weight:bold;
+color:#0A2E6B;">
+💧 Clariflocculator Running Status
+</div>
+""", unsafe_allow_html=True)
+`
 
 # ==========================
 # SIDEBAR
