@@ -1060,6 +1060,22 @@ trend_df["Date"] = pd.to_datetime(
 )
 
 # ============================================================
+# CLARIFIER / FH SELECTION
+# ============================================================
+
+selected_unit = st.sidebar.selectbox(
+    "Select Unit",
+    [
+        "Clarifier Part A",
+        "Clarifier Part B",
+        "FH3",
+        "FH4",
+        "FH5",
+        "FH6"
+    ]
+)
+
+# ============================================================
 # STATIC DATE FILTER
 # ============================================================
 
@@ -1090,7 +1106,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.subheader("🌀 Clarifier Live Monitoring")
+st.subheader(f"🌀 {selected_unit} Live Monitoring")
 
 # ============================================================
 # VALUES
@@ -1166,7 +1182,7 @@ fig_clar = go.Figure(go.Indicator(
     },
 
     title={
-        'text': "Clarifier Outlet Turbidity",
+        'text': f"{selected_unit} Outlet Turbidity",
         'font': {
             'size': 24
         }
@@ -1258,7 +1274,10 @@ m4.metric(
 # ANALYSIS
 # ============================================================
 
-st.markdown("###### Analysis")
+st.markdown(
+    f"###### Analysis - {selected_unit}"
+)
+
 
 if clar_outlet <= 5:
 
