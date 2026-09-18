@@ -2674,7 +2674,8 @@ with left_col:
             step=0.10
         )
 
-st.write(f"Selected Alum Dose: {alum_dose:.2f} mg/L")
+        st.write(f"Selected Alum Dose: {alum_dose:.2f} mg/L")
+
         pac_dose = st.slider(
             "PAC Dose (mg/L)",
             min_value=0.00,
@@ -2683,7 +2684,7 @@ st.write(f"Selected Alum Dose: {alum_dose:.2f} mg/L")
             step=0.10
         )
 
-st.write(f"Selected PAC Dose: {pac_dose:.2f} mg/L")
+        st.write(f"Selected PAC Dose: {pac_dose:.2f} mg/L")
         
         hypo_dose = st.slider(
             "Hypo Dose (ppm)",
