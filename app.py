@@ -2407,6 +2407,16 @@ font-weight:bold;
 color:#0A2E6B;">
 
 
+
+🗼 Distribution Water Towers
+</div>
+""", unsafe_allow_html=True)
+
+names=["Central WT","Kadma WT","Sidgorah 3 WT","Sakchi WT","Tatanagar WT","Tatanagarr WT"]
+tc=st.columns(3)
+for i in range(6):
+    tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
+
 # ===============================
 # SUMP LEVEL MONITORING
 # ===============================
@@ -2442,15 +2452,6 @@ for i in range(6):
         gauge(names[i], levels[i], 100),
         use_container_width=True
     )
-🗼 Distribution Water Towers
-</div>
-""", unsafe_allow_html=True)
-
-names=["Central WT","Kadma WT","Sidgorah 3 WT","Sakchi WT","Tatanagar WT","Tatanagarr WT"]
-tc=st.columns(3)
-for i in range(6):
-    tc[i%3].plotly_chart(gauge(names[i],75,100),use_container_width=True)
-    
 import streamlit as st
 import smtplib
 import pandas as pd
