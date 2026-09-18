@@ -2589,11 +2589,13 @@ required_columns = [
     "humidity",
     "raw_turbidity",
     "alum_dose",
+    "pac_dose",
     "hypo_dose",
     "outlet_turbidity",
     "final_turbidity",
     "frc",
-    "status"
+    "status",
+    "operator_feedback"
 
 
 ]
@@ -2709,7 +2711,9 @@ with left_col:
             5.0,
             0.5
         )
-
+    operator_feedback = st.text_area(
+    "📝 Operator Remarks / Feedback"
+)
     submit = st.button("✅ Submit Feedback")
 
 # =========================================================
@@ -2760,7 +2764,9 @@ if submit:
 
         "frc": frc,
 
-        "status": status
+        "status": status,
+
+        "operator_feedback": operator_feedback
 
     }])
 
@@ -3212,20 +3218,20 @@ st.plotly_chart(
 
 st.markdown("---")
 
-st.subheader("📂 Stored Feedback Data")
+st.subheader("📂 Complete Feedback Database")
 
-if st.checkbox("Show Stored Data"):
+latest_df = pd.read_csv(FILE)
 
-    st.dataframe(
+st.write(f"Total Records: {len(latest_df)}")
 
-        df.sort_values(
-            by="timestamp",
-            ascending=False
-        ),
-
-        use_container_width=True
-
-    )
+st.dataframe(
+    latest_df.sort_values(
+        by="timestamp",
+        ascending=False
+    ),
+    use_container_width=True,
+    height=500
+)
    # =========================================================
 # DELETE ROW OPTION
 # =========================================================
