@@ -2937,7 +2937,7 @@ Final Turbidity: {final_turbidity}
 FRC: {frc}
 
 Alum Dose: {alum_dose}
-Pac Dose: {pac dose}
+Pac Dose: {pac_dose}
 Hypo Dose: {hypo_dose}
 
 Immediate operator action required.
