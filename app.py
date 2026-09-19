@@ -331,7 +331,6 @@ if mode == "📁 Manual Data":
         "Select Date",
         options=history_df["DateTime"],
         value=history_df[
-        value=history_df[
             history_df["DateTime"].dt.date == datetime.now().date()
         ]["DateTime"].iloc[-1]
         if len(
