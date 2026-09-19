@@ -800,13 +800,10 @@ else:
 
     with d2:
     
-        end_date = pd.to_datetime(date.today())
-    
-        st.date_input(
+        end_date = st.date_input(
             "To Date",
             value=date.today(),
-            disabled=True,
-            key="to_date_fixed"
+            key="monitoring_to_date"
         )
     # ======================================
     # FILTER DATA
