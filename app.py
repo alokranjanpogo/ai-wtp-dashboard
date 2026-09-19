@@ -333,9 +333,9 @@ if mode == "📁 Manual Data":
         value=history_df["DateTime"].iloc[-1]
     )
 
-    else:
-    
-        selected_time = history_df["DateTime"].iloc[0]
+else:
+
+    selected_time = history_df["DateTime"].iloc[0]
         
    
         # ========================================
