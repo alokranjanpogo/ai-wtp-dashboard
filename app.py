@@ -327,36 +327,22 @@ if mode == "📁 Manual Data":
     # ========================================
     if len(history_df) > 1:
 
-    today = pd.Timestamp.now().normalize()
-
-    today_data = history_df[
-        history_df["DateTime"].dt.normalize() == today
-    ]
-
-    if len(today_data) > 0:
-
-        default_value = today_data["DateTime"].iloc[-1]
-
-    else:
-
-        default_value = history_df["DateTime"].iloc[-1]
-
     selected_time = st.select_slider(
 
         "Select Date",
 
         options=history_df["DateTime"],
 
-        value=default_value
+        value=history_df["DateTime"].iloc[-1]
 
     )
 
-else:
-
-    selected_time = history_df[
-        "DateTime"
-    ].iloc[0]
+    else:
     
+        selected_time = history_df[
+            "DateTime"
+        ].iloc[0]
+        
     # ========================================
     # FILTER ROW
     # ========================================
