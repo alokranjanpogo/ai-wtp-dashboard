@@ -325,24 +325,37 @@ if mode == "📁 Manual Data":
     # ========================================
     # SAFE SLICER
     # ========================================
-    if len(history_df) > 1:
+   # ========================================
+# SAFE SLICER
+# ========================================
 
-    selected_time = st.select_slider(
+today = pd.Timestamp.now().normalize()
 
-        "Select Date",
+today_rows = history_df[
+    history_df["DateTime"].dt.normalize() == today
+]
 
-        options=history_df["DateTime"],
+if len(history_df) > 1:
 
-        value=history_df["DateTime"].iloc[-1]
+    if len(today_rows) > 0:
 
-    )
+        selected_time = st.select_slider(
+            "Select Date",
+            options=history_df["DateTime"],
+            value=today_rows["DateTime"].iloc[-1]
+        )
 
     else:
-    
-        selected_time = history_df[
-            "DateTime"
-        ].iloc[0]
-        
+
+        selected_time = st.select_slider(
+            "Select Date",
+            options=history_df["DateTime"],
+            value=history_df["DateTime"].iloc[-1]
+        )
+
+else:
+
+    selected_time = history_df["DateTime"].iloc[0]
     # ========================================
     # FILTER ROW
     # ========================================
