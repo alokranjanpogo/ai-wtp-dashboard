@@ -1077,14 +1077,14 @@ selected_unit = st.sidebar.selectbox(
 # STATIC DATE FILTER
 # ============================================================
 
+from datetime import date
+
 if monitor_mode == "📊 Static Monitoring":
 
     selected_date = st.date_input(
-
         "Select Monitoring Date",
-
-        value=trend_df["Date"].max()
-
+        value=date.today(),
+        key="clarifier_monitor_date"
     )
 
     selected_date = pd.to_datetime(
