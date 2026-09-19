@@ -325,35 +325,35 @@ if mode == "📁 Manual Data":
     # ========================================
     # SAFE SLICER
     # ========================================
-if len(history_df) > 1:
-
-selected_time = st.select_slider(
+    if len(history_df) > 1:
+    
+    selected_time = st.select_slider(
     "Select Date",
     options=history_df["DateTime"],
     value=history_df["DateTime"].iloc[-1]
-)
-
-else:
-
+    )
+    
+    else:
+    
     selected_time = history_df["DateTime"].iloc[0]
             
    
-        # ========================================
-        # FILTER ROW
-        # ========================================
+    # ========================================
+    # FILTER ROW
+    # ========================================
+
+    row = history_df[
+        history_df["DateTime"] == selected_time
+    ]
     
-        row = history_df[
-            history_df["DateTime"] == selected_time
-        ]
-        
-        intake_turb = float(
-            row["Turbidity (NTU)"].values[0]
-        )
-        st.session_state["live_turbidity"] = intake_turb
-        
-        conductivity_today = float(
-            row["Conductivity (µS/cm)"].values[0]
-        )
+    intake_turb = float(
+        row["Turbidity (NTU)"].values[0]
+    )
+    st.session_state["live_turbidity"] = intake_turb
+    
+    conductivity_today = float(
+        row["Conductivity (µS/cm)"].values[0]
+    )
 
     # ========================================
     # METRICS
