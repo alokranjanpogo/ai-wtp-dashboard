@@ -796,16 +796,18 @@ else:
 
         )
 
+    from datetime import date
+
     with d2:
-
-        end_date = st.date_input(
-
-            "End Date",
-
-            value=df["Date"].max()
-
+    
+        end_date = pd.to_datetime(date.today())
+    
+        st.date_input(
+            "To Date",
+            value=date.today(),
+            disabled=True,
+            key="to_date_fixed"
         )
-
     # ======================================
     # FILTER DATA
     # ======================================
