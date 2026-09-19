@@ -325,27 +325,18 @@ if mode == "📁 Manual Data":
     # ========================================
     # SAFE SLICER
     # ========================================
+  
     if len(history_df) > 1:
-
-        today_rows = history_df[
-            history_df["DateTime"].dt.date == datetime.now().date()
-        ]
-    
-        default_date = (
-            today_rows["DateTime"].iloc[-1]
-            if len(today_rows) > 0
-            else history_df["DateTime"].iloc[-1]
-        )
     
         selected_time = st.select_slider(
             "Select Date",
             options=history_df["DateTime"],
-            value=default_date
+            value=history_df["DateTime"].iloc[-1]
         )
-
-else:
-
-    selected_time = history_df["DateTime"].iloc[0]
+    
+    else:
+    
+        selected_time = history_df["DateTime"].iloc[0]
    
     # ========================================
     # FILTER ROW
