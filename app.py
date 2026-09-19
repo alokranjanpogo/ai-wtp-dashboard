@@ -327,15 +327,15 @@ if mode == "📁 Manual Data":
     # ========================================
     if len(history_df) > 1:
     
-    selected_time = st.select_slider(
-    "Select Date",
-    options=history_df["DateTime"],
-    value=history_df["DateTime"].iloc[-1]
-    )
+        selected_time = st.select_slider(
+        "Select Date",
+        options=history_df["DateTime"],
+        value=history_df["DateTime"].iloc[-1]
+        )
     
     else:
     
-    selected_time = history_df["DateTime"].iloc[0]
+        selected_time = history_df["DateTime"].iloc[0]
             
    
     # ========================================
