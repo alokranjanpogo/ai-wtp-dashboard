@@ -326,52 +326,52 @@ if mode == "📁 Manual Data":
     # SAFE SLICER
     # ========================================
    # ========================================
-# SAFE SLICER
-# ========================================
-
-today = pd.Timestamp.now().normalize()
-
-today_rows = history_df[
-    history_df["DateTime"].dt.normalize() == today
-]
-
-if len(history_df) > 1:
-
-    if len(today_rows) > 0:
-
-        selected_time = st.select_slider(
-            "Select Date",
-            options=history_df["DateTime"],
-            value=today_rows["DateTime"].iloc[-1]
-        )
-
-    else:
-
-        selected_time = st.select_slider(
-            "Select Date",
-            options=history_df["DateTime"],
-            value=history_df["DateTime"].iloc[-1]
-        )
-
-else:
-
-    selected_time = history_df["DateTime"].iloc[0]
+    # SAFE SLICER
     # ========================================
-    # FILTER ROW
-    # ========================================
-
-    row = history_df[
-        history_df["DateTime"] == selected_time
+    
+    today = pd.Timestamp.now().normalize()
+    
+    today_rows = history_df[
+        history_df["DateTime"].dt.normalize() == today
     ]
     
-    intake_turb = float(
-        row["Turbidity (NTU)"].values[0]
-    )
-    st.session_state["live_turbidity"] = intake_turb
+    if len(history_df) > 1:
     
-    conductivity_today = float(
-        row["Conductivity (µS/cm)"].values[0]
-    )
+        if len(today_rows) > 0:
+    
+            selected_time = st.select_slider(
+                "Select Date",
+                options=history_df["DateTime"],
+                value=today_rows["DateTime"].iloc[-1]
+            )
+    
+        else:
+    
+            selected_time = st.select_slider(
+                "Select Date",
+                options=history_df["DateTime"],
+                value=history_df["DateTime"].iloc[-1]
+            )
+    
+    else:
+    
+        selected_time = history_df["DateTime"].iloc[0]
+        # ========================================
+        # FILTER ROW
+        # ========================================
+    
+        row = history_df[
+            history_df["DateTime"] == selected_time
+        ]
+        
+        intake_turb = float(
+            row["Turbidity (NTU)"].values[0]
+        )
+        st.session_state["live_turbidity"] = intake_turb
+        
+        conductivity_today = float(
+            row["Conductivity (µS/cm)"].values[0]
+        )
 
     # ========================================
     # METRICS
