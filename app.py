@@ -334,7 +334,9 @@ if mode == "📁 Manual Data":
         selected_time = st.select_slider(
             "Select Date",
             options=history_df["DateTime"],
-            value=history_df["DateTime"].iloc[-1]
+            value=history_df[
+                history_df["DateTime"].dt.date == datetime.now().date()
+            ]["DateTime"].iloc[-1]
         )
     
     else:
