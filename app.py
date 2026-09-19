@@ -81,7 +81,7 @@ else:
     # ======================================
     
     flow_m3hr = round(
-        random.uniform(1088, 1112),
+        random.uniform(9800, 10000),
         2
     )
     
@@ -259,8 +259,8 @@ color:#0A2E6B;">
 </div>
 """, unsafe_allow_html=True)
 
-production_mld = 18 # value can vary between 18–23
-production_m3_hr = 1100
+production_mld = 228 # value can vary between 220-235
+production_m3_hr = 9500
 production_lps = production_m3_hr * 1000 / 3600
 
 colp = st.columns(3)
