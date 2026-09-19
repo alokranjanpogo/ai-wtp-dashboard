@@ -3063,55 +3063,48 @@ Analytics Dashboard
 
 if len(df) > 0:
 
-   m1, m2, m3, m4, m5 = st.columns(5)
-   with m1:
+    m1, m2, m3, m4, m5 = st.columns(5)
 
-    st.metric(
-        "Total Samples",
-        len(df)
-    )
-
-with m2:
-
-    st.metric(
-        "Avg Alum Dose",
-        f"{df['alum_dose'].mean():.2f} mg/L"
-    )
-
-with m3:
-
-    st.metric(
-        "Avg PAC Dose",
-        f"{df['pac_dose'].mean():.2f} mg/L"
-    )
-
-with m4:
-
-    st.metric(
-        "Avg Final Turbidity",
-        f"{df['final_turbidity'].mean():.2f}"
-    )
-
-with m5:
-
-    efficiency = (
-
-        len(
-            df[
-                df["final_turbidity"] <= 1
-            ]
+    with m1:
+        st.metric(
+            "Total Samples",
+            len(df)
         )
 
-        /
+    with m2:
+        st.metric(
+            "Avg Alum Dose",
+            f"{df['alum_dose'].mean():.2f} mg/L"
+        )
 
-        len(df)
+    with m3:
+        st.metric(
+            "Avg PAC Dose",
+            f"{df['pac_dose'].mean():.2f} mg/L"
+        )
 
-    ) * 100
+    with m4:
+        st.metric(
+            "Avg Final Turbidity",
+            f"{df['final_turbidity'].mean():.2f}"
+        )
 
-    st.metric(
-        "Treatment Efficiency",
-        f"{efficiency:.1f}%"
-    )
+    with m5:
+
+        efficiency = (
+            len(
+                df[
+                    df["final_turbidity"] <= 1
+                ]
+            )
+            / len(df)
+        ) * 100
+
+        st.metric(
+            "Treatment Efficiency",
+            f"{efficiency:.1f}%"
+        )
+
     if efficiency >= 90:
 
         st.success("🟢 Plant Health Excellent")
