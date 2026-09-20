@@ -1708,12 +1708,12 @@ else:
         "Select Unit",
         [
             "Clarifier",
-            "Filter Bed 1",
-            "Filter Bed 2",
-            "Filter Bed 3",
-            "Filter Bed 4",
-            "Filter Bed 5",
-            "Filter Bed 6"
+            "Filter House 1",
+            "Filter House 2",
+            "Filter House 3",
+            "Filter House 4",
+            "Filter House 5",
+            "Filter House 6"
         ],
         key="output_trend_unit"
     )
