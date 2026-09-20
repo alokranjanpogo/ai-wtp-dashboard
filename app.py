@@ -3865,7 +3865,7 @@ with f1:
     selected_year = st.selectbox(
         "Select Year",
         all_years,
-        index=1
+        index=0
     )
 
 with f2:
@@ -3873,7 +3873,7 @@ with f2:
     selected_month = st.selectbox(
         "Select Month",
         all_months,
-        index=0
+        index=1
     )
 
 filtered_wq = wq[
