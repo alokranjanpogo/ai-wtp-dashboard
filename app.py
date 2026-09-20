@@ -3865,7 +3865,7 @@ with f1:
     selected_year = st.selectbox(
         "Select Year",
         all_years,
-        index=0
+        index=1
     )
 
 with f2:
@@ -5314,7 +5314,8 @@ mode = st.sidebar.radio(
     [
         "Single Location",
         "Multiple Locations"
-    ]
+    ],
+    index=1
 )
 
 locations = sorted(df["Location"].unique())
