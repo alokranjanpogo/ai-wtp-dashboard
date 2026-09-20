@@ -1359,7 +1359,7 @@ for i in range(1,7):
         alarm_triggered = True
         st.session_state.alarm_active = True
         st.session_state.filter_alarm_muted = False
-   filter_summary.append({
+    filter_summary.append({
 
         "Filter House": display_name,
     
