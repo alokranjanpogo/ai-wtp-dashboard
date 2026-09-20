@@ -1520,7 +1520,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.subheader("📋 Filter Bed Summary")
+st.subheader("📋 Filter House Summary")
 
 for item in filter_summary:
 
