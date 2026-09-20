@@ -1025,7 +1025,7 @@ border-radius:8px;
 font-size:31px;
 font-weight:bold;
 color:#0A2E6B;">
-📊 Smart Clarifier & Filter Bed Monitoring
+📊 Smart Clarifier & Filter House Monitoring
 </div>
 """, unsafe_allow_html=True)
 
@@ -1301,7 +1301,7 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.subheader("🧪 Filter Bed Live Status")
+st.subheader("🧪 Filter House Live Status")
 
 cols = st.columns(6)
 
@@ -1311,7 +1311,8 @@ alarm_triggered = False
 
 for i in range(1,7):
 
-    filter_name = f"Filter Bed {i}"
+    filter_name = f"Filter Bed {i}"      # Excel lookup
+    display_name = f"Filter House {i}"   # Dashboard display
 
     # ========================================================
     # LIVE / STATIC VALUES
@@ -1358,21 +1359,21 @@ for i in range(1,7):
         alarm_triggered = True
         st.session_state.alarm_active = True
         st.session_state.filter_alarm_muted = False
-    filter_summary.append({
+   filter_summary.append({
 
-        "Filter Bed": filter_name,
-
+        "Filter House": display_name,
+    
         "Outlet Turbidity": round(
             filter_outlet,
             2
         ),
-
+    
         "Status": status
-
+    
     })
     if filter_outlet > 1 or status == "🔴 Backwash Needed":
 
-        st.error(f"🚨 FILTER ALARM : {filter_name}")
+        st.error(f"🚨 FILTER ALARM : {display_name}")
     
         col1, col2 = st.columns([4,1])
     
@@ -1404,7 +1405,7 @@ for i in range(1,7):
         },
 
         title={
-            'text': f"FB-{i}",
+            'text': f"FH-{i}",
             'font': {
                 'size': 13
             }
@@ -1554,7 +1555,7 @@ for item in filter_summary:
         ">
 
         <h4 style="margin:0;color:{text};">
-            {item['Filter Bed']}
+            {item['Filter House']}
         </h4>
 
         <p style="
@@ -1585,12 +1586,12 @@ st.subheader("📈 Output Turbidity Trend")
 
 units = [
     "Clarifier",
-    "Filter Bed 1",
-    "Filter Bed 2",
-    "Filter Bed 3",
-    "Filter Bed 4",
-    "Filter Bed 5",
-    "Filter Bed 6"
+    "Filter House 1",
+    "Filter House 2",
+    "Filter House 3",
+    "Filter House 4",
+    "Filter House 5",
+    "Filter House 6"
 ]
 
 # ============================================================
@@ -3820,7 +3821,7 @@ margin-bottom:15px;">
 📊 WATER QUALITY EXECUTIVE DASHBOARD
 </h2>
 <p style="color:#cbd5e1;margin:0;">
-Moharda Water Supply Monitoring System
+Water Supply Monitoring System
 </p>
 </div>
 """, unsafe_allow_html=True)
