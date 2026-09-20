@@ -1691,10 +1691,12 @@ else:
             key="output_trend_from_date"
         )
 
+    from datetime import date
+
     with col2:
         to_date = st.date_input(
             "To Date",
-            value=trend_df["Date"].max().date(),
+            value=date.today(),
             min_value=pd.Timestamp("2026-01-01").date(),
             max_value=pd.Timestamp("2035-12-31").date(),
             key="output_trend_to_date"
@@ -1792,9 +1794,12 @@ if mode == "📁 Manual Data":
         errors="coerce"
     )
 
+    from datetime import date
+
     selected_date = st.date_input(
         "Select Date",
-        value=history_df["Date"].max()
+        value=date.today(),
+        key="raw_water_trend_date"
     )
 
     selected_date = pd.to_datetime(selected_date)
