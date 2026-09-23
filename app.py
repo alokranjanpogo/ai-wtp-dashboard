@@ -5440,13 +5440,7 @@ st.markdown("""
 # ==========================
 # TITLE
 # ==========================
-if st.session_state.goto_section == "mechanical":
 
-    st.success(
-        "✅ Clariflocculator Running Status"
-    )
-
-    st.session_state.goto_section = ""
 st.markdown("""
 <div style="
 background:#F4F8FF;
