@@ -270,12 +270,6 @@ if st.session_state.quality_alarm_list:
         + " | ".join(st.session_state.quality_alarm_list)
     )
 
-    if st.button(
-            "🌀 Open Smart Clarifier & Filter House Monitoring",
-            key="goto_quality"
-        ):
-            st.session_state.goto_section = "clarifier"
-
 # ======================================
 # MECHANICAL
 # ======================================
@@ -291,11 +285,6 @@ if st.session_state.mechanical_alarm_list:
         + " | ".join(st.session_state.mechanical_alarm_list)
     )
 
-    if st.button(
-        "⚙️ Open Clariflocculator Running Status",
-        key="goto_mechanical"
-    ):
-        st.session_state.goto_section = "mechanical"
 # ======================================
 # GIS
 # ======================================
@@ -307,11 +296,6 @@ if st.session_state.gis_alarm_list:
         + " | ".join(st.session_state.gis_alarm_list)
     )
 
-    if st.button(
-        "📍 Open Customer End GIS Map",
-        key="goto_gis"
-    ):
-        st.session_state.goto_section = "gis"
 ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.now(ist)
 st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
