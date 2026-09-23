@@ -1226,9 +1226,9 @@ if clar_outlet > 10:
         f"({clar_outlet:.2f} NTU)"
     )
 
-    if msg not in st.session_state.alarm_list:
+    if msg not in st.session_state.quality_alarm_list:
 
-        st.session_state.alarm_list.append(
+        st.session_state.quality_alarm_list.append(
             msg
         )
 if clar_outlet <= 5:
