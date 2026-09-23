@@ -5487,11 +5487,11 @@ def draw_unit(location):
 
     bridge_status = str(
         row["Bridge Running Status"]
-    ).strip()
+    ).strip().upper()
 
     blowdown_status = str(
         row["Blowdown Valve Status"]
-    ).strip()
+    ).strip().upper()
 
     running = (
         bridge_status == "OK"
@@ -5527,6 +5527,46 @@ def draw_unit(location):
     if "Problem" in df.columns:
         problem = row["Problem"]
 
+    st.markdown(
+        f"""
+        <div class="scada-card">
+
+        <h2 style="text-align:center">
+        {location}
+        </h2>
+
+        <div class="tank">
+            <div class="{bridge_class}">
+            </div>
+        </div>
+
+        <br>
+
+        <div class="{light}"></div>
+
+        <h3 style="text-align:center">
+        {text}
+        </h3>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.write(
+        "**Bridge Status:**",
+        bridge_status
+    )
+
+    st.write(
+        "**Blowdown Valve Status:**",
+        blowdown_status
+    )
+
+    st.write(
+        "**Problem:**",
+        problem
+    )
     st.markdown(
         f"""
         <div class="scada-card">
