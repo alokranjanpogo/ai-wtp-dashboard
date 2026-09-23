@@ -10,6 +10,8 @@ from streamlit_autorefresh import st_autorefresh
 from datetime import datetime
 
 if "filter_alarm_muted" not in st.session_state:
+if "goto_section" not in st.session_state:
+    st.session_state.goto_section = ""    
     st.session_state.filter_alarm_muted = False
 if "quality_alarm_list" not in st.session_state:
     st.session_state.quality_alarm_list = []
@@ -268,10 +270,11 @@ if st.session_state.quality_alarm_list:
         + " | ".join(st.session_state.quality_alarm_list)
     )
 
-    st.button(
-        "🌀 Go To Clarifier & Filter Section",
-        key="goto_quality"
-    )
+    if st.button(
+            "🌀 Open Smart Clarifier & Filter House Monitoring",
+            key="goto_quality"
+        ):
+            st.session_state.goto_section = "clarifier"
 
 # ======================================
 # MECHANICAL
@@ -279,15 +282,15 @@ if st.session_state.quality_alarm_list:
 
 if st.session_state.mechanical_alarm_list:
 
-    st.warning(
-        "⚙️ MECHANICAL : "
-        + " | ".join(st.session_state.mechanical_alarm_list)
-    )
-
-    st.button(
-        "⚙️ Go To Mechanical Section",
+    if st.button(
+        "⚙️ Open Clariflocculator Running Status",
         key="goto_mechanical"
-    )
+    ):
+        st.session_state.goto_section = "mechanical"
+        st.button(
+            "⚙️ Open Clariflocculator Running Status",
+            key="goto_mechanical"
+        )
 
 # ======================================
 # GIS
@@ -300,24 +303,11 @@ if st.session_state.gis_alarm_list:
         + " | ".join(st.session_state.gis_alarm_list)
     )
 
-    st.button(
-        "📍 Go To GIS Section",
+    if st.button(
+        "📍 Open Customer End GIS Map",
         key="goto_gis"
-    )
-
-# ======================================
-# NO ACTIVE ALARM
-# ======================================
-
-if (
-    len(st.session_state.quality_alarm_list) == 0
-    and
-    len(st.session_state.mechanical_alarm_list) == 0
-    and
-    len(st.session_state.gis_alarm_list) == 0
-):
-
-    st.success("✅ No Active Alarms")
+    ):
+        st.session_state.goto_section = "gis"
 ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.now(ist)
 st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
@@ -1082,6 +1072,13 @@ def gauge(title,value,max_val,mode="normal"):
 # SMART CLARIFIER + Filter Bed MONITORING SYSTEM
 # FINAL STATIC + DYNAMIC VERSION
 # ============================================================
+if st.session_state.goto_section == "clarifier":
+
+    st.success(
+        "✅ Smart Clarifier & Filter House Monitoring"
+    )
+
+    st.session_state.goto_section = ""
 
 import streamlit as st
 import pandas as pd
@@ -3572,7 +3569,13 @@ except Exception as e:
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
+if st.session_state.goto_section == "gis":
 
+    st.success(
+        "✅ Customer End GIS Map"
+    )
+
+    st.session_state.goto_section = ""
 st.markdown("""
 <div style="
 background:#F4F8FF;
@@ -5437,7 +5440,13 @@ st.markdown("""
 # ==========================
 # TITLE
 # ==========================
+if st.session_state.goto_section == "mechanical":
 
+    st.success(
+        "✅ Clariflocculator Running Status"
+    )
+
+    st.session_state.goto_section = ""
 st.markdown("""
 <div style="
 background:#F4F8FF;
