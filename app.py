@@ -5546,47 +5546,7 @@ def draw_unit(location):
         "**Problem:**",
         problem
     )
-    st.markdown(
-        f"""
-        <div class="scada-card">
-
-        <h2 style="text-align:center">
-        {location}
-        </h2>
-
-        <div class="tank">
-            <div class="{bridge_class}">
-            </div>
-        </div>
-
-        <br>
-
-        <div class="{light}"></div>
-
-        <h3 style="text-align:center">
-        {text}
-        </h3>
-
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.write(
-        "**Bridge Status:**",
-        bridge_status
-    )
-
-    st.write(
-        "**Blowdown Valve Status:**",
-        blowdown_status
-    )
-
-    st.write(
-        "**Problem:**",
-        problem
-    )
-
+   
 # ==========================
 # SINGLE LOCATION
 # ==========================
