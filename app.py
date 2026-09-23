@@ -3600,39 +3600,49 @@ try:
         gis["Status"].isin(selected_status)
     ]
     
-    critical_count = len(
+    # ======================================================
+    # GIS ALARM COUNT
+    # ======================================================
+    
+    total_coliform_count = len(
         gis[
-            gis["Status"] == "Critical"
+            gis["Total_Coli"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            == "present"
         ]
     )
     
-    if critical_count > 0:
-    
-        critical_rows = gis[
-            gis["Status"] == "Critical"
+    faecal_coliform_count = len(
+        gis[
+            gis["Faecal_Col"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            == "present"
         ]
+    )
     
-        gis_alarms = []
+    gis_alarms = []
     
-        for _, row in critical_rows.iterrows():
+    if total_coliform_count > 0:
     
-            if str(row["Total_Coli"]).strip().lower() == "present":
+        gis_alarms.append(
+            f"Total Coliform Present : {total_coliform_count}"
+        )
     
-                gis_alarms.append(
-                    f"{row['Cust_Name_']} - Total Coliform Present"
-                )
+    if faecal_coliform_count > 0:
     
-            if str(row["Faecal_Col"]).strip().lower() == "present":
+        gis_alarms.append(
+            f"Faecal Coliform Present : {faecal_coliform_count}"
+        )
     
-                gis_alarms.append(
-                    f"{row['Cust_Name_']} - Faecal Coliform Present"
-                )
+    st.session_state.gis_alarm_list = gis_alarms
     
-        st.session_state.gis_alarm_list = gis_alarms
-    
-    else:
-    
-        st.session_state.gis_alarm_list = []
+    # ======================================================
+    # NO DATA CHECK
+    # ======================================================
     
     if gis_filtered.empty:
     
@@ -3642,7 +3652,7 @@ try:
     
     else:
     
-    
+        # REST OF GIS MAP CODE HERE
         # ==================================================
         # SUMMARY CARDS
         # ==================================================
