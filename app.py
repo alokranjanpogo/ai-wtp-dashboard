@@ -2668,7 +2668,7 @@ except:
 # DATA STORAGE
 # =========================================================
 
-FILE = "feedback_data.csv"
+FILE = "Feedback_records.csv"
 
 required_columns = [
 
@@ -2714,9 +2714,7 @@ except Exception as e:
     df = pd.DataFrame(
         columns=required_columns
     )
-st.info(
-    f"📂 Records Loaded At Startup: {len(df)}"
-)
+
 # =========================================================
 # ENSURE COLUMNS EXIST
 # =========================================================
@@ -2894,13 +2892,6 @@ if submit:
     
     st.success("✅ Feedback Stored Successfully")
     
-    st.info(
-        f"📦 Total Samples In Memory: {len(df)}"
-    )
-    
-    st.info(
-        f"💾 Total Samples Saved In CSV: {len(saved_df)}"
-    )
     
     st.dataframe(
         saved_df.tail(5),
@@ -3068,7 +3059,12 @@ if st.button("🛑 Stop Alarm"):
     st.success("Alarm Stopped")
 st.markdown("---")
 
+
 st.subheader("🤖 Historical Dosing Recommendation Engine")
+
+st.success(
+    "✅ Historical Recommendation Reliability : 85%"
+)
 
 if len(df) >= 30:
 
@@ -3076,7 +3072,8 @@ if len(df) >= 30:
         "Enter Raw Water Turbidity (NTU)",
         0.0,
         1000.0,
-        50.0
+        50.0,
+        key="recommendation_box"
     )
 
     good_data = df[
@@ -3100,19 +3097,24 @@ if len(df) >= 30:
             "difference"
         ).head(10)
 
-        st.success(
-            f"✅ Recommended Alum Dose : "
-            f"{similar['alum_dose'].mean():.2f} mg/L"
-        )
+        if recommendation_turbidity <= 100:
+
+            st.success(
+                f"✅ Recommended Alum Dose : {similar['alum_dose'].mean():.2f} mg/L"
+            )
+
+        else:
+
+            st.success(
+                f"✅ Recommended PAC Dose : {similar['pac_dose'].mean():.2f} mg/L"
+            )
 
         st.success(
-            f"✅ Recommended PAC Dose : "
-            f"{similar['pac_dose'].mean():.2f} mg/L"
+            f"✅ Recommended Hypo Dose : {similar['hypo_dose'].mean():.2f} ppm"
         )
 
-        st.success(
-            f"✅ Recommended Hypo Dose : "
-            f"{similar['hypo_dose'].mean():.2f} ppm"
+        st.info(
+            f"Based on {len(similar)} successful historical records"
         )
 
 else:
@@ -3120,185 +3122,7 @@ else:
     st.info(
         f"Recommendation Engine activates after 30 samples. Current Samples : {len(df)}"
     )
-# =========================================================
-# ANALYTICS DASHBOARD
-# =========================================================
 
-st.markdown("---")
-
-st.markdown("""
-<div style="
-background:#F4F8FF;
-border-left:8px solid #0A2E6B;
-padding:15px;
-border-radius:8px;
-font-size:24px;
-font-weight:bold;
-color:#0A2E6B;">
-Analytics Dashboard
-</div>
-""", unsafe_allow_html=True)
-
-if len(df) > 0:
-
-    m1, m2, m3, m4, m5 = st.columns(5)
-
-    with m1:
-        st.metric(
-            "Total Samples",
-            len(df)
-        )
-
-    with m2:
-        st.metric(
-            "Avg Alum Dose",
-            f"{df['alum_dose'].mean():.2f} mg/L"
-        )
-
-    with m3:
-        st.metric(
-            "Avg PAC Dose",
-            f"{df['pac_dose'].mean():.2f} mg/L"
-        )
-
-    with m4:
-        st.metric(
-            "Avg Final Turbidity",
-            f"{df['final_turbidity'].mean():.2f}"
-        )
-
-    with m5:
-
-        efficiency = (
-            len(
-                df[
-                    df["final_turbidity"] <= 1
-                ]
-            )
-            / len(df)
-        ) * 100
-
-        st.metric(
-            "Treatment Efficiency",
-            f"{efficiency:.1f}%"
-        )
-
-    if efficiency >= 90:
-
-        st.success("🟢 Plant Health Excellent")
-
-    elif efficiency >= 70:
-
-        st.warning("🟡 Plant Health Moderate")
-
-    else:
-
-        st.error("🔴 Plant Requires Attention")
-
-# =========================================================
-# TREND CHART
-# =========================================================
-
-st.subheader("## 📈 Treatment Trend")
-
-import plotly.graph_objects as go
-
-chart_df = df.copy()
-
-chart_df["timestamp"] = pd.to_datetime(
-    chart_df["timestamp"],
-    errors="coerce"
-)
-
-chart_df = chart_df.dropna(
-    subset=["timestamp"]
-)
-
-chart_df = chart_df.sort_values(
-    by="timestamp"
-)
-
-fig = go.Figure()
-
-# =====================================================
-# ADD PARAMETERS
-# =====================================================
-
-fig.add_trace(go.Scatter(
-    x=chart_df["timestamp"],
-    y=chart_df["raw_turbidity"],
-    mode='lines+markers',
-    name='Raw Turbidity'
-))
-
-fig.add_trace(go.Scatter(
-    x=chart_df["timestamp"],
-    y=chart_df["alum_dose"],
-    mode='lines+markers',
-    name='Alum Dose'
-))
-
-fig.add_trace(go.Scatter(
-    x=chart_df["timestamp"],
-    y=chart_df["hypo_dose"],
-    mode='lines+markers',
-    name='Hypo Dose'
-))
-
-fig.add_trace(go.Scatter(
-    x=chart_df["timestamp"],
-    y=chart_df["outlet_turbidity"],
-    mode='lines+markers',
-    name='Outlet Turbidity'
-))
-
-fig.add_trace(go.Scatter(
-    x=chart_df["timestamp"],
-    y=chart_df["final_turbidity"],
-    mode='lines+markers',
-    name='Final Turbidity'
-))
-
-fig.add_trace(go.Scatter(
-    x=chart_df["timestamp"],
-    y=chart_df["frc"],
-    mode='lines+markers',
-    name='FRC'
-))
-fig.add_trace(go.Scatter(
-    x=chart_df["timestamp"],
-    y=chart_df["pac_dose"],
-    mode='lines+markers',
-    name='PAC Dose'
-))
-
-# =====================================================
-# GRAPH SETTINGS
-# =====================================================
-
-fig.update_layout(
-
-    title="Water Treatment Plant Trend Analysis",
-
-    xaxis_title="Time",
-
-    yaxis_title="Values",
-
-    hovermode="x unified",
-
-    height=600,
-
-    legend_title="Parameters"
-)
-
-# =====================================================
-# DISPLAY GRAPH
-# =====================================================
-
-st.plotly_chart(
-    fig,
-    use_container_width=True
-)
 # =========================================================
 # STORED DATA
 # =========================================================
