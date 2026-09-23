@@ -2477,6 +2477,7 @@ else:
 
 st.metric("Required Hypo Dose", f"{dose_selected:,.0f} kg/day")
 st.metric("Chlorine Demand", f"{chlorine_demand:.2f} mg/L")
+# ===============================
 # WATER TOWERS
 # ===============================
 st.markdown("""
@@ -2488,37 +2489,38 @@ border-radius:8px;
 font-size:24px;
 font-weight:bold;
 color:#0A2E6B;">
-
-
-
-st.markdown(
-    """
-    <div style="text-align:center; font-size:28px; font-weight:bold;">
-    Distribution Water Towers
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+🗼 Distribution Water Towers
+</div>
+""", unsafe_allow_html=True)
 
 names = [
     "Central WT",
     "Kadma WT",
-    "Sidgorah 3 WT",
+    "Sidgorah WT",
     "Sakchi WT",
     "Tatanagar WT",
-    "Tatanagar R WT"
+    "Tatanagarr WT"
 ]
 
-levels = [82, 67, 91, 74, 58, 88]
+levels = [
+    82,  # Central WT
+    67,  # Kadma WT
+    91,  # Sidgorah WT
+    74,  # Sakchi WT
+    58,  # Tatanagar WT
+    88   # Tatanagarr WT
+]
 
 tc = st.columns(3)
 
-for i in range(len(names)):
-    with tc[i % 3]:
-        st.plotly_chart(
-            gauge(names[i], levels[i], 100),
-            use_container_width=True
-        )
+for i in range(6):
+    tc[i % 3].plotly_chart(
+        gauge(names[i], levels[i], 100),
+        use_container_width=True
+    )
+
+
+
 # ===============================
 # SUMP LEVEL MONITORING
 # ===============================
