@@ -3321,20 +3321,29 @@ st.plotly_chart(
 
 st.markdown("---")
 
-st.subheader("📂 Complete Feedback Database")
+st.subheader("📂 Last 20 Historical Feedback Records")
 
 latest_df = pd.read_csv(FILE)
 
-st.write(f"Total Records: {len(latest_df)}")
-
-st.dataframe(
-    latest_df.sort_values(
+latest_20 = (
+    latest_df
+    .sort_values(
         by="timestamp",
         ascending=False
-    ),
+    )
+    .head(20)
+)
+
+st.write(
+    f"Showing Latest {len(latest_20)} Records"
+)
+
+st.dataframe(
+    latest_20,
     use_container_width=True,
     height=500
 )
+
    # =========================================================
 # DELETE ROW OPTION
 # =========================================================
