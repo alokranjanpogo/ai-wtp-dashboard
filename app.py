@@ -11,8 +11,14 @@ from datetime import datetime
 
 if "filter_alarm_muted" not in st.session_state:
     st.session_state.filter_alarm_muted = False
-if "alarm_list" not in st.session_state:
-    st.session_state.alarm_list = []    
+if "quality_alarm_list" not in st.session_state:
+    st.session_state.quality_alarm_list = []
+
+if "mechanical_alarm_list" not in st.session_state:
+    st.session_state.mechanical_alarm_list = []
+
+if "gis_alarm_list" not in st.session_state:
+    st.session_state.gis_alarm_list = [] 
 # ===============================
 # AUTO REFRESH
 # ===============================
@@ -244,12 +250,51 @@ st.title("🏭 WTP – LIVE HMI PANEL")
 # SCADA ALARM BANNER
 # ======================================
 
-if len(st.session_state.alarm_list) > 0:
+# ======================================
+# WATER QUALITY ALARMS
+# ======================================
+st.session_state.quality_alarm_list = []
+st.session_state.mechanical_alarm_list = []
+st.session_state.gis_alarm_list = []
 
-    recent_alarms = st.session_state.alarm_list[-10:]
 
-    alarm_text = " | ".join(recent_alarms)
+if len(st.session_state.quality_alarm_list) > 0:
 
+    alarm_text = " | ".join(
+        st.session_state.quality_alarm_list[-10:]
+    )
+
+    st.error(
+        f"🚨 WATER QUALITY : {alarm_text}"
+    )
+
+# ======================================
+# MECHANICAL ALARMS
+# ======================================
+
+if len(st.session_state.mechanical_alarm_list) > 0:
+
+    alarm_text = " | ".join(
+        st.session_state.mechanical_alarm_list[-10:]
+    )
+
+    st.warning(
+        f"⚙️ MECHANICAL : {alarm_text}"
+    )
+
+# ======================================
+# GIS ALARMS
+# ======================================
+
+if len(st.session_state.gis_alarm_list) > 0:
+
+    alarm_text = " | ".join(
+        st.session_state.gis_alarm_list[-10:]
+    )
+
+    st.info(
+        f"📍 GIS : {alarm_text}"
+    )
     st.markdown(
         f"""
         <div style="
@@ -1410,15 +1455,15 @@ for i in range(1,7):
     })
     if filter_outlet > 1 or status == "🔴 Backwash Needed":
         message = (
-            f"{display_name} High Turbidity "
+            Clarifier Outlet High "
             f"({filter_outlet:.2f} NTU)"
         )
 
-        if message not in st.session_state.alarm_list:
-        
-            st.session_state.alarm_list.append(
-                message
-       )
+        if msg not in st.session_state.quality_alarm_list:
+
+            st.session_state.quality_alarm_list.append(
+                msg
+            )
         st.error(f"🚨 FILTER ALARM : {display_name}")
     
         col1, col2 = st.columns([4,1])
@@ -2969,10 +3014,10 @@ if submit:
                 f"({final_turbidity:.2f} NTU)"
             )
     
-            if msg not in st.session_state.alarm_list:
-    
-                st.session_state.alarm_list.append(msg)
-    
+            if msg not in st.session_state.quality_alarm_list:
+
+                st.session_state.quality_alarm_list.append(msg)
+                
         if frc < 0.2:
     
             msg = (
@@ -2980,10 +3025,9 @@ if submit:
                 f"({frc:.2f})"
             )
     
-            if msg not in st.session_state.alarm_list:
-    
-                st.session_state.alarm_list.append(msg)
-    
+            if msg not in st.session_state.quality_alarm_list:
+
+                st.session_state.quality_alarm_list.append(msg)
         st.session_state.alarm = True
     
         # =================================================
@@ -3582,7 +3626,23 @@ try:
     gis_filtered = gis[
         gis["Status"].isin(selected_status)
     ]
-
+    critical_count = len(
+        gis[
+            gis["Status"] == "Critical"
+        ]
+    )
+    
+    if critical_count > 0:
+    
+        st.session_state.gis_alarm_list = [
+    
+            f"{critical_count} Critical GIS Locations"
+    
+        ]
+    
+    else:
+    
+        st.session_state.gis_alarm_list = []
     if gis_filtered.empty:
 
         st.warning(
@@ -5388,7 +5448,17 @@ locations = sorted(df["Location"].unique())
 # ==========================
 
 def draw_unit(location):
+if not running:
 
+    mech_msg = (
+        f"{location} Clariflocculator Not Running"
+    )
+
+    if mech_msg not in st.session_state.mechanical_alarm_list:
+
+        st.session_state.mechanical_alarm_list.append(
+            mech_msg
+        )
     row = df[df["Location"] == location].iloc[0]
 
     bridge_status = str(
