@@ -20,9 +20,6 @@ if "mechanical_alarm_list" not in st.session_state:
 if "gis_alarm_list" not in st.session_state:
     st.session_state.gis_alarm_list = [] 
 
-st.session_state.quality_alarm_list.clear()
-st.session_state.mechanical_alarm_list.clear()
-st.session_state.gis_alarm_list.clear()
 # ===============================
 # AUTO REFRESH
 # ===============================
