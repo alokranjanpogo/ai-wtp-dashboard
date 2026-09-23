@@ -34,6 +34,17 @@ mode = st.sidebar.radio(
     "Select Data Source",
     ["📁 Manual Data", "🟢 Real-Time Data"]
 )
+page = st.sidebar.radio(
+    "🚀 Quick Navigation",
+    [
+        "Full Dashboard",
+        "Smart Clarifier & Filter House Monitoring",
+        "Clariflocculator Running Status",
+        "Customer End GIS Map",
+        "Washout GIS Map",
+        "Smart Feedback System"
+    ]
+)
 if mode == "🟢 Real-Time Data":
 
     refresh_placeholder = st.empty()
@@ -1079,7 +1090,10 @@ import base64
 # ============================================================
 # TITLE
 # ============================================================
-
+if page in [
+    "Full Dashboard",
+    "Smart Clarifier & Filter House Monitoring"
+]:
 st.markdown("---")
 st.markdown("""
 <div style="
@@ -2555,7 +2569,10 @@ import pytz
 # =========================================================
 # PAGE CONFIG
 # =========================================================
-
+if page in [
+    "Full Dashboard",
+    "Smart Feedback System"
+]:
 st.set_page_config(layout="wide")
 
 st.markdown("""
@@ -3538,13 +3555,11 @@ except Exception as e:
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
-if st.session_state.goto_section == "gis":
+if page in [
+    "Full Dashboard",
+    "Customer End GIS Map"
+]:
 
-    st.success(
-        "✅ Customer End GIS Map"
-    )
-
-    st.session_state.goto_section = ""
 st.markdown("""
 <div style="
 background:#F4F8FF;
@@ -5428,7 +5443,10 @@ st.markdown("""
 # ==========================
 # TITLE
 # ==========================
-
+if page in [
+    "Full Dashboard",
+    "Clariflocculator Running Status"
+]:
 st.markdown("""
 <div style="
 background:#F4F8FF;
