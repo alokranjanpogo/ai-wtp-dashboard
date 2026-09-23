@@ -3578,6 +3578,10 @@ try:
     # ======================================================
     # STATUS FILTER
     # ======================================================
+    # ======================================================
+    # STATUS FILTER
+    # ======================================================
+    
     selected_status = st.multiselect(
         "Select Water Quality Status",
         [
@@ -3591,10 +3595,11 @@ try:
             "Critical"
         ]
     )
-
+    
     gis_filtered = gis[
         gis["Status"].isin(selected_status)
     ]
+    
     critical_count = len(
         gis[
             gis["Status"] == "Critical"
@@ -3603,39 +3608,41 @@ try:
     
     if critical_count > 0:
     
-       critical_rows = gis[
+        critical_rows = gis[
             gis["Status"] == "Critical"
         ]
-        
+    
         gis_alarms = []
-        
+    
         for _, row in critical_rows.iterrows():
-        
-            if str(row["Total_Coli"]).lower() == "present":
-        
+    
+            if str(row["Total_Coli"]).strip().lower() == "present":
+    
                 gis_alarms.append(
                     f"{row['Cust_Name_']} - Total Coliform Present"
                 )
-        
-            if str(row["Faecal_Col"]).lower() == "present":
-        
+    
+            if str(row["Faecal_Col"]).strip().lower() == "present":
+    
                 gis_alarms.append(
                     f"{row['Cust_Name_']} - Faecal Coliform Present"
                 )
-        
+    
         st.session_state.gis_alarm_list = gis_alarms
-            
+    
     else:
     
         st.session_state.gis_alarm_list = []
+    
     if gis_filtered.empty:
-
+    
         st.warning(
             "No locations found for selected status."
         )
-
+    
     else:
-
+    
+    
         # ==================================================
         # SUMMARY CARDS
         # ==================================================
