@@ -34,17 +34,7 @@ mode = st.sidebar.radio(
     "Select Data Source",
     ["📁 Manual Data", "🟢 Real-Time Data"]
 )
-page = st.sidebar.radio(
-    "🚀 Quick Navigation",
-    [
-        "Full Dashboard",
-        "Smart Clarifier & Filter House Monitoring",
-        "Clariflocculator Running Status",
-        "Customer End GIS Map",
-        "Washout GIS Map",
-        "Smart Feedback System"
-    ]
-)
+
 if mode == "🟢 Real-Time Data":
 
     refresh_placeholder = st.empty()
