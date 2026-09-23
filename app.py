@@ -1160,7 +1160,7 @@ else:
 # ============================================================
 # HEALTH STATUS
 # ============================================================
-if clar_outlet > 10:
+if clar_outlet > 5:
 
     msg = (
         f"Clarifier Outlet High "
@@ -1172,11 +1172,11 @@ if clar_outlet > 10:
         st.session_state.quality_alarm_list.append(
             msg
         )
-if clar_outlet <= 5:
+if clar_outlet <=3.5:
 
     clar_health = "🟢 Healthy"
 
-elif clar_outlet <= 10:
+elif clar_outlet <= 5:
 
     clar_health = "🟡 Moderate"
 
