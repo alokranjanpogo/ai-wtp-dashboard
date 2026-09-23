@@ -251,7 +251,7 @@ st.title("🏭 WTP – LIVE HMI PANEL")
 # ACTIVE ALARM CENTER
 # ======================================
 
-st.markdown("### 🚨 Active Alarm Center")
+st.markdown("### 🚨 Active Alarm ")
 
 if st.session_state.quality_alarm_list:
     st.error(
@@ -3603,12 +3603,28 @@ try:
     
     if critical_count > 0:
     
-        st.session_state.gis_alarm_list = [
-    
-            f"{critical_count} Critical GIS Locations"
-    
+       critical_rows = gis[
+            gis["Status"] == "Critical"
         ]
-    
+        
+        gis_alarms = []
+        
+        for _, row in critical_rows.iterrows():
+        
+            if str(row["Total_Coli"]).lower() == "present":
+        
+                gis_alarms.append(
+                    f"{row['Cust_Name_']} - Total Coliform Present"
+                )
+        
+            if str(row["Faecal_Col"]).lower() == "present":
+        
+                gis_alarms.append(
+                    f"{row['Cust_Name_']} - Faecal Coliform Present"
+                )
+        
+        st.session_state.gis_alarm_list = gis_alarms
+            
     else:
     
         st.session_state.gis_alarm_list = []
