@@ -247,6 +247,36 @@ else:
 # TITLE
 # ===============================
 st.title("🏭 WTP – LIVE HMI PANEL")
+# ======================================
+# ACTIVE ALARM CENTER
+# ======================================
+
+st.markdown("### 🚨 Active Alarm Center")
+
+if st.session_state.quality_alarm_list:
+    st.error(
+        "🚨 WATER QUALITY : "
+        + " | ".join(st.session_state.quality_alarm_list)
+    )
+
+if st.session_state.mechanical_alarm_list:
+    st.warning(
+        "⚙️ MECHANICAL : "
+        + " | ".join(st.session_state.mechanical_alarm_list)
+    )
+
+if st.session_state.gis_alarm_list:
+    st.error(
+        "📍 GIS : "
+        + " | ".join(st.session_state.gis_alarm_list)
+    )
+
+if (
+    len(st.session_state.quality_alarm_list)==0
+    and len(st.session_state.mechanical_alarm_list)==0
+    and len(st.session_state.gis_alarm_list)==0
+):
+    st.success("✅ No Active Alarms")
 ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.now(ist)
 st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
@@ -3865,73 +3895,7 @@ st_folium(
     width=None,
     height=650
 )
-# ======================================
-# SCADA ALARM BANNER
-# ======================================
 
-# ======================================
-# WATER QUALITY ALARMS
-# ======================================
-
-if len(st.session_state.quality_alarm_list) > 0:
-
-    alarm_text = " | ".join(
-        st.session_state.quality_alarm_list[-10:]
-    )
-
-    st.error(
-        f"🚨 WATER QUALITY : {alarm_text}"
-    )
-
-# ======================================
-# MECHANICAL ALARMS
-# ======================================
-
-if len(st.session_state.mechanical_alarm_list) > 0:
-
-    alarm_text = " | ".join(
-        st.session_state.mechanical_alarm_list[-10:]
-    )
-
-    st.warning(
-        f"⚙️ MECHANICAL : {alarm_text}"
-    )
-
-# ======================================
-# GIS ALARMS
-# ======================================
-
-if len(st.session_state.gis_alarm_list) > 0:
-
-    alarm_text = " | ".join(
-        st.session_state.gis_alarm_list[-10:]
-    )
-
-    st.info(
-        f"📍 GIS : {alarm_text}"
-    )
-    st.markdown(
-        f"""
-        <div style="
-        background-color:#d32f2f;
-        color:white;
-        padding:12px;
-        font-size:20px;
-        font-weight:bold;
-        border-radius:8px;">
-        🚨 ACTIVE ALARMS : {alarm_text}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-if st.button("✅ Acknowledge All Alarms"):
-
-    st.session_state.quality_alarm_list = []
-    st.session_state.mechanical_alarm_list = []
-    st.session_state.gis_alarm_list = []
-
-    st.rerun()
 # ==========================================================
 # WATER QUALITY EXECUTIVE DASHBOARD - PART 1
 # HEADER + KPI + WQI GAUGE
