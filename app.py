@@ -280,18 +280,22 @@ if st.session_state.quality_alarm_list:
 # MECHANICAL
 # ======================================
 
+# ======================================
+# MECHANICAL
+# ======================================
+
 if st.session_state.mechanical_alarm_list:
+
+    st.warning(
+        "⚙️ MECHANICAL : "
+        + " | ".join(st.session_state.mechanical_alarm_list)
+    )
 
     if st.button(
         "⚙️ Open Clariflocculator Running Status",
         key="goto_mechanical"
     ):
         st.session_state.goto_section = "mechanical"
-        st.button(
-            "⚙️ Open Clariflocculator Running Status",
-            key="goto_mechanical"
-        )
-
 # ======================================
 # GIS
 # ======================================
