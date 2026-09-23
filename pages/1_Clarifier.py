@@ -2,13 +2,9 @@
 # SMART CLARIFIER + Filter Bed MONITORING SYSTEM
 # FINAL STATIC + DYNAMIC VERSION
 # ============================================================
-if st.session_state.goto_section == "clarifier":
+import streamlit as st
 
-    st.success(
-        "✅ Smart Clarifier & Filter House Monitoring"
-    )
-
-    st.session_state.goto_section = ""
+st.title("Clarifier Loaded")
 
 import streamlit as st
 import pandas as pd
