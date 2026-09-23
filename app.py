@@ -3884,11 +3884,9 @@ for i, row in washout.iterrows():
     elif i < 7:
         color = "orange"
 
-    elif i < 12:
-        color = "blue"
-
     else:
         color = "green"
+
 
     folium.CircleMarker(
         location=[
