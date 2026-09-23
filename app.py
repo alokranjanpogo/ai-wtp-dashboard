@@ -2952,69 +2952,66 @@ if submit:
     # =====================================================
     # ALARM CONDITIONS
     # =====================================================
-
+    # =====================================================
+    # ALARM CONDITIONS
+    # =====================================================
+    
     if (
-
         final_turbidity > 1
-
-        or
-
-        frc < 0.2
-
-        or
-
-        outlet_turbidity > 10
-
+        or frc < 0.2
+        or outlet_turbidity > 10
     ):
-    if final_turbidity > 1:
-
-    msg = (
-        f"Final Turbidity High "
-        f"({final_turbidity:.2f} NTU)"
-    )
-
-    if msg not in st.session_state.alarm_list:
-
-        st.session_state.alarm_list.append(msg)
-
-    if frc < 0.2:
     
-        msg = (
-            f"Low FRC "
-            f"({frc:.2f})"
-        )
+        if final_turbidity > 1:
     
-        if msg not in st.session_state.alarm_list:
+            msg = (
+                f"Final Turbidity High "
+                f"({final_turbidity:.2f} NTU)"
+            )
     
-            st.session_state.alarm_list.append(msg)
+            if msg not in st.session_state.alarm_list:
+    
+                st.session_state.alarm_list.append(msg)
+    
+        if frc < 0.2:
+    
+            msg = (
+                f"Low FRC "
+                f"({frc:.2f})"
+            )
+    
+            if msg not in st.session_state.alarm_list:
+    
+                st.session_state.alarm_list.append(msg)
+    
         st.session_state.alarm = True
-
+    
         # =================================================
         # EMAIL MESSAGE
         # =================================================
-
+    
         msg = f"""
-🚨 WATER QUALITY ALERT 🚨
-
-Time: {now}
-
-Raw Turbidity: {raw_turbidity}
-
-Clarifier Outlet Turbidity: {outlet_turbidity}
-
-Final Turbidity: {final_turbidity}
-
-FRC: {frc}
-
-Alum Dose: {alum_dose}
-Pac Dose: {pac_dose}
-Hypo Dose: {hypo_dose}
-
-Immediate operator action required.
-"""
-
+    🚨 WATER QUALITY ALERT 🚨
+    
+    Time: {now}
+    
+    Raw Turbidity: {raw_turbidity}
+    
+    Clarifier Outlet Turbidity: {outlet_turbidity}
+    
+    Final Turbidity: {final_turbidity}
+    
+    FRC: {frc}
+    
+    Alum Dose: {alum_dose}
+    Pac Dose: {pac_dose}
+    Hypo Dose: {hypo_dose}
+    
+    Immediate operator action required.
+    """
+    
         send_email_alert(msg)
-
+        
 # =========================================================
 # ACTIVE ALARM DISPLAY
 # =========================================================
