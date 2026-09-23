@@ -1454,15 +1454,16 @@ for i in range(1,7):
     
     })
     if filter_outlet > 1 or status == "🔴 Backwash Needed":
+
         message = (
-            Clarifier Outlet High "
+            f"{display_name} High Turbidity "
             f"({filter_outlet:.2f} NTU)"
         )
-
-        if msg not in st.session_state.quality_alarm_list:
-
+    
+        if message not in st.session_state.quality_alarm_list:
+    
             st.session_state.quality_alarm_list.append(
-                msg
+                message
             )
         st.error(f"🚨 FILTER ALARM : {display_name}")
     
