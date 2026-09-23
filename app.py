@@ -2491,43 +2491,34 @@ color:#0A2E6B;">
 
 
 
-st.markdown("""
-<div style="text-align:center; font-size:28px; font-weight:bold;">
-🗼 Distribution Water Towers
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style="text-align:center; font-size:28px; font-weight:bold;">
+    Distribution Water Towers
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-# Tower Names
 names = [
     "Central WT",
     "Kadma WT",
-    "Sidgorah WT",
+    "Sidgorah 3 WT",
     "Sakchi WT",
     "Tatanagar WT",
     "Tatanagar R WT"
 ]
 
-# Current Fill Levels (%)
-levels = [
-    82,  # Central WT
-    67,  # Kadma WT
-    91,  # Sidgorah WT
-    74,  # Sakchi WT
-    58,  # Tatanagar WT
-    88   # Tatanagar R WT
-]
+levels = [82, 67, 91, 74, 58, 88]
 
 tc = st.columns(3)
 
 for i in range(len(names)):
-    tc[i % 3].plotly_chart(
-        gauge(
-            names[i],
-            levels[i],
-            100
-        ),
-        use_container_width=True
-    )
+    with tc[i % 3]:
+        st.plotly_chart(
+            gauge(names[i], levels[i], 100),
+            use_container_width=True
+        )
 # ===============================
 # SUMP LEVEL MONITORING
 # ===============================
