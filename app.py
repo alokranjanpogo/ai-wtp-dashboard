@@ -2343,7 +2343,7 @@ hypo_strength = 0.12
 
 flow_m3_hr = st.slider(
     "Flow Rate (m³/hr)",
-    500,1500,1100,50
+    500,15000,9500,50
 )
 
 flow_m3_day = flow_m3_hr * operation_hours
