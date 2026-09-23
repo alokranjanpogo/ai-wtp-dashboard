@@ -10,8 +10,8 @@ from streamlit_autorefresh import st_autorefresh
 from datetime import datetime
 
 if "filter_alarm_muted" not in st.session_state:
-if "goto_section" not in st.session_state:
-    st.session_state.goto_section = ""    
+    if "goto_section" not in st.session_state:
+        st.session_state.goto_section = ""    
     st.session_state.filter_alarm_muted = False
 if "quality_alarm_list" not in st.session_state:
     st.session_state.quality_alarm_list = []
