@@ -5449,17 +5449,7 @@ locations = sorted(df["Location"].unique())
 # ==========================
 
 def draw_unit(location):
-if not running:
 
-    mech_msg = (
-        f"{location} Clariflocculator Not Running"
-    )
-
-    if mech_msg not in st.session_state.mechanical_alarm_list:
-
-        st.session_state.mechanical_alarm_list.append(
-            mech_msg
-        )
     row = df[df["Location"] == location].iloc[0]
 
     bridge_status = str(
@@ -5474,6 +5464,18 @@ if not running:
         bridge_status == "OK"
         and blowdown_status == "OK"
     )
+
+    if not running:
+
+        mech_msg = (
+            f"{location} Clariflocculator Not Running"
+        )
+
+        if mech_msg not in st.session_state.mechanical_alarm_list:
+
+            st.session_state.mechanical_alarm_list.append(
+                mech_msg
+            )
 
     if running:
 
