@@ -251,31 +251,72 @@ st.title("🏭 WTP – LIVE HMI PANEL")
 # ACTIVE ALARM CENTER
 # ======================================
 
-st.markdown("### 🚨 Active Alarm ")
+# ======================================
+# ACTIVE ALARM CENTER
+# ======================================
+
+st.markdown("### 🚨 Active Alarm Center")
+
+# ======================================
+# WATER QUALITY
+# ======================================
 
 if st.session_state.quality_alarm_list:
+
     st.error(
         "🚨 WATER QUALITY : "
         + " | ".join(st.session_state.quality_alarm_list)
     )
 
+    st.button(
+        "🌀 Go To Clarifier & Filter Section",
+        key="goto_quality"
+    )
+
+# ======================================
+# MECHANICAL
+# ======================================
+
 if st.session_state.mechanical_alarm_list:
+
     st.warning(
         "⚙️ MECHANICAL : "
         + " | ".join(st.session_state.mechanical_alarm_list)
     )
 
+    st.button(
+        "⚙️ Go To Mechanical Section",
+        key="goto_mechanical"
+    )
+
+# ======================================
+# GIS
+# ======================================
+
 if st.session_state.gis_alarm_list:
+
     st.error(
         "📍 GIS : "
         + " | ".join(st.session_state.gis_alarm_list)
     )
 
+    st.button(
+        "📍 Go To GIS Section",
+        key="goto_gis"
+    )
+
+# ======================================
+# NO ACTIVE ALARM
+# ======================================
+
 if (
-    len(st.session_state.quality_alarm_list)==0
-    and len(st.session_state.mechanical_alarm_list)==0
-    and len(st.session_state.gis_alarm_list)==0
+    len(st.session_state.quality_alarm_list) == 0
+    and
+    len(st.session_state.mechanical_alarm_list) == 0
+    and
+    len(st.session_state.gis_alarm_list) == 0
 ):
+
     st.success("✅ No Active Alarms")
 ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.now(ist)
