@@ -1569,39 +1569,19 @@ for i in range(1,7):
 # ============================================================
 # AUTO ALARM
 # ============================================================
-if not st.session_state.filter_alarm_muted and alarm_triggered:
-
-    with open("mixkit-sport-start-bleeps-918.wav", "rb") as f:
-        audio_bytes = f.read()
-
-    b64 = base64.b64encode(audio_bytes).decode()
-
-    st.components.v1.html(
-        f"""
-        <audio id="alarm" autoplay loop style="display:none;">
-            <source src="data:audio/wav;base64,{b64}" type="audio/wav">
-        </audio>
-
-        <script>
-            document.getElementById("alarm").play();
-        </script>
-        """,
-        height=0,
-    )
-
-else:
-    st.components.v1.html(
-        """
-        <script>
-            var audios = document.getElementsByTagName("audio");
-            for (var i = 0; i < audios.length; i++) {
-                audios[i].pause();
-                audios[i].currentTime = 0;
-            }
-        </script>
-        """,
-        height=0,
-    )
+st.components.v1.html(
+    """
+    <script>
+        var audios = document.getElementsByTagName("audio");
+        for (var i = 0; i < audios.length; i++) {
+            audios[i].pause();
+            audios[i].currentTime = 0;
+            audios[i].muted = true;
+        }
+    </script>
+    """,
+    height=0,
+)
 # ============================================================
 # FILTER SUMMARY
 # ============================================================
