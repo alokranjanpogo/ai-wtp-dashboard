@@ -3924,6 +3924,14 @@ if len(st.session_state.gis_alarm_list) > 0:
         """,
         unsafe_allow_html=True
     )
+
+if st.button("✅ Acknowledge All Alarms"):
+
+    st.session_state.quality_alarm_list = []
+    st.session_state.mechanical_alarm_list = []
+    st.session_state.gis_alarm_list = []
+
+    st.rerun()
 # ==========================================================
 # WATER QUALITY EXECUTIVE DASHBOARD - PART 1
 # HEADER + KPI + WQI GAUGE
