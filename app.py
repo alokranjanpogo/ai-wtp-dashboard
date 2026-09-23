@@ -11,6 +11,8 @@ from datetime import datetime
 
 if "filter_alarm_muted" not in st.session_state:
     st.session_state.filter_alarm_muted = False
+if "alarm_list" not in st.session_state:
+    st.session_state.alarm_list = []    
 # ===============================
 # AUTO REFRESH
 # ===============================
@@ -238,6 +240,30 @@ else:
 # TITLE
 # ===============================
 st.title("🏭 WTP – LIVE HMI PANEL")
+# ======================================
+# SCADA ALARM BANNER
+# ======================================
+
+if len(st.session_state.alarm_list) > 0:
+
+    recent_alarms = st.session_state.alarm_list[-10:]
+
+    alarm_text = " | ".join(recent_alarms)
+
+    st.markdown(
+        f"""
+        <div style="
+        background-color:#d32f2f;
+        color:white;
+        padding:12px;
+        font-size:20px;
+        font-weight:bold;
+        border-radius:8px;">
+        🚨 ACTIVE ALARMS : {alarm_text}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 ist = pytz.timezone('Asia/Kolkata')
 current_time = datetime.now(ist)
 st.markdown(f"### 🕒 {current_time.strftime('%d-%m-%Y %H:%M:%S')}")
@@ -1148,7 +1174,18 @@ else:
 # ============================================================
 # HEALTH STATUS
 # ============================================================
+if clar_outlet > 10:
 
+    msg = (
+        f"Clarifier Outlet High "
+        f"({clar_outlet:.2f} NTU)"
+    )
+
+    if msg not in st.session_state.alarm_list:
+
+        st.session_state.alarm_list.append(
+            msg
+        )
 if clar_outlet <= 5:
 
     clar_health = "🟢 Healthy"
@@ -1372,7 +1409,16 @@ for i in range(1,7):
     
     })
     if filter_outlet > 1 or status == "🔴 Backwash Needed":
+        message = (
+            f"{display_name} High Turbidity "
+            f"({filter_outlet:.2f} NTU)"
+        )
 
+        if message not in st.session_state.alarm_list:
+        
+            st.session_state.alarm_list.append(
+                message
+       )
         st.error(f"🚨 FILTER ALARM : {display_name}")
     
         col1, col2 = st.columns([4,1])
@@ -2920,7 +2966,27 @@ if submit:
         outlet_turbidity > 10
 
     ):
+    if final_turbidity > 1:
 
+    msg = (
+        f"Final Turbidity High "
+        f"({final_turbidity:.2f} NTU)"
+    )
+
+    if msg not in st.session_state.alarm_list:
+
+        st.session_state.alarm_list.append(msg)
+
+    if frc < 0.2:
+    
+        msg = (
+            f"Low FRC "
+            f"({frc:.2f})"
+        )
+    
+        if msg not in st.session_state.alarm_list:
+    
+            st.session_state.alarm_list.append(msg)
         st.session_state.alarm = True
 
         # =================================================
