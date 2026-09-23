@@ -3876,7 +3876,7 @@ washout = washout.dropna(
 )
 
 # ============================================================
-# RANDOMIZE FOR COLOR DISTRIBUTION
+# RANDOMIZE
 # ============================================================
 
 washout = washout.sample(
@@ -3897,7 +3897,7 @@ center_lon = washout["Longitude"].mean()
 
 m = folium.Map(
     location=[center_lat, center_lon],
-    zoom_start=12,
+    zoom_start=10,
     tiles="OpenStreetMap"
 )
 
@@ -3916,7 +3916,6 @@ for i, row in washout.iterrows():
     else:
         color = "green"
 
-
     folium.CircleMarker(
         location=[
             row["Lattitude"],
@@ -3927,8 +3926,28 @@ for i, row in washout.iterrows():
         fill=True,
         fill_color=color,
         fill_opacity=0.9,
-        tooltip=str(row["Location"])
+        tooltip=folium.Tooltip(
+            f"📍 {row['Location']}",
+            sticky=True
+        )
     ).add_to(m)
+
+# ============================================================
+# AUTO FIT ALL POINTS
+# ============================================================
+
+bounds = [
+    [
+        washout["Lattitude"].min(),
+        washout["Longitude"].min()
+    ],
+    [
+        washout["Lattitude"].max(),
+        washout["Longitude"].max()
+    ]
+]
+
+m.fit_bounds(bounds)
 
 # ============================================================
 # DISPLAY MAP
