@@ -2701,7 +2701,9 @@ required_columns = [
     "final_turbidity",
     "frc",
     "status",
-    "operator_feedback"
+    "operator_feedback",
+    "recommended_alum",
+    "recommended_hypo"
 
 
 ]
@@ -2877,7 +2879,10 @@ if submit:
 
         "status": status,
 
-        "operator_feedback": operator_feedback
+        "operator_feedback": operator_feedback,
+
+        "recommended_alum": np.nan,
+        "recommended_hypo": np.nan
 
     }])
 
@@ -2917,93 +2922,7 @@ if submit:
         saved_df.tail(5),
         use_container_width=True
     )
-    # =====================================================
-    # AI RECOMMENDATION
-    # =====================================================
-
-    if len(df) >= 30:
-
-        st.markdown("## Smart Recommendation")
-
-        good_data = df[
-            (df["final_turbidity"] <= 1)
-            &
-            (df["frc"] >= 0.2)
-            &
-            (df["frc"] <= 1)
-        ]
-
-        if len(good_data) >= 10:
-
-            good_data = good_data.copy()
-
-            good_data["difference"] = abs(
-                good_data["raw_turbidity"]
-                -
-                raw_turbidity
-            )
-
-            similar = good_data.sort_values(
-                by="difference"
-            ).head(10)
-
-            recommended_alum = similar[
-                "alum_dose"
-            ].mean()
-
-            recommended_hypo = similar[
-                "hypo_dose"
-            ].mean()
-
-            st.success(
-                f"✅ Recommended Alum Dose: "
-                f"{recommended_alum:.2f} mg/L"
-            )
-
-            st.success(
-                f"✅ Recommended Hypo Dose: "
-                f"{recommended_hypo:.2f} ppm"
-            )
-
-            if raw_turbidity > 150:
-
-                st.warning(
-                    "⚠️ High raw turbidity detected."
-                )
-
-            if temperature > 35:
-
-                st.warning(
-                    "🌡 High temperature may increase chlorine decay."
-                )
-
-            if frc < 0.2:
-
-                st.error(
-                    "🚨 Low FRC detected."
-                )
-
-            if outlet_turbidity > 10:
-
-                st.warning(
-                    "⚠️ Clarifier performance issue suspected."
-                )
-
-        else:
-
-            st.warning(
-                "Not enough good quality samples available."
-            )
-
-    else:
-
-        remaining = 30 - len(df)
-
-        st.info(
-            f"AI Recommendation activates after "
-            f"30 samples.\n"
-            f"Remaining samples: {remaining}"
-        )
+    
 
     # =====================================================
     # ALARM CONDITIONS
@@ -3163,7 +3082,60 @@ if st.button("🛑 Stop Alarm"):
     st.session_state.sound_enabled = False
 
     st.success("Alarm Stopped")
+st.markdown("---")
 
+st.subheader("🤖 Historical Dosing Recommendation Engine")
+
+if len(df) >= 30:
+
+    recommendation_turbidity = st.number_input(
+        "Enter Raw Water Turbidity (NTU)",
+        0.0,
+        1000.0,
+        50.0
+    )
+
+    good_data = df[
+        (df["final_turbidity"] <= 1)
+        &
+        (df["frc"] >= 0.2)
+        &
+        (df["frc"] <= 1)
+    ]
+
+    if len(good_data) >= 10:
+
+        good_data = good_data.copy()
+
+        good_data["difference"] = abs(
+            good_data["raw_turbidity"]
+            - recommendation_turbidity
+        )
+
+        similar = good_data.sort_values(
+            "difference"
+        ).head(10)
+
+        st.success(
+            f"✅ Recommended Alum Dose : "
+            f"{similar['alum_dose'].mean():.2f} mg/L"
+        )
+
+        st.success(
+            f"✅ Recommended PAC Dose : "
+            f"{similar['pac_dose'].mean():.2f} mg/L"
+        )
+
+        st.success(
+            f"✅ Recommended Hypo Dose : "
+            f"{similar['hypo_dose'].mean():.2f} ppm"
+        )
+
+else:
+
+    st.info(
+        f"Recommendation Engine activates after 30 samples. Current Samples : {len(df)}"
+    )
 # =========================================================
 # ANALYTICS DASHBOARD
 # =========================================================
