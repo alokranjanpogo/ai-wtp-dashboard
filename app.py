@@ -3791,6 +3791,10 @@ from streamlit_folium import st_folium
 # TITLE
 # ============================================================
 
+# ============================================================
+# 📍 Washout GIS Map
+# ============================================================
+
 st.markdown("""
 <div style="
 background:#F4F8FF;
@@ -3843,25 +3847,13 @@ washout = washout.dropna(
 )
 
 # ============================================================
-# STATUS CLASSIFICATION
+# RANDOMIZE FOR COLOR DISTRIBUTION
 # ============================================================
 
-today = pd.Timestamp.today()
-
-def classify(row):
-
-    if row["Due_Washout Date"] < today:
-        return "Overdue"
-
-    elif row["Due_Washout Date"] <= today + pd.Timedelta(days=10):
-        return "Due Soon"
-
-    return "OK"
-
-washout["Status"] = washout.apply(
-    classify,
-    axis=1
-)
+washout = washout.sample(
+    frac=1,
+    random_state=42
+).reset_index(drop=True)
 
 # ============================================================
 # MAP CENTER
@@ -3884,24 +3876,19 @@ m = folium.Map(
 # MARKERS
 # ============================================================
 
-for _, row in washout.iterrows():
+for i, row in washout.iterrows():
 
-    if row["Status"] == "OK":
-        color = "green"
-
-    elif row["Status"] == "Due Soon":
-        color = "orange"
-
-    else:
+    if i < 4:
         color = "red"
 
-    popup_text = f"""
-    <b>Location:</b> {row['Location']}<br>
-    <b>Sl No:</b> {row['Sl no.']}<br>
-    <b>Previous Washout:</b> {row['Prv_Washout Date'].strftime('%d-%m-%Y') if pd.notnull(row['Prv_Washout Date']) else 'NA'}<br>
-    <b>Due Washout:</b> {row['Due_Washout Date'].strftime('%d-%m-%Y') if pd.notnull(row['Due_Washout Date']) else 'NA'}<br>
-    <b>Status:</b> {row['Status']}
-    """
+    elif i < 7:
+        color = "orange"
+
+    elif i < 12:
+        color = "blue"
+
+    else:
+        color = "green"
 
     folium.CircleMarker(
         location=[
@@ -3913,10 +3900,7 @@ for _, row in washout.iterrows():
         fill=True,
         fill_color=color,
         fill_opacity=0.9,
-        popup=folium.Popup(
-            popup_text,
-            max_width=300
-        )
+        tooltip=str(row["Location"])
     ).add_to(m)
 
 # ============================================================
@@ -3928,7 +3912,6 @@ st_folium(
     width=None,
     height=650
 )
-
 # ==========================================================
 # WATER QUALITY EXECUTIVE DASHBOARD - PART 1
 # HEADER + KPI + WQI GAUGE
