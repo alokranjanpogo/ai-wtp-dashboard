@@ -1090,10 +1090,7 @@ import base64
 # ============================================================
 # TITLE
 # ============================================================
-if page in [
-    "Full Dashboard",
-    "Smart Clarifier & Filter House Monitoring"
-]:
+
 st.markdown("---")
 st.markdown("""
 <div style="
@@ -2569,10 +2566,6 @@ import pytz
 # =========================================================
 # PAGE CONFIG
 # =========================================================
-if page in [
-    "Full Dashboard",
-    "Smart Feedback System"
-]:
 st.set_page_config(layout="wide")
 
 st.markdown("""
@@ -3555,11 +3548,6 @@ except Exception as e:
 # =======================================
 # CUSTOMER END GIS MAP
 # ==========================================================
-if page in [
-    "Full Dashboard",
-    "Customer End GIS Map"
-]:
-
 st.markdown("""
 <div style="
 background:#F4F8FF;
@@ -5443,10 +5431,6 @@ st.markdown("""
 # ==========================
 # TITLE
 # ==========================
-if page in [
-    "Full Dashboard",
-    "Clariflocculator Running Status"
-]:
 st.markdown("""
 <div style="
 background:#F4F8FF;
